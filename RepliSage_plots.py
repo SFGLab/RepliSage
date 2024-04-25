@@ -222,7 +222,7 @@ def combine_matrices(path_upper,path_lower,label_upper,label_lower,th1=0,th2=50,
     plt.savefig('comparison_reg3.pdf',format='pdf',dpi=500)
     plt.show()
 
-    def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
+def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
     figure(figsize=(10, 8), dpi=600)
     plt.plot(Es, 'k')
     plt.plot(Bs, 'cyan')

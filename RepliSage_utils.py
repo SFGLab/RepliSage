@@ -120,6 +120,7 @@ def corr_exp_heat(mat_sim,bedpe_file,region,chrom,N_beads,path):
 
     return pears
 
+
 def write_cmm(comps,name):
     comp_old = 2
     counter, start = 0, 0
@@ -148,6 +149,7 @@ def write_mmcif(points1,points2,cif_file_name='LE_init_struct.cif'):
             z = points1[i][2]
         except IndexError:
             z = 0.0
+            
         atoms += ('{0:} {1:} {2:} {3:} {4:} {5:} {6:}  {7:} {8:} '
                 '{9:} {10:.3f} {11:.3f} {12:.3f}\n'.format('ATOM', i+1, 'D', 'CA',\
                                                             '.', 'ALA', 'A', 1, i+1, '?',\
@@ -161,14 +163,14 @@ def write_mmcif(points1,points2,cif_file_name='LE_init_struct.cif'):
             z = 0.0
         atoms += ('{0:} {1:} {2:} {3:} {4:} {5:} {6:}  {7:} {8:} '
                 '{9:} {10:.3f} {11:.3f} {12:.3f}\n'.format('ATOM', n+i+1, 'D', 'CA',\
-                                                            '.', 'ALA', 'A', 1, n+i+1, '?',\
+                                                            '.', 'ALA', 'A', 2, n+i+1, '?',\
                                                             x, y, z))
 
     connects = ''
     for i in range(0,n-1):
         connects += f'C{i+1} covale ALA A {i+1} CA ALA A {i+2} CA\n'
     for i in range(0,n-1):
-        connects += f'C{n+i+1} covale ALA A {i+1} CA ALA A {n+i+2} CA\n'
+        connects += f'C{n+i+1} covale ALA A {n+i+1} CA ALA A {n+i+2} CA\n'
 
     # Save files
     ## .pdb
@@ -294,6 +296,20 @@ def self_avoiding_random_walk(n: int, step: float = 1.0, bead_radius: float = 0.
         points = np.array(points)
         return points
 
+def polymer_circle(n: int, z_stretch: float = 1.0, radius: float = 5.0) -> np.ndarray:
+    points = []
+    angle_increment = 360 / float(n)
+    radius = 1 / (2 * np.sin(np.radians(angle_increment) / 2.)) if radius==None else radius
+    z_stretch = z_stretch / n
+    z = 0
+    for i in range(n):
+        x = radius * np.cos(angle_increment * i * np.pi / 180)
+        y = radius * np.sin(angle_increment * i * np.pi / 180)
+        if z_stretch != 0:
+            z += z_stretch
+        points.append((x, y, z))
+    points = np.array(points)
+    return points
 
 def get_coordinates_mm(mm_vec):
     '''

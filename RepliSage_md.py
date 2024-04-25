@@ -24,7 +24,8 @@ class MD_LE:
         path (int): the path where the simulation will save structures etc.
         '''
         self.M, self.N = M, N
-        self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, self.t_rep
+        self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, t_rep
+        self.rep_duration = len(self.l_forks[0,:])
         self.N_coh, self.N_steps = M.shape
         self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
         self.path = path
@@ -43,8 +44,8 @@ class MD_LE:
         # Define initial structure
         print('Building initial structure...')
         points1 = polymer_circle(self.N_beads)
-        points2 = points1 + [1.0,1.0,1.0]
-        write_mmcif(points,self.path+'/LE_init_struct.cif')
+        points2 = points1 + [0.2,0.2,0.2]
+        write_mmcif(points1,points2,self.path+'/LE_init_struct.cif')
         generate_psf(self.N_beads,self.path+'/other/LE_init_struct.psf')
         print('Done brother ;D\n')
 
@@ -84,17 +85,24 @@ class MD_LE:
                     # Update Loop Extrusion Force
                     le_force = self.LE_forces[nn]
                     le_force.setBondParameters(i-1, self.M[nn,i-1], self.N[nn,i-1], 0.1, 0.0)
-                    le_force.setBondParameters(i, self.M[nn,i], self.N[nn,i], 0.1, 50000.0)
+                    le_force.setBondParameters(i, self.M[nn,i], self.N[nn,i], 0.1, 3e5)
                     le_force.updateParametersInContext(simulation.context)
 
-                    # Update Morse potential which is linked with replication fork propagation
+                    # Update repli potential which is linked with replication fork propagation
                     if i>=self.t_rep and i<self.t_rep+15*self.rep_duration:
                         locs1 = np.nonzero(self.l_forks[:,(i-self.t_rep)%15])[0]
                         locs2 = np.nonzero(self.r_forks[:,(i-self.t_rep)%15])[0]
                         locs = np.union1d(locs1,locs2)
+                        for j in range(0,self.N_beads):
+                            self.external_force.setParticleParameters(j,j+self.N_beads,[1000.0])
                         for l in locs:
-                            self.morse_force.setBondParameters(int(l),[0.0])
-                        self.morse_force.updateParametersInContext(simulation.context)
+                            self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.0])
+                        self.repli_force.updateParametersInContext(simulation.context)
+                        self.external_force.updateParametersInContext(simulation.context)
+                    elif i>=self.t_rep+15*self.rep_duration:
+                        for j in range(self.N_beads):
+                            self.external_force.setParticleParameters(j, j+self.N_beads, [0.0])
+                        self.external_force.updateParametersInContext(simulation.context)
                 
                 simulation.step(sim_step)
                 if i%self.step==0 and i>self.burnin*self.step:
@@ -131,7 +139,7 @@ class MD_LE:
                 
                 # heats_to_prob(self.heats,self.path+f'/plots/prob_dist_heatmap.svg',burnin=self.burnin,q=0.1)
             return self.avg_heat
-
+    
     def add_forcefield(self):
         '''
         Here is the definition of the forcefield.
@@ -143,7 +151,7 @@ class MD_LE:
         - LE forces: this is a list of force objects. Each object corresponds to a different cohesin. It is needed to define a force for each time step.
         '''
         # Leonard-Jones potential for excluded volume
-        ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/r+r_small)^4')
+        ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
         ev_force.addGlobalParameter('epsilon', defaultValue=10)
         ev_force.addGlobalParameter('r_small', defaultValue=0.01)
         ev_force.addPerParticleParameter('sigma')
@@ -162,9 +170,9 @@ class MD_LE:
         # Harmonic angle force between successive beads so as to make chromatin rigid
         self.angle_force = mm.HarmonicAngleForce()
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 400)
         for i in range(self.N_beads,2*self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 400)
         self.system.addForce(self.angle_force)
         
         # LE force that connects cohesin restraints
@@ -174,22 +182,33 @@ class MD_LE:
             for i in range(self.N_steps):
                 if i==0:
                     LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.1, 50000.0)
-                    LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.1, 50000.0)
+                    LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.1, 3e5)
                 else:
                     LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.1, 0)
                     LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.1, 0)
             self.system.addForce(LE_force)
             self.LE_forces.append(LE_force)
 
-        # Morse force to bring together the two polymers
-        self.morse_force = mm.CustomBondForce('De * (1 - exp(-alpha * (r - r0)))^2')
-        self.morse_force.addGlobalParameter('alpha', defaultValue=1)
-        self.morse_force.addGlobalParameter('r0', defaultValue=0.1)
-        self.morse_force.addPerParticleParameter('De')
+        # Replication force to bring together the two polymers
+        self.repli_force = mm.CustomBondForce('D * (r-r0)')
+        self.repli_force.addGlobalParameter('r0', defaultValue=0.1)
+        self.repli_force.addPerBondParameter('D')
         for i in range(self.N_beads):
-            self.morse_force.addBond(i, i + N_beads, [10.0])
-        self.system.addForce(self.morse_force)
-        
+            self.repli_force.addBond(i, i + self.N_beads, [5e3])
+        self.system.addForce(self.repli_force)
+
+        # Custom External Force
+        # Define a random direction for the force
+        random_direction = np.random.randn(3)
+        random_direction /= np.linalg.norm(random_direction)  # Normalize the direction vector
+        self.external_force = mm.CustomExternalForce(f'F * (ax * x + ay * y + az * z)')
+        self.external_force.addPerParticleParameter('F')
+        self.external_force.addGlobalParameter('ax',defaultValue=random_direction[0])
+        self.external_force.addGlobalParameter('ay',defaultValue=random_direction[1])
+        self.external_force.addGlobalParameter('az',defaultValue=random_direction[2])
+        for i in range(self.N_beads,2*self.N_beads):
+            self.external_force.addParticle(i,[0.0])
+        self.system.addForce(self.external_force)
 
 def main():
     # A potential example

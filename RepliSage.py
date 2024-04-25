@@ -210,7 +210,7 @@ class RepliSage:
         if m_new<0: m_new=0
         if n_new>self.N_beads-1: n_new=self.N_beads-1
         return m_new, n_new
-
+    
     def initialize(self):
         '''
         Random initialization of polymer DNA fiber with some cohesin positions.
@@ -259,7 +259,7 @@ class RepliSage:
                     m_new, n_new = self.unbind_bind(poisson_choice)
                 elif r==1 or r==2:
                     m_new, n_new = self.slide(ms[j],ns[j])
-
+                
                 # Compute energy difference
                 if i<t_rep:
                     dE = self.get_dE(ms,ns,m_new,n_new,0,j)  
@@ -346,7 +346,7 @@ def main():
     # For method paper
     region, chrom =  [178421513, 179491193], 'chr1'
     
-    out_path=f'replication_without_stress'
+    out_path=f'with_md'
     bedpe_file = '/home/skorsak/Documents/data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     # coh_track_file = '/home/skorsak/Documents/data/Petros_project/bw/RAD21_ChIPseq/mm_BMDM_WT_Rad21_heme_0min.bw'
     # bw_file1 = '/home/skorsak/Documents/data/Petros_project/bw/BACH1_ChIPseq/mm_Bach1_1h_rep1_heme_merged.bw'
