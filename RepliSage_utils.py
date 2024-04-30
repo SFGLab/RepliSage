@@ -149,7 +149,7 @@ def write_mmcif(points1,points2,cif_file_name='LE_init_struct.cif'):
             z = points1[i][2]
         except IndexError:
             z = 0.0
-            
+        atom_type =  'ALB' if i==0 or i==n-1 else 'ALA'  
         atoms += ('{0:} {1:} {2:} {3:} {4:} {5:} {6:}  {7:} {8:} '
                 '{9:} {10:.3f} {11:.3f} {12:.3f}\n'.format('ATOM', i+1, 'D', 'CA',\
                                                             '.', 'ALA', 'A', 1, i+1, '?',\
@@ -161,16 +161,21 @@ def write_mmcif(points1,points2,cif_file_name='LE_init_struct.cif'):
             z = points2[i][2]
         except IndexError:
             z = 0.0
+        atom_type =  'ALB' if i==0 or i==n-1 else 'ALA'
         atoms += ('{0:} {1:} {2:} {3:} {4:} {5:} {6:}  {7:} {8:} '
                 '{9:} {10:.3f} {11:.3f} {12:.3f}\n'.format('ATOM', n+i+1, 'D', 'CA',\
-                                                            '.', 'ALA', 'A', 2, n+i+1, '?',\
+                                                            '.', 'ALA', 'B', 2, n+i+1, '?',\
                                                             x, y, z))
 
     connects = ''
     for i in range(0,n-1):
-        connects += f'C{i+1} covale ALA A {i+1} CA ALA A {i+2} CA\n'
+        atom_type0 =  'ALB' if i==0 else 'ALA'
+        atom_type1 =  'ALB' if i+1==n-1 else 'ALA'
+        connects += f'C{i+1} covale {atom_type0} A {i+1} CA {atom_type1} A {i+2} CA\n'
     for i in range(0,n-1):
-        connects += f'C{n+i+1} covale ALA A {n+i+1} CA ALA A {n+i+2} CA\n'
+        atom_type0 =  'ALB' if i==0 else 'ALA'
+        atom_type1 =  'ALB' if i+1==n-1 else 'ALA'
+        connects += f'C{n+i+1} covale {atom_type0} B {n+i+1} CA {atom_type1} B {n+i+2} CA\n'
 
     # Save files
     ## .pdb

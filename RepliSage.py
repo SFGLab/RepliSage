@@ -314,9 +314,9 @@ class RepliSage:
         # Some vizualizations
         if viz: coh_traj_plot(self.Ms,self.Ns,self.N_beads, self.path)
         if viz: make_timeplots(Es, Bs, Ks, Fs, bi, mode, self.path)
-        if viz: coh_probdist_plot(self.Ms,self.Ns,self.N_beads,self.path)
-        if viz and self.N_beads<=2000: stochastic_heatmap(self.Ms,self.Ns,MC_step,self.N_beads,self.path)
-        if viz and self.N_beads<=2000: make_loop_hist(self.Ms,self.Ns,self.path)
+        # if viz: coh_probdist_plot(self.Ms,self.Ns,self.N_beads,self.path)
+        # if viz and self.N_beads<=2000: stochastic_heatmap(self.Ms,self.Ns,MC_step,self.N_beads,self.path)
+        # if viz and self.N_beads<=2000: make_loop_hist(self.Ms,self.Ns,self.path)
         
         return Es, self.Ms, self.Ns, Bs, Ks, Fs, ufs
 
@@ -355,7 +355,7 @@ def main():
     
     sim = RepliSage(region,chrom,bedpe_file,out_path=out_path,N_beads=1000)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
-    sim.run_MD('CUDA')
+    sim.run_MD('OpenCL')
 
 if __name__=='__main__':
     main()
