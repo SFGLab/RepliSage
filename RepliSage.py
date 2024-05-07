@@ -63,7 +63,7 @@ class RepliSage:
         self.b = self.f/2
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
-        self.l_forks, self.r_forks = run_replikator(L=self.N_beads,time_steps=int(5e2),initiation_rate=0.001,mu_v=1,std_v=2, viz=True)
+        self.l_forks, self.r_forks = run_replikator(L=self.N_beads,time_steps=int(5e2),initiation_rate=0.01,mu_v=1,std_v=2, viz=True)
         self.rep_duration = len(self.l_forks[0,:])
         self.N_rep = np.max(np.sum(self.l_forks+self.r_forks,axis=0))
         print('Number of replication forks',self.N_rep)
@@ -76,6 +76,18 @@ class RepliSage:
         binding = np.sum(self.L[ms]+self.R[ns])
         E_b = self.b*binding/(np.sum(self.L)+np.sum(self.R))
         return E_b
+
+    # def E_ising(self,spins):
+        
+    #     '''Compute energy of spin lattice by lopping over each spin 
+    #     with periodic boundary conditions enforced
+    #     via rollover index implemented using modulo operator %'''
+        
+    #     E1,E2 = np.sum(self.h*spins),0
+        
+    #     for i in range(self.N_beads): E2 += np.sum(np.sum(self.J[i,i+1:]*spins[i]*spins[i+1:]))
+
+    #     return self.c1*E1/self.N_beads+self.c2*E2/(2*self.N_lef)
 
     def E_repli(self,ms,ns,t):
         '''
@@ -122,6 +134,12 @@ class RepliSage:
             self.repli_norm =  self.c_rep/np.sum(np.average(self.l_forks+self.r_forks,axis=0))
             energy += self.E_repli(ms,ns,t)
         return energy
+
+    # def getdE_ising(self,ms,ns,spins,J_new,m_new,n_new,coh_idx,spin_idx):
+    #     dE1 = -2*self.h[spin_idx]*spins[spin_idx] # 2 because of the difference calculation
+    #     dE2 = -np.sum((J_new[spin_idx,]+self.J[spin_idx,])*spins[spin_idx]*spins)+(J_new[spin_idx,spin_idx]+self.J[spin_idx,spin_idx])*spins[spin_idx]*spins[spin_idx]
+    #     if spin_idx!=m_new and spin_idx!=n_new and spin_idx!=ms[coh_idx] and spin_idx!=ns[coh_idx]: dE3 =  J_new[m_new,n_new]*spins[m_new]*spins[n_new]-self.J[ms[coh_idx],ns[coh_idx]]*spins[ms[coh_idx]]*spins[ns[coh_idx]]
+    #     return self.c1*dE1/self.N_beads+self.c2*dE2/(2*self.N_lef)
 
     def get_dE_bind(self,ms,ns,m_new,n_new,idx):
         return self.b*(self.L[m_new]+self.R[n_new]-self.L[ms[idx]]-self.R[ns[idx]])/(np.sum(self.L)+np.sum(self.R))
@@ -263,8 +281,8 @@ class RepliSage:
                 # Compute energy difference
                 if i<t_rep:
                     dE = self.get_dE(ms,ns,m_new,n_new,0,j)  
-                elif i>=t_rep and i<t_rep+15*self.rep_duration:
-                    dE = self.get_dE(ms,ns,m_new,n_new,(i-t_rep)%15,j)
+                elif i>=t_rep and i<t_rep+4*self.rep_duration:
+                    dE = self.get_dE(ms,ns,m_new,n_new,(i-t_rep)%4,j)
                 else:
                     dE = self.get_dE(ms,ns,m_new,n_new,self.rep_duration-1,j)
                 
@@ -347,7 +365,7 @@ def main():
     region, chrom =  [178421513, 179491193], 'chr1'
     
     out_path=f'with_md'
-    bedpe_file = '/home/skorsak/Documents/data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    bedpe_file = '/mnt/raid/data/encode/ChIAPET/ENCSR184YZV_CTCF_ChIAPET//LHG0052H_loops_cleaned_th10_2.bedpe'
     # coh_track_file = '/home/skorsak/Documents/data/Petros_project/bw/RAD21_ChIPseq/mm_BMDM_WT_Rad21_heme_0min.bw'
     # bw_file1 = '/home/skorsak/Documents/data/Petros_project/bw/BACH1_ChIPseq/mm_Bach1_1h_rep1_heme_merged.bw'
     # bw_file2 = '/home/skorsak/Documents/data/Petros_project/bw/RNAPol_ChIPseq/WT-RNAPOLIIS2-1h-heme100-rep1_S5.bw'
@@ -355,7 +373,7 @@ def main():
     
     sim = RepliSage(region,chrom,bedpe_file,out_path=out_path,N_beads=1000)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
-    sim.run_MD('OpenCL')
+    sim.run_MD('CUDA')
 
 if __name__=='__main__':
     main()

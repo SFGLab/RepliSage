@@ -26,6 +26,7 @@ class MD_LE:
         self.M, self.N = M, N
         self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, t_rep
         self.rep_duration = len(self.l_forks[0,:])
+        print('Duration of Replication',self.rep_duration)
         self.N_coh, self.N_steps = M.shape
         self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
         self.path = path
@@ -89,11 +90,11 @@ class MD_LE:
                     le_force.setBondParameters(i+1, self.M[nn,i], self.N[nn,i], 0.05, 3e3)
                     le_force.setBondParameters(i+2, self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e3)
                     le_force.updateParametersInContext(simulation.context)
-
+                    
                     # Update repli potential which is linked with replication fork propagation
-                    if i>=self.t_rep and i<self.t_rep+15*self.rep_duration:
-                        locs1 = np.nonzero(self.l_forks[:,(i-self.t_rep)%15])[0]
-                        locs2 = np.nonzero(self.r_forks[:,(i-self.t_rep)%15])[0]
+                    if i>=self.t_rep and i<self.t_rep+4*self.rep_duration:
+                        locs1 = np.nonzero(self.l_forks[:,(i-self.t_rep)%4])[0]
+                        locs2 = np.nonzero(self.r_forks[:,(i-self.t_rep)%4])[0]
                         locs = np.union1d(locs1,locs2)
                         
                         for l in locs:
@@ -101,9 +102,9 @@ class MD_LE:
                             self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[1.0,5e2])
                         self.repli_force.updateParametersInContext(simulation.context)
                         # self.external_force.updateParametersInContext(simulation.context)
-                    elif i>=self.t_rep+15*self.rep_duration:
+                    elif i>=self.t_rep+4*self.rep_duration:
                         for j in range(self.N_beads):
-                            self.repli_force.setBondParameters(j,j,j+self.N_beads,[0.5,0.0])
+                            self.repli_force.setBondParameters(j,j,j+self.N_beads,[6.0,5e1])
                         self.repli_force.updateParametersInContext(simulation.context)
                         # # for j in range(self.N_beads):
                         # #     self.external_force.setParticleParameters(j, j+self.N_beads, [0.0])
@@ -207,7 +208,7 @@ class MD_LE:
         self.repli_force.addPerBondParameter('r0')
         self.repli_force.addPerBondParameter('D')
         for i in range(self.N_beads):
-            self.repli_force.addBond(i, i + self.N_beads, [0,5e3])
+            self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
         self.system.addForce(self.repli_force)
 
         # # Custom External Force
