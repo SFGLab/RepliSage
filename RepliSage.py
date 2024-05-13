@@ -28,7 +28,7 @@ def Kappa(mi,ni,mj,nj):
     return k
 
 class RepliSage:
-    def __init__(self,region,chrom,bedpe_file,N_beads=None,N_lef=None,f=None,b=None,kappa=None,r=None,track_file=None,bw_files=None,out_path=None):
+    def __init__(self,region,chrom,bedpe_file,rep_duration,N_beads=None,N_lef=None,f=None,b=None,kappa=None,r=None,track_file=None,bw_files=None,out_path=None):
         '''
         Definition of simulation parameters and input files.
         
@@ -63,8 +63,8 @@ class RepliSage:
         self.b = self.f/2
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
-        self.l_forks, self.r_forks = run_replikator(L=self.N_beads,time_steps=int(5e2),initiation_rate=0.01,mu_v=1,std_v=2, viz=True)
-        self.rep_duration = len(self.l_forks[0,:])
+        self.l_forks, self.r_forks = run_replikator(L=self.N_beads,time_steps=rep_duration,initiation_rate=0.01,mu_v=1,std_v=2, viz=True)
+        self.rep_duration = rep_duration
         self.N_rep = np.max(np.sum(self.l_forks+self.r_forks,axis=0))
         print('Number of replication forks',self.N_rep)
         self.path = make_folder(out_path)
@@ -238,7 +238,7 @@ class RepliSage:
             ms[i], ns[i] = self.unbind_bind()
         return ms, ns
     
-    def run_energy_minimization(self,N_steps,MC_step,burnin,T=1,T_min=0,t_rep=5000,poisson_choice=True,mode='Metropolis',viz=False,save=False, m_init=None, n_init=None):
+    def run_energy_minimization(self,N_steps,MC_step,burnin,T=1,T_min=0,t_rep=2500,poisson_choice=True,mode='Metropolis',viz=False,save=False, m_init=None, n_init=None):
         '''
         Implementation of the stochastic Monte Carlo simulation.
 
@@ -256,7 +256,7 @@ class RepliSage:
         self.Ti = T
         self.t_rep = t_rep
         Ts = list()
-        self.burnin, self.MC_step = burnin, MC_step 
+        self.burnin, self.MC_step = burnin, MC_step
         bi = burnin//MC_step
         if np.any(m_init==None) or np.any(n_init==None):
             ms, ns = self.initialize()
@@ -280,9 +280,9 @@ class RepliSage:
                 
                 # Compute energy difference
                 if i<t_rep:
-                    dE = self.get_dE(ms,ns,m_new,n_new,0,j)  
-                elif i>=t_rep and i<t_rep+4*self.rep_duration:
-                    dE = self.get_dE(ms,ns,m_new,n_new,(i-t_rep)%4,j)
+                    dE = self.get_dE(ms,ns,m_new,n_new,0,j)
+                elif i>=t_rep and i<t_rep+self.rep_duration:
+                    dE = self.get_dE(ms,ns,m_new,n_new,i-t_rep,j)
                 else:
                     dE = self.get_dE(ms,ns,m_new,n_new,self.rep_duration-1,j)
                 
@@ -359,7 +359,7 @@ class RepliSage:
         corr_exp_heat(sim_heat,self.bedpe_file,self.region,self.chrom,self.N_beads,self.path)
 
 def main():
-    N_steps, MC_step, burnin, T, T_min = int(2e4), int(1e2), 1000, 4,1
+    N_steps, MC_step, burnin, T, T_min, rep_duration = int(2e4), int(1e2), 1000, 4, 1, 5000
     
     # For method paper
     region, chrom =  [178421513, 179491193], 'chr1'
@@ -371,7 +371,7 @@ def main():
     # bw_file2 = '/home/skorsak/Documents/data/Petros_project/bw/RNAPol_ChIPseq/WT-RNAPOLIIS2-1h-heme100-rep1_S5.bw'
     # bw_files = [bw_file1,bw_file2]
     
-    sim = RepliSage(region,chrom,bedpe_file,out_path=out_path,N_beads=1000)
+    sim = RepliSage(region,chrom,bedpe_file,out_path=out_path,N_beads=1000,rep_duration=rep_duration)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
     sim.run_MD('CUDA')
 
