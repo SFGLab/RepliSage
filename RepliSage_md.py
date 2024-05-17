@@ -64,19 +64,16 @@ class MD_LE:
         # Minimize energy
         print('Minimizing energy...')
         platform = mm.Platform.getPlatformByName(self.platform)
-        simulation = Simulation(pdb.topology, self.system, integrator, platform)
-        simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//10, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-        simulation.reporters.append(DCDReporter(self.path+'/other/stochastic_LE.dcd', 5))
-        simulation.context.setPositions(pdb.positions)
-        current_platform = simulation.context.getPlatform()
-        print(f"Simulation will run on platform: {current_platform.getName()}")
-        simulation.minimizeEnergy(tolerance=0.001)
-
-        # self.state = simulation.context.getState(getPositions=True)
-        # PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.path+'/pdbs/MDLE_0.cif', 'w'))
+        self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
+        self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//10, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
+        self.simulation.reporters.append(DCDReporter(self.path+'/other/stochastic_LE.dcd', 5))
+        self.simulation.context.setPositions(pdb.positions)
+        current_platform = self.simulation.context.getPlatform()
+        print(f"self.simulation will run on platform: {current_platform.getName()}")
+        self.simulation.minimizeEnergy()
         print('Energy minimization done :D\n')
 
-        # Run molecular dynamics simulation
+        # Run molecular dynamics self.simulation
         if run_MD:
             print('Running molecular dynamics (wait for 10 steps)...')
             start = time.time()
@@ -84,43 +81,19 @@ class MD_LE:
             for i in range(1,self.N_steps):
                 for nn in range(self.N_coh):
                     # Update Loop Extrusion Force
-                    le_force = self.LE_forces[nn]
-                    le_force.setBondParameters(i-1, self.M[nn,i-1], self.N[nn,i-1], 0.05, 0.0)
-                    le_force.setBondParameters(i, self.N_beads+self.M[nn,i-1], self.N_beads+self.N[nn,i-1], 0.05, 0.0)
-                    le_force.setBondParameters(i+1, self.M[nn,i], self.N[nn,i], 0.05, 3e3)
-                    le_force.setBondParameters(i+2, self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e3)
-                    le_force.updateParametersInContext(simulation.context)
-                    
-                    # Update repli potential which is linked with replication fork propagation
-                    if i>=self.t_rep and i<self.t_rep+4*self.rep_duration:
-                        locs1 = np.nonzero(self.l_forks[:,(i-self.t_rep)%4])[0]
-                        locs2 = np.nonzero(self.r_forks[:,(i-self.t_rep)%4])[0]
-                        locs = np.union1d(locs1,locs2)
-                        
-                        for l in locs:
-                            # self.external_force.setParticleParameters(l,l+self.N_beads,[1e5])
-                            self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[1.0,5e2])
-                        self.repli_force.updateParametersInContext(simulation.context)
-                        # self.external_force.updateParametersInContext(simulation.context)
-                    elif i>=self.t_rep+4*self.rep_duration:
-                        for j in range(self.N_beads):
-                            self.repli_force.setBondParameters(j,j,j+self.N_beads,[6.0,5e1])
-                        self.repli_force.updateParametersInContext(simulation.context)
-                        # # for j in range(self.N_beads):
-                        # #     self.external_force.setParticleParameters(j, j+self.N_beads, [0.0])
-                        # self.external_force.updateParametersInContext(simulation.context)
-                
-                simulation.step(sim_step)
+                    self.change_loop(i)
+                if i>=self.t_rep: self.change_repliforce(i)      
+                self.simulation.step(sim_step)
                 if i%self.step==0 and i>self.burnin*self.step:
-                    self.state = simulation.context.getState(getPositions=True)
+                    self.state = self.simulation.context.getState(getPositions=True)
                     if write_files: PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.path+f'/pdbs/MDLE_{i//self.step-self.burnin}.cif', 'w'))
                     save_path = self.path+f'/heatmaps/heat_{i//self.step-self.burnin}.svg' if write_files else None
                     heats.append(get_heatmap(self.state.getPositions(),save_path=save_path,save=write_files))
-                    time.sleep(5)
+                    time.sleep(1)
             end = time.time()
             elapsed = end - start
 
-            print(f'Everything is done! Simulation finished succesfully!\nMD finished in {elapsed/60:.2f} minutes.\n')
+            print(f'Everything is done! simulation finished succesfully!\nMD finished in {elapsed/60:.2f} minutes.\n')
 
             self.avg_heat = np.average(heats,axis=0)
             self.std_heat = np.std(heats,axis=0)
@@ -132,7 +105,6 @@ class MD_LE:
                 plt.colorbar()
                 plt.savefig(self.path+f'/plots/avg_heatmap.svg',format='svg',dpi=500)
                 plt.savefig(self.path+f'/plots/avg_heatmap.pdf',format='pdf',dpi=500)
-                # plt.colorbar()
                 plt.close()
 
                 figure(figsize=(10, 10))
@@ -140,11 +112,72 @@ class MD_LE:
                 plt.colorbar()
                 plt.savefig(self.path+f'/plots/std_heatmap.svg',format='svg',dpi=500)
                 plt.savefig(self.path+f'/plots/std_heatmap.pdf',format='pdf',dpi=500)
-                # plt.colorbar()
                 plt.close()
-                
-                # heats_to_prob(self.heats,self.path+f'/plots/prob_dist_heatmap.svg',burnin=self.burnin,q=0.1)
             return self.avg_heat
+
+    def change_loop(self,i):
+        force_idx = self.system.getNumForces()-1
+        self.system.removeForce(force_idx)
+        self.add_loops(i)
+        self.simulation.context.reinitialize(preserveState=True)
+        self.LE_force.updateParametersInContext(self.simulation.context)
+
+    def change_repliforce(self,i):
+        if i>=self.t_rep and i<self.t_rep+self.rep_duration:
+            locs1 = np.nonzero(self.l_forks[:,i-self.t_rep])[0]
+            locs2 = np.nonzero(self.r_forks[:,i-self.t_rep])[0]
+            locs = np.union1d(locs1,locs2)
+            for l in locs:
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.2,5e1])
+        elif i>=self.t_rep+self.rep_duration:
+            for j in range(self.N_beads):
+                self.repli_force.setBondParameters(j,j,j+self.N_beads,[6.0,5.0])
+        self.repli_force.updateParametersInContext(self.simulation.context)
+
+    def add_evforce(self):
+        'Leonard-Jones potential for excluded volume'
+        self.ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=20)
+        self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
+        self.ev_force.addPerParticleParameter('sigma')
+        for i in range(2*self.N_beads):
+            self.ev_force.addParticle([0.05])
+        self.system.addForce(self.ev_force)
+
+    def add_bonds(self):
+        'Harmonic bond borce between succesive beads'
+        self.bond_force = mm.HarmonicBondForce()
+        for i in range(self.N_beads - 1):
+            self.bond_force.addBond(i, i + 1, 0.1, 3e5)
+        for i in range(self.N_beads,2*self.N_beads - 1):
+            self.bond_force.addBond(i, i + 1, 0.1, 3e5)
+        self.system.addForce(self.bond_force)
+    
+    def add_stiffness(self):
+        'Harmonic angle force between successive beads so as to make chromatin rigid'
+        self.angle_force = mm.HarmonicAngleForce()
+        for i in range(self.N_beads - 2):
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+        for i in range(self.N_beads,2*self.N_beads - 2):
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+        self.system.addForce(self.angle_force)
+    
+    def add_loops(self,i=0):
+        'LE force that connects cohesin restraints'
+        self.LE_force = mm.HarmonicBondForce()
+        for nn in range(self.N_coh):
+            self.LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.05, 3e3)
+            self.LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e3)
+        self.system.addForce(self.LE_force)
+    
+    def add_repliforce(self):
+        'Replication force to bring together the two polymers'
+        self.repli_force = mm.CustomBondForce('D * (r-r0)^2')
+        self.repli_force.addPerBondParameter('r0')
+        self.repli_force.addPerBondParameter('D')
+        for i in range(self.N_beads):
+            self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
+        self.system.addForce(self.repli_force)
     
     def add_forcefield(self):
         '''
@@ -156,74 +189,12 @@ class MD_LE:
         - angle force: for polymer stiffness.
         - LE forces: this is a list of force objects. Each object corresponds to a different cohesin. It is needed to define a force for each time step.
         '''
-        # Leonard-Jones potential for excluded volume
-        ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
-        ev_force.addGlobalParameter('epsilon', defaultValue=20)
-        ev_force.addGlobalParameter('r_small', defaultValue=0.01)
-        ev_force.addPerParticleParameter('sigma')
-        for i in range(2*self.N_beads):
-            ev_force.addParticle([0.05])
-        self.system.addForce(ev_force)
-
-        # # Define dihedral (torsion) parameters
-        # torsional_force = mm.PeriodicTorsionForce()
-        # for i in range(self.N_beads-3):
-        #     torsional_force.addTorsion(i, i+1, i+2, i+3, 1, 0, 3)
-        # for i in range(self.N_beads,2*self.N_beads-3):
-        #     torsional_force.addTorsion(i, i+1, i+2, i+3, 1, 0, 3)
-        # self.system.addForce(torsional_force)
-
-        # Harmonic bond borce between succesive beads
-        self.bond_force = mm.HarmonicBondForce()
-        for i in range(self.N_beads - 1):
-            self.bond_force.addBond(i, i + 1, 0.1, 3e5)
-        for i in range(self.N_beads,2*self.N_beads - 1):
-            self.bond_force.addBond(i, i + 1, 0.1, 3e5)
-        self.system.addForce(self.bond_force)
-
-        # Harmonic angle force between successive beads so as to make chromatin rigid
-        self.angle_force = mm.HarmonicAngleForce()
-        for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
-        for i in range(self.N_beads,2*self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
-        self.system.addForce(self.angle_force)
+        self.add_evforce()
+        self.add_bonds()
+        self.add_stiffness()
+        self.add_repliforce()
+        self.add_loops()
         
-        # LE force that connects cohesin restraints
-        self.LE_forces = list()
-        for nn in tqdm(range(self.N_coh)):
-            LE_force = mm.HarmonicBondForce()
-            for i in range(self.N_steps):
-                if i==0:
-                    LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.05, 3e3)
-                    LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e3)
-                else:
-                    LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.05, 0)
-                    LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 0)
-            self.system.addForce(LE_force)
-            self.LE_forces.append(LE_force)
-
-        # Replication force to bring together the two polymers
-        self.repli_force = mm.CustomBondForce('D * (r-r0)^2')
-        self.repli_force.addPerBondParameter('r0')
-        self.repli_force.addPerBondParameter('D')
-        for i in range(self.N_beads):
-            self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
-        self.system.addForce(self.repli_force)
-
-        # # Custom External Force
-        # # Define a random direction for the force
-        # random_direction = np.random.randn(3)
-        # random_direction /= np.linalg.norm(random_direction)  # Normalize the direction vector
-        # self.external_force = mm.CustomExternalForce(f'F * (ax * x + ay * y + az * z)')
-        # self.external_force.addPerParticleParameter('F')
-        # self.external_force.addGlobalParameter('ax',defaultValue=random_direction[0])
-        # self.external_force.addGlobalParameter('ay',defaultValue=random_direction[1])
-        # self.external_force.addGlobalParameter('az',defaultValue=random_direction[2])
-        # for i in range(self.N_beads,2*self.N_beads):
-        #     self.external_force.addParticle(i,[0.0])
-        # self.system.addForce(self.external_force)
-
 def main():
     # A potential example
     M = np.load('/home/skorsak/Dropbox/LoopSage/files/region_[48100000,48700000]_chr3/Annealing_Nbeads500_ncoh50/Ms.npy')

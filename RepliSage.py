@@ -28,7 +28,7 @@ def Kappa(mi,ni,mj,nj):
     return k
 
 class RepliSage:
-    def __init__(self,region,chrom,bedpe_file,rep_duration,N_beads=None,N_lef=None,f=None,b=None,kappa=None,r=None,track_file=None,bw_files=None,out_path=None):
+    def __init__(self,region,chrom,bedpe_file,rept_path,ori_path,rep_duration,N_beads=None,N_lef=None,f=None,b=None,kappa=None,r=None,track_file=None,bw_files=None,out_path=None):
         '''
         Definition of simulation parameters and input files.
         
@@ -63,7 +63,7 @@ class RepliSage:
         self.b = self.f/2
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
-        self.l_forks, self.r_forks = run_replikator(L=self.N_beads,time_steps=rep_duration,initiation_rate=0.01,mu_v=1,std_v=2, viz=True)
+        self.l_forks, self.r_forks = replikator(ori_path,rept_path, N_beads, eval(chrom[-1]), region, rep_duration)
         self.rep_duration = rep_duration
         self.N_rep = np.max(np.sum(self.l_forks+self.r_forks,axis=0))
         print('Number of replication forks',self.N_rep)
@@ -359,19 +359,21 @@ class RepliSage:
         corr_exp_heat(sim_heat,self.bedpe_file,self.region,self.chrom,self.N_beads,self.path)
 
 def main():
-    N_steps, MC_step, burnin, T, T_min, rep_duration = int(2e4), int(1e2), 1000, 4, 1, 5000
+    N_steps, MC_step, burnin, T, T_min, rep_duration = int(1e4), int(1e2), 1000, 4, 1, 5000
     
     # For method paper
     region, chrom =  [178421513, 179491193], 'chr1'
     
     out_path=f'with_md'
-    bedpe_file = '/mnt/raid/data/encode/ChIAPET/ENCSR184YZV_CTCF_ChIAPET//LHG0052H_loops_cleaned_th10_2.bedpe'
+    bedpe_file = '/home/skorsak/Documents/data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/home/skorsak/Documents/data/Replication/timing/iPSC_individual_level_data.txt'
+    ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
     # coh_track_file = '/home/skorsak/Documents/data/Petros_project/bw/RAD21_ChIPseq/mm_BMDM_WT_Rad21_heme_0min.bw'
     # bw_file1 = '/home/skorsak/Documents/data/Petros_project/bw/BACH1_ChIPseq/mm_Bach1_1h_rep1_heme_merged.bw'
     # bw_file2 = '/home/skorsak/Documents/data/Petros_project/bw/RNAPol_ChIPseq/WT-RNAPOLIIS2-1h-heme100-rep1_S5.bw'
     # bw_files = [bw_file1,bw_file2]
     
-    sim = RepliSage(region,chrom,bedpe_file,out_path=out_path,N_beads=1000,rep_duration=rep_duration)
+    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=1000,rep_duration=rep_duration)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
     sim.run_MD('CUDA')
 

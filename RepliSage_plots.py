@@ -17,7 +17,7 @@ from scipy import stats
 def make_loop_hist(Ms,Ns,path=None):
     Ls = np.abs(Ns-Ms).flatten()
     Ls_df = pd.DataFrame(Ls)
-    figure(figsize=(10, 7), dpi=600)
+    figure(figsize=(10, 7), dpi=200)
     sns.histplot(data=Ls_df, bins=30,  kde=True,stat='density')
     plt.grid()
     plt.legend()
@@ -27,28 +27,28 @@ def make_loop_hist(Ms,Ns,path=None):
         save_path = path+'/plots/loop_length.png'
         plt.savefig(save_path,format='png',dpi=200)
         save_path = path+'/plots/loop_length.svg'
-        plt.savefig(save_path,format='svg',dpi=600)
+        plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/loop_length.pdf'
-        plt.savefig(save_path,format='pdf',dpi=600)
+        plt.savefig(save_path,format='pdf',dpi=200)
     plt.close()
 
     Is, Js = Ms.flatten(), Ns.flatten()
     IJ_df = pd.DataFrame()
     IJ_df['mi'] = Is
     IJ_df['nj'] = Js
-    figure(figsize=(8, 8), dpi=600)
+    figure(figsize=(8, 8), dpi=200)
     sns.jointplot(IJ_df, x="mi", y="nj",kind='hex',color='Red')
     if path!=None:
         save_path = path+'/plots/ij_prob.png'
         plt.savefig(save_path,format='png',dpi=200)
         save_path = path+'/plots/ij_prob.svg'
-        plt.savefig(save_path,format='svg',dpi=600)
+        plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/ij_prob.pdf'
-        plt.savefig(save_path,format='pdf',dpi=600)
+        plt.savefig(save_path,format='pdf',dpi=200)
     plt.close()
 
 def make_moveplots(unbinds, slides, path=None):
-    figure(figsize=(10, 8), dpi=600)
+    figure(figsize=(10, 8), dpi=200)
     plt.plot(unbinds, 'blue')
     plt.plot(slides, 'red')
     plt.ylabel('Number of moves', fontsize=16)
@@ -58,9 +58,9 @@ def make_moveplots(unbinds, slides, path=None):
     plt.grid()
     if path!=None:
         save_path = path+'/plots/moveplot.png'
-        plt.savefig(save_path,dpi=600)
+        plt.savefig(save_path,dpi=200)
         save_path = path+'/plots/moveplot.pdf'
-        plt.savefig(save_path,dpi=600)
+        plt.savefig(save_path,dpi=200)
     plt.close()
 
 def average_pooling(mat,dim_new):
@@ -92,7 +92,7 @@ def correlation_plot(given_heatmap,T_range,path):
         kendals[i] = scipy.stats.kendalltau(a, b).correlation
         print(f'\nTemperature:{T}, Pearson Correlation coefficient:{pearsons[i]}, Spearman:{spearmans[i]}, Kendal:{kendals[i]}\n\n')
 
-    figure(figsize=(10, 8), dpi=600)
+    figure(figsize=(10, 8), dpi=200)
     plt.plot(T_range,pearsons,'bo-')
     plt.plot(T_range,spearmans,'ro-')
     plt.plot(T_range,kendals,'go-')
@@ -103,7 +103,7 @@ def correlation_plot(given_heatmap,T_range,path):
     plt.legend(['Pearson','Spearman','Kendall Tau'])
     plt.grid()
     save_path = path+'/plots/pearson_plot.pdf' if path!=None else 'pearson_plot.pdf'
-    plt.savefig(save_path,dpi=600)
+    plt.savefig(save_path,dpi=200)
     plt.close()
 
 def coh_traj_plot(ms,ns,N_beads,path):
@@ -122,9 +122,9 @@ def coh_traj_plot(ms,ns,N_beads,path):
     save_path = path+'/plots/coh_trajectories.png' if path!=None else 'coh_trajectories.png'
     plt.savefig(save_path, format='png', dpi=200)
     save_path = path+'/plots/coh_trajectories.svg' if path!=None else 'coh_trajectories.svg'
-    plt.savefig(save_path, format='svg', dpi=600)
+    plt.savefig(save_path, format='svg', dpi=200)
     save_path = path+'/plots/coh_trajectories.pdf' if path!=None else 'coh_trajectories.pdf'
-    plt.savefig(save_path, format='pdf', dpi=600)
+    plt.savefig(save_path, format='pdf', dpi=200)
     plt.close()
 
 def coh_probdist_plot(ms,ns,N_beads,path):
@@ -136,16 +136,16 @@ def coh_probdist_plot(ms,ns,N_beads,path):
         M[n,ti]+=1
     dist = np.average(M,axis=1)
 
-    figure(figsize=(8, 6), dpi=600)
+    figure(figsize=(8, 6), dpi=200)
     x = np.arange(N_beads)
     plt.fill_between(x,dist)
     plt.title('Probablity distribution of cohesin')
     save_path = path+'/plots/coh_probdist.png' if path!=None else 'coh_trajectories.png'
     plt.savefig(save_path, format='png', dpi=200)
     save_path = path+'/plots/coh_probdist.svg' if path!=None else 'coh_trajectories.svg'
-    plt.savefig(save_path, format='svg', dpi=600)
+    plt.savefig(save_path, format='svg', dpi=200)
     save_path = path+'/plots/coh_probdist.pdf' if path!=None else 'coh_trajectories.pdf'
-    plt.savefig(save_path, format='pdf', dpi=600)
+    plt.savefig(save_path, format='pdf', dpi=200)
     plt.close()
 
 def stochastic_heatmap(ms,ns,step,L,path,comm_prop=True,fill_square=True):
@@ -179,9 +179,9 @@ def stochastic_heatmap(ms,ns,step,L,path,comm_prop=True,fill_square=True):
     figure(figsize=(10, 10))
     plt.imshow(avg_mat,cmap="Reds",vmax=np.average(avg_mat)+3*np.std(avg_mat))
     save_path = path+f'/plots/stochastic_heatmap.svg' if path!=None else 'stochastic_heatmap.svg'
-    plt.savefig(save_path,format='svg',dpi=500)
+    plt.savefig(save_path,format='svg',dpi=200)
     save_path = path+f'/plots/stochastic_heatmap.pdf' if path!=None else 'stochastic_heatmap.pdf'
-    plt.savefig(save_path,format='pdf',dpi=500)
+    plt.savefig(save_path,format='pdf',dpi=200)
     # plt.colorbar()
     plt.close()
 
@@ -217,23 +217,23 @@ def combine_matrices(path_upper,path_lower,label_upper,label_lower,th1=0,th2=50,
     plt.xlabel('Genomic Distance (x5kb)',fontsize=20)
     plt.ylabel('Genomic Distance (x5kb)',fontsize=20)
     # plt.title('Experimental (upper triangle) versus simulation (lower triangle) heatmap',fontsize=25)
-    plt.savefig('comparison_reg3.svg',format='svg',dpi=500)
-    plt.savefig('comparison_reg3.png',format='png',dpi=500)
-    plt.savefig('comparison_reg3.pdf',format='pdf',dpi=500)
+    plt.savefig('comparison_reg3.svg',format='svg',dpi=200)
+    plt.savefig('comparison_reg3.png',format='png',dpi=200)
+    plt.savefig('comparison_reg3.pdf',format='pdf',dpi=200)
     plt.show()
 
 def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
-    figure(figsize=(10, 8), dpi=600)
-    plt.plot(Es, 'k')
-    plt.plot(Bs, 'cyan')
-    plt.plot(Ks, 'green')
-    plt.plot(Fs, 'red')
+    figure(figsize=(10, 8), dpi=200)
+    plt.plot(Bs, 'cyan', label='Binding Energy')
+    plt.plot(Ks, 'green', label='Crossing Energy')
+    plt.plot(Fs, 'red', label='Folding Energy')
     plt.axvline(x=burnin, color='blue')
     plt.ylabel('Metrics', fontsize=16)
-    plt.ylim((np.min(Es)-10,-np.min(Es)))
     plt.xlabel('Monte Carlo Step', fontsize=16)
+    min_val = np.min([np.min(Bs),np.min(Ks),np.min(Fs)])
+    plt.ylim((min_val,np.std(np.abs(Bs))))
     # plt.yscale('symlog')
-    plt.legend(['Total Energy', 'Binding', 'crossing', 'Folding'], fontsize=16)
+    plt.legend(fontsize=16)
     plt.grid()
 
     if path!=None:
@@ -242,9 +242,18 @@ def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
         save_path = path+'/plots/energies.svg'
         plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/energies.pdf'
-        plt.savefig(save_path,format='pdf',dpi=600)
+        plt.savefig(save_path,format='pdf',dpi=200)
     plt.close()
 
+    plt.plot(Es, 'k')
+    plt.ylabel('Energy', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    plt.ylim((np.min(Es),np.std(np.abs(Bs))))
+    save_path = path+'/plots/total_energy.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/total_energy.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    plt.close()
     # Autocorrelation plot
     if mode=='Annealing':
         x = np.arange(0,len(Fs[burnin:])) 
