@@ -79,9 +79,7 @@ class MD_LE:
             start = time.time()
             heats = list()
             for i in range(1,self.N_steps):
-                for nn in range(self.N_coh):
-                    # Update Loop Extrusion Force
-                    self.change_loop(i)
+                self.change_loop(i)
                 if i>=self.t_rep: self.change_repliforce(i)      
                 self.simulation.step(sim_step)
                 if i%self.step==0 and i>self.burnin*self.step:
@@ -157,9 +155,9 @@ class MD_LE:
         'Harmonic angle force between successive beads so as to make chromatin rigid'
         self.angle_force = mm.HarmonicAngleForce()
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 800)
         for i in range(self.N_beads,2*self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 800)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i=0):
