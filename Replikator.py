@@ -5,6 +5,8 @@ from matplotlib.pyplot import figure
 from scipy.stats import norm
 from scipy.optimize import minimize
 from scipy.signal import find_peaks
+from sklearn import preprocessing
+import scipy.io
 from tqdm import tqdm
 
 def expand_columns(array, new_columns):
@@ -41,117 +43,6 @@ def expand_columns(array, new_columns):
         expanded_array = np.hstack((expanded_array, zero_padding))
     
     return expanded_array
-
-def replikator_num_simulator(L,time_steps,initiation_rate,mu_v,std_v,viz=False):
-    # Initialize arrays
-    vs = np.zeros(L)  # Fork propagation speed
-    f = np.zeros((L, time_steps))  # Replication fraction
-    rep_fract = list()
-    replicated_dna = np.zeros((L, time_steps), dtype=int)  # Forks position
-    r_forks, l_forks = np.zeros((L, time_steps), dtype=int), np.zeros((L, time_steps), dtype=int)
-    init_t, init_x, coal_t, coal_x = list(), list(), list(), list()
-
-    # Monte Carlo simulation
-    print('Running replikator....')
-    dna_is_replicated = False
-    t, T = 1, time_steps
-    while not dna_is_replicated:
-        # Fork initiation
-        initiate_forks = np.random.rand(L) < initiation_rate[:,t]
-        init_locs = np.nonzero(initiate_forks)[0]
-        for init in init_locs:
-            if replicated_dna[init, t-1]==0:
-                vel = np.random.normal(mu_v[init], std_v[init], 1)[0]
-                vs[init] = vel if vel>=1 else 1
-        replicated_dna[initiate_forks, t] = 1
-        
-        previously_initiated = replicated_dna[:, t-1] == 1
-        xs = np.nonzero(initiate_forks*(~previously_initiated))[0]
-        for x in xs:
-            init_x.append(x)
-            init_t.append(t)
-        
-        # Fork propagation
-        for i in range(L):
-            if replicated_dna[i, t - 1] == 1:
-                # Move the fork according to the propagation speed
-                v = vs[i]
-                distance = int(round(np.random.uniform(0,v+1,1)[0]))
-                if replicated_dna[(i + distance + 1) % L, t-1]==1 and replicated_dna[(i+1)%L, t - 1] == 0: 
-                    coal_t.append(t)
-                    coal_x.append((i + distance) % L)
-                if replicated_dna[(i - distance -1) % L, t-1]==1 and replicated_dna[(i-1)%L, t - 1] == 0: 
-                    coal_t.append(t)
-                    coal_x.append((i - distance) % L)
-                
-                if (i-distance)%L<(i+distance)%L: # they have not met the boundaries
-                    replicated_dna[(i-distance)%L:(i+distance)%L,t] = 1
-                    vs[(i-distance)%L:(i+distance)%L] = v
-                else: # they meet boundaries
-                    if (i+distance)>L:
-                        replicated_dna[i:L,t], replicated_dna[0:(i+distance)%L,t] = 1, 1
-                        vs[i:L], vs[0:(i+distance)%L] = v, v
-                    if (i-distance)<0:
-                        replicated_dna[0:i,t], replicated_dna[(i-distance)%L:L,t] = 1, 1
-                        vs[0:i], vs[(i-distance)%L:L] = v, v
-                replicated_dna[(i-distance)%L, t], replicated_dna[(i+distance)%L, t] = 1, 1
-                r_forks[(i + distance) % L,t] = 1 if replicated_dna[(i+distance)%L, t - 1] == 0 else 0
-                l_forks[(i - distance) % L,t] = 1 if replicated_dna[(i-distance)%L, t - 1] == 0 else 0
-
-        # Check if termination condition is satisfied
-        rep_fract.append(np.count_nonzero(replicated_dna[:,t-1])/L)
-        if np.all(replicated_dna[:,t-1]==1): 
-            dna_is_replicated = True
-            T = t
-
-        # Calculate replication fraction
-        f[:, t] = replicated_dna[:, t]
-        t+=1
-    print('Done! ;)')
-
-    replicated_dna, f = replicated_dna[:,:T], f[:,:T]
-    r_forks, l_forks = r_forks[:,:T], l_forks[:,:T]
-
-    if T<time_steps:
-        replicated_dna, f = expand_columns(replicated_dna,time_steps), expand_columns(f,time_steps)
-        r_forks, l_forks = expand_columns(r_forks,time_steps), expand_columns(l_forks,time_steps)
-        zero_columns = np.all(f == 0, axis=0) & (np.arange(time_steps)>time_steps/2)
-        f[:, zero_columns] = 1
-    print('Dimension of r_forks:', r_forks.shape)
-
-    if viz:
-        # Replication fraction
-        plt.figure(figsize=(12.6, 6))
-        plt.imshow(f.T, cmap='bwr', aspect='auto', origin='lower')
-        plt.colorbar(label='Replication Fraction')
-        plt.title('DNA Replication Simulation')
-        plt.xlabel('DNA position')
-        plt.ylabel('Computational Time')
-        plt.show()
-
-        # Plot Replication Fraction
-        plt.figure(figsize=(8, 6))
-        plt.plot(rep_fract)
-        plt.xlabel('Time',fontsize=18)
-        plt.ylabel(r'Replication Fraction',fontsize=18)
-        plt.show()
-
-        # Fork Locations
-        plt.figure(figsize=(10, 6))
-        plt.imshow(r_forks.T, cmap='Reds', aspect='auto', origin='lower',vmax=0.1)
-        plt.title('Right Fork Locations',fontsize=28)
-        plt.xlabel('DNA position',fontsize=18)
-        plt.ylabel('Computational Time',fontsize=18)
-        plt.show()
-
-        plt.figure(figsize=(10, 6))
-        plt.imshow(l_forks.T, cmap='Blues', aspect='auto', origin='lower',vmax=0.1)
-        plt.title('Left Fork Locations',fontsize=28)
-        plt.xlabel('DNA position',fontsize=18)
-        plt.ylabel('Computational Time',fontsize=18)
-        plt.show()
-
-    return l_forks, r_forks
 
 def min_max_normalize(matrix, Min, Max):
     # Calculate the minimum and maximum values of the matrix
@@ -190,170 +81,201 @@ def reshape_array_by_averaging(input_array, new_dimension):
 
         # Compute the average of values in the current window
         if i == new_dimension - 1:  # Handle the last segment
-            reshaped_array[i] = np.mean(input_array[start_idx:])
+            reshaped_array[i] = np.average(input_array[start_idx:])
         else:
-            reshaped_array[i] = np.mean(input_array[start_idx:end_idx])
+            reshaped_array[i] = np.average(input_array[start_idx:end_idx])
 
     return reshaped_array
 
-class RepTimingPreproc:
-    '''
-    This is a class that imports single cell replication timing data and performs some operations,
-    to convert them to useful data that can be used as input for the simulation.
-    '''
-    def __init__(self,L,screp_time_path,chrom,oris_path=None,region=None):
-        '''
-        Importing data.
+class Replikator:
+    def __init__(self,rept_data_path,oris_path,sim_L,sim_T):
+        self.mat = scipy.io.loadmat(rept_data_path)['Chr9_replication_state_filtered']
+        self.oris_df = pd.read_csv(oris_path,sep='\t',header=None)
+        self.L, self.T = sim_L, sim_T
 
-        - L (int): simulation length
-        - screp_time_path (str): the path with single cell replication timing data.
-        - chrom (int): the number of the chromosome of interest.
-        - oris_path (str): the path with the replication origin data.
-        - region (list): list with start and end coordinate of the region of interest.
-        '''
-        self.L = L
-        self.chrom, self.region = chrom, region
-        self.rept_preproc(screp_time_path)
-        self.oris_reproc(oris_path)
+    def proces_oris(self,chrom_length=140273252):
+        self.oris_df = self.oris_df[self.oris_df[0]=='chr9'].reset_index(drop=True)
+        self.oris, self.oris_log_pvals = self.L*self.oris_df[1].values//chrom_length, self.oris_df[3].values
 
-    def rept_preproc(self,screp_time_path):
-        '''
-        This function performs a preprocessing of single cell replication curves.
-        '''
-        rep_timing_df = pd.read_csv(screp_time_path,sep='\t')
-        self.experiment_columns = [col for col in rep_timing_df if col.startswith('HPSI')]
-        self.num_experiments = len(rep_timing_df)
-        self.rept_chrom_df = rep_timing_df[rep_timing_df['chr'] == self.chrom].reset_index(drop=True)
-        self.rept_chrom_df[self.experiment_columns] = self.rept_chrom_df[self.experiment_columns].fillna(self.rept_chrom_df[self.experiment_columns].mean())
-        if np.all(self.region!=None):
-            self.rept_chrom_df = self.rept_chrom_df[(self.rept_chrom_df['start']>self.region[0])&(self.rept_chrom_df['end']<self.region[1])].reset_index(drop=True)       
-        self.original_region_length = self.rept_chrom_df['end'].values[-1] if self.region==None else self.region[1]-self.region[0]
-        
-    def oris_reproc(self,oris_path):
-        '''
-        Replication origins preprocessing.
-        '''
-        if oris_path!=None:
-            ori_df = pd.read_csv(oris_path,sep='\t',header=None)
-            chrom_ori_df = ori_df[ori_df[0]=='chr'+str(self.chrom)].reset_index(drop=True)
-            chrom_ori_df[3] = chrom_ori_df[3].fillna(chrom_ori_df[3].mean())
-            if np.all(self.region!=None):
-                chrom_ori_df = chrom_ori_df[(chrom_ori_df[1]>self.region[0])&(chrom_ori_df[2]<self.region[1])].reset_index(drop=True)
-                chrom_ori_df[[1,2]] = chrom_ori_df[[1,2]]-self.region[0]
-            chrom_ori_df[[1,2]] = self.L*(chrom_ori_df[[1,2]]/self.original_region_length)
-            chrom_ori_df[[1,2]] = chrom_ori_df[[1,2]].round(0).astype(int)
-            
-            chrom_ori_df[3] = chrom_ori_df.groupby([1, 2])[3].transform('mean')
-            self.oris = np.unique(chrom_ori_df[1].values)
-        else:
-            self.oris = np.arange(L)
-        print(f'The number of replication origins is {len(self.oris)}')
+    def process_matrix(self):
+        min_value = np.min(np.nan_to_num(self.mat[self.mat>0]))
+        self.mat = np.nan_to_num(self.mat,nan=min_value)
+        min_max_scaler = preprocessing.MinMaxScaler()
+        self.mat = min_max_scaler.fit_transform(self.mat)
 
-    def vizualize_repcurves(self):
-        '''
-        Plotting single cell replication curves.
-        '''
-        fig, axs = plt.subplots(self.num_experiments, 1, figsize=(12, 400))
-        for i, experiment_col in enumerate(self.experiment_columns):
-            axs[i].plot(chromosome_df['start'], chromosome_df[experiment_col], label=experiment_col)
-        plt.show()
+    def compute_f(self):
+        self.avg_fx = reshape_array_by_averaging(np.average(self.mat,axis=0),self.L)
+        self.std_fx = reshape_array_by_averaging(np.std(self.mat,axis=0),self.L)
+        self.avg_ft = reshape_array_by_averaging(np.average(self.mat,axis=1),self.T)
+        self.std_ft = reshape_array_by_averaging(np.std(self.mat,axis=1),self.T)
 
-    def aggregate_signals(self):
-        '''
-        Compute the average and the standard deviation of the single cell replication curves.
-        '''
-        # Compute average and standard deviation across experiments for each location
-        self.rept_chrom_df['average_signal'] = self.rept_chrom_df[self.experiment_columns].mean(axis=1)
-        self.rept_chrom_df['std_dev_signal'] = self.rept_chrom_df[self.experiment_columns].std(axis=1)
-        self.avg_signal, self.std_signal = np.zeros(self.original_region_length), np.zeros(self.original_region_length)
-        print('Aggregating signals...')
-        starts, ends = self.rept_chrom_df['start'].values-self.region[0], self.rept_chrom_df['end'].values-self.region[0]
-        mean_values, std_values = self.rept_chrom_df['average_signal'].values, self.rept_chrom_df['std_dev_signal'].values
-        for i in tqdm(range(len(self.rept_chrom_df))):
-            self.avg_signal[starts[i]:ends[i]], self.std_signal[starts[i]:ends[i]] = mean_values[i], std_values[i]
-        self.avg_signal = reshape_array_by_averaging(self.avg_signal,self.L)
-        self.std_signal = reshape_array_by_averaging(self.std_signal,self.L)
-        print('Done! :D')
-
-    def find_peaks_dips(self,viz=False,prominence=0.1):
-        '''
-        It computes the peaks of the averaged replication curve.
-        '''
-        self.peaks, _ = find_peaks(self.avg_signal,prominence=prominence)
-        self.dips, _ = find_peaks(-self.avg_signal,prominence=prominence)
+    def compute_peaks(self,prominence=0.01):
+        self.peaks, _ = find_peaks(self.avg_fx,prominence=prominence)
+        self.dips, _ = find_peaks(-self.avg_fx,prominence=prominence)
 
     def compute_slopes(self):
-        '''
-        It computes the slopes between the maxima of the average replicaton curve.
-        These slopes are linked with the replication fork velocities.
-        '''
         extrema_indices = np.sort(np.concatenate((self.peaks, self.dips)))
         extrema_indices_sorted = np.sort(extrema_indices)
-        exp_slopes = list()
         print('Computing slopes of replication curves...')
-        for exp_col in tqdm(self.experiment_columns):
-            exp_array = np.zeros(self.original_region_length)
-            starts = self.rept_chrom_df['start'].values - self.region[0]
-            ends = self.rept_chrom_df['end'].values - self.region[0]
-            values = self.rept_chrom_df[exp_col].values
-            for start, end, value in zip(starts, ends, values):
-                exp_array[start:end] = value
-            exp_array = reshape_array_by_averaging(exp_array,self.L)
-            slopes = np.zeros(self.L)
-            for i, extr in enumerate(extrema_indices_sorted[:-1]):
-                start_idx = extrema_indices_sorted[i]
-                end_idx = extrema_indices_sorted[i + 1]
-                segment_slope = (exp_array[end_idx] - exp_array[start_idx]) / (end_idx - start_idx)
-                slopes[extr] = segment_slope
-            exp_slopes.append(slopes)
+
+        avg_slopes, std_slopes = np.zeros(self.L), np.zeros(self.L)
+        for i, extr in enumerate(extrema_indices_sorted[:-1]):
+            start_idx = extrema_indices_sorted[i]
+            end_idx = extrema_indices_sorted[i + 1]
+            delta_x = (end_idx - start_idx)
+            segment_slope = (self.avg_fx[end_idx] - self.avg_fx[start_idx]) / delta_x
+            sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
+            avg_slopes[extr] = np.abs(segment_slope)
+            std_slopes[extr] = sigma_slope
+        self.speed_avg = 2000*np.average(avg_slopes)
+        self.speed_std = 2000*np.average(std_slopes)
         print('Done!\n')
-        exp_slopes = np.nan_to_num(np.array(exp_slopes))
 
-        # Aggregate across experiments
-        self.average_slopes = np.average(exp_slopes,axis=0)
-        self.std_slopes = np.std(exp_slopes,axis=0)
+    def compute_init_rate(self):
+        ms = self.avg_fx[self.oris]
+        ss = self.std_fx[self.oris]
 
-    def compute_initiation_rate(self,time_steps,viz=False):
-        '''
-        Computes the initiation rates of each origin.
-
-        time_steps (int): the simulation time steps.
-        '''
-        self.initiation_rate = np.zeros((time_steps,self.L))
-        mus = min_max_normalize(self.avg_signal, 0, time_steps)
-        stds = self.std_signal*time_steps/(np.max(self.avg_signal)-np.min(self.avg_signal))
-
+        self.initiation_rate = np.zeros((self.L,self.T))
         print('Computing initiation rate...')
-        for i in tqdm(range(self.L)):
-            if i in self.oris:
-                mu, std = mus[i], stds[i]
-                s = np.round(np.random.normal(mu, std, 10000)).astype(int)
-                s[s>=time_steps] = time_steps-1
-                unique_locations, counts = np.unique(s, return_counts=True)
-                self.initiation_rate[unique_locations,i] = counts
-                self.initiation_rate[:,i] /= np.sum(self.initiation_rate[:,i])
-        print('Computation Done! <3')
+        mus = self.T*(1-ms)
+        stds = self.T*ss
+        for i in tqdm(self.oris):
+            s = np.round(np.random.normal(mus[i], stds[i], 10000)).astype(int)
+            s[s<0] = 0
+            s[s>=self.T] = self.T-1
+            unique_locations, counts = np.unique(s, return_counts=True)
+            self.initiation_rate[i,unique_locations] = counts
+            self.initiation_rate[i,:] /= np.sum(self.initiation_rate[i,:])
+        print('Computation Done! <3\n')
+
+
+    def prepare_data(self):
+        self.process_matrix()
+        self.proces_oris()
+        self.compute_f()
+        self.compute_peaks()
+        self.compute_slopes()
+        self.compute_init_rate()
+    
+    def numerical_simulator(self,scale,viz=False):
+        # Initialize arrays
+        vs = np.zeros(self.L)  # Fork propagation speed
+        f = np.zeros((self.L, self.T))  # Replication fraction
+        rep_fract = list()
+        replicated_dna = np.zeros((self.L, self.T), dtype=int)  # Forks position
+        r_forks, l_forks = np.zeros((self.L, self.T), dtype=int), np.zeros((self.L, self.T), dtype=int)
+        init_t, init_x, coal_t, coal_x = list(), list(), list(), list()
+
+        # Monte Carlo simulation
+        print('Running replikator....')
+        dna_is_replicated = False
+        t, T = 1, self.T
+        while not dna_is_replicated:
+            # Fork initiation
+            initiate_forks = np.random.rand(self.L) < scale*self.initiation_rate[:,t]
+            init_locs = np.nonzero(initiate_forks)[0]
+            for init in init_locs:
+                if replicated_dna[init, t-1]==0:
+                    vel = np.random.normal(self.speed_avg, self.speed_std, 1)[0]
+                    vs[init] = vel if vel>=1 else 1
+            replicated_dna[initiate_forks, t] = 1
+            
+            previously_initiated = replicated_dna[:, t-1] == 1
+            xs = np.nonzero(initiate_forks*(~previously_initiated))[0]
+            for x in xs:
+                init_x.append(x)
+                init_t.append(t)
+            
+            # Fork propagation
+            for i in range(self.L):
+                if replicated_dna[i, t - 1] == 1:
+                    # Move the fork according to the propagation speed
+                    v = vs[i]
+                    distance = int(round(np.random.uniform(0,v+1,1)[0]))
+                    if replicated_dna[(i + distance + 1) % self.L, t-1]==1 and replicated_dna[(i+1)%self.L, t - 1] == 0:
+                        coal_t.append(t)
+                        coal_x.append((i + distance) % self.L)
+                    if replicated_dna[(i - distance -1) % self.L, t-1]==1 and replicated_dna[(i-1)%self.L, t - 1] == 0:
+                        coal_t.append(t)
+                        coal_x.append((i - distance) % self.L)
+                    
+                    if (i-distance)%self.L<(i+distance)%self.L: # they have not met the boundaries
+                        replicated_dna[(i-distance)%self.L:(i+distance)%self.L,t] = 1
+                        vs[(i-distance)%self.L:(i+distance)%self.L] = v
+                    else: # they meet boundaries
+                        if (i+distance)>self.L:
+                            replicated_dna[i:self.L,t], replicated_dna[0:(i+distance)%self.L,t] = 1, 1
+                            vs[i:self.L], vs[0:(i+distance)%self.L] = v, v
+                        if (i-distance)<0:
+                            replicated_dna[0:i,t], replicated_dna[(i-distance)%self.L:self.L,t] = 1, 1
+                            vs[0:i], vs[(i-distance)%self.L:self.L] = v, v
+                    replicated_dna[(i-distance)%self.L, t], replicated_dna[(i+distance)%self.L, t] = 1, 1
+                    r_forks[(i + distance) % self.L,t] = 1 if replicated_dna[(i+distance)%self.L, t - 1] == 0 else 0
+                    l_forks[(i - distance) % self.L,t] = 1 if replicated_dna[(i-distance)%self.L, t - 1] == 0 else 0
+
+            # Check if termination condition is satisfied
+            rep_fract.append(np.count_nonzero(replicated_dna[:,t-1])/self.L)
+            if np.all(replicated_dna[:,t-1]==1): 
+                dna_is_replicated = True
+                T = t
+
+            # Calculate replication fraction
+            f[:, t] = replicated_dna[:, t]
+            t+=1
+        print('Done! ;)')
+
+        replicated_dna, f = replicated_dna[:,:T], f[:,:T]
+        r_forks, l_forks = r_forks[:,:T], l_forks[:,:T]
+
+        if T<self.T:
+            replicated_dna, f = expand_columns(replicated_dna,self.T), expand_columns(f,self.T)
+            r_forks, l_forks = expand_columns(r_forks,self.T), expand_columns(l_forks,self.T)
+            zero_columns = np.all(f == 0, axis=0) & (np.arange(self.T)>self.T/2)
+            f[:, zero_columns] = 1
+        print('Dimension of r_forks:', r_forks.shape)
 
         if viz:
-            plt.figure(figsize=(10.6, 5))
-            plt.imshow(self.initiation_rate, cmap='jet', aspect='auto', origin='lower',vmax=5/time_steps)
-            plt.colorbar(label='Initiation Rate')
+            # Replication fraction
+            plt.figure(figsize=(12.6, 6))
+            plt.imshow(f.T, cmap='bwr', aspect='auto', origin='lower')
+            plt.colorbar(label='Replication Fraction')
+            plt.title('DNA Replication Simulation')
             plt.xlabel('DNA position')
             plt.ylabel('Computational Time')
             plt.show()
 
-def replikator(ori_path,rept_path, L, chrom, region, time_steps):
+            # Plot Replication Fraction
+            plt.figure(figsize=(8, 6))
+            plt.plot(rep_fract)
+            plt.xlabel('Time',fontsize=18)
+            plt.ylabel(r'Replication Fraction',fontsize=18)
+            plt.show()
 
-    prproc = RepTimingPreproc(L,rept_path,chrom,ori_path,region)
-    prproc.aggregate_signals()
-    prproc.find_peaks_dips()
-    prproc.compute_slopes()
-    prproc.compute_initiation_rate(time_steps,viz=True)
-    lfs, rfs = replikator_num_simulator(L=L,time_steps=time_steps,initiation_rate=prproc.initiation_rate.T,\
-        mu_v=5*prproc.average_slopes,std_v=5*prproc.std_slopes,viz=True)
-    return lfs, rfs
+            # Fork Locations
+            plt.figure(figsize=(10, 6))
+            plt.imshow(r_forks.T, cmap='Reds', aspect='auto', origin='lower',vmax=0.1)
+            plt.title('Right Fork Locations',fontsize=28)
+            plt.xlabel('DNA position',fontsize=18)
+            plt.ylabel('Computational Time',fontsize=18)
+            plt.show()
 
-# L, chrom,time_steps = 1000, 1, int(1e3)
-# region = [178421513, 179491193]
-# rept_path = '/home/skorsak/Documents/data/Replication/timing/iPSC_individual_level_data.txt'
-# ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
+            plt.figure(figsize=(10, 6))
+            plt.imshow(l_forks.T, cmap='Blues', aspect='auto', origin='lower',vmax=0.1)
+            plt.title('Left Fork Locations',fontsize=28)
+            plt.xlabel('DNA position',fontsize=18)
+            plt.ylabel('Computational Time',fontsize=18)
+            plt.show()
+
+        return l_forks, r_forks
+
+    def run(self,scale=100,viz=True):
+        self.prepare_data()
+        l_forks, r_forks = self.numerical_simulator(scale,viz=viz)
+        return l_forks, r_forks
+
+def main():
+    N_beads,rep_duration = 5000,5000
+    rept_path = '/home/skorsak/Documents/data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+    ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
+    rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
+    l_forks, r_forks = rep.run()

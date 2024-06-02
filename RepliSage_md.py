@@ -54,7 +54,7 @@ class MD_LE:
         pdb = PDBxFile(self.path+'/LE_init_struct.cif')
         forcefield = ForceField('forcefields/classic_sm_ff.xml')
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=1*u.nanometer)
-        integrator = mm.LangevinIntegrator(310, 0.01, 10 * mm.unit.femtosecond)
+        integrator = mm.LangevinIntegrator(310, 0.1, 50 * mm.unit.femtosecond)
 
         # Add forces
         print('Adding forces...')

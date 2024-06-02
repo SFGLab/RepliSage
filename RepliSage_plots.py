@@ -5,7 +5,6 @@ import random as rd
 import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
-from sewar.full_ref import mse, rmse, psnr, uqi, ssim, ergas, scc, rase, sam, msssim, vifp
 from matplotlib.pyplot import figure
 from matplotlib.pyplot import cm
 import seaborn as sns

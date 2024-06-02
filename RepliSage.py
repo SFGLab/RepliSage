@@ -57,13 +57,14 @@ class RepliSage:
         self.log_avg_loop = np.average(np.log(self.dists+1))
         self.params = stats.maxwell.fit(self.dists)
         self.loop_pdist = stats.maxwell.pdf(np.arange(self.N_beads), *self.params)
-        self.N_lef = self.N_CTCF
+        self.N_lef = self.N_CTCF if N_lef==None else N_lef
         print('Number of LEFs:',self.N_lef)
         self.f = -4000*np.sqrt(self.log_avg_loop/3.5)*self.N_CTCF/self.N_lef if f==None else f
         self.b = self.f/2
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
-        self.l_forks, self.r_forks = replikator(ori_path,rept_path, N_beads, eval(chrom[-1]), region, rep_duration)
+        rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
+        self.l_forks, self.r_forks = rep.run()
         self.rep_duration = rep_duration
         self.N_rep = np.max(np.sum(self.l_forks+self.r_forks,axis=0))
         print('Number of replication forks',self.N_rep)
@@ -77,17 +78,17 @@ class RepliSage:
         E_b = self.b*binding/(np.sum(self.L)+np.sum(self.R))
         return E_b
 
-    # def E_ising(self,spins):
+    def E_ising(self,spins):
         
-    #     '''Compute energy of spin lattice by lopping over each spin 
-    #     with periodic boundary conditions enforced
-    #     via rollover index implemented using modulo operator %'''
+        '''Compute energy of spin lattice by lopping over each spin 
+        with periodic boundary conditions enforced
+        via rollover index implemented using modulo operator %'''
         
-    #     E1,E2 = np.sum(self.h*spins),0
+        E1,E2 = np.sum(self.h*spins),0
         
-    #     for i in range(self.N_beads): E2 += np.sum(np.sum(self.J[i,i+1:]*spins[i]*spins[i+1:]))
+        for i in range(self.N_beads): E2 += np.sum(np.sum(self.J[i,i+1:]*spins[i]*spins[i+1:]))
 
-    #     return self.c1*E1/self.N_beads+self.c2*E2/(2*self.N_lef)
+        return self.c1*E1/self.N_beads+self.c2*E2/(2*self.N_lef)
 
     def E_repli(self,ms,ns,t):
         '''
@@ -135,11 +136,11 @@ class RepliSage:
             energy += self.E_repli(ms,ns,t)
         return energy
 
-    # def getdE_ising(self,ms,ns,spins,J_new,m_new,n_new,coh_idx,spin_idx):
-    #     dE1 = -2*self.h[spin_idx]*spins[spin_idx] # 2 because of the difference calculation
-    #     dE2 = -np.sum((J_new[spin_idx,]+self.J[spin_idx,])*spins[spin_idx]*spins)+(J_new[spin_idx,spin_idx]+self.J[spin_idx,spin_idx])*spins[spin_idx]*spins[spin_idx]
-    #     if spin_idx!=m_new and spin_idx!=n_new and spin_idx!=ms[coh_idx] and spin_idx!=ns[coh_idx]: dE3 =  J_new[m_new,n_new]*spins[m_new]*spins[n_new]-self.J[ms[coh_idx],ns[coh_idx]]*spins[ms[coh_idx]]*spins[ns[coh_idx]]
-    #     return self.c1*dE1/self.N_beads+self.c2*dE2/(2*self.N_lef)
+    def getdE_ising(self,ms,ns,spins,J_new,m_new,n_new,coh_idx,spin_idx):
+        dE1 = -2*self.h[spin_idx]*spins[spin_idx] # 2 because of the difference calculation
+        dE2 = -np.sum((J_new[spin_idx,]+self.J[spin_idx,])*spins[spin_idx]*spins)+(J_new[spin_idx,spin_idx]+self.J[spin_idx,spin_idx])*spins[spin_idx]*spins[spin_idx]
+        if spin_idx!=m_new and spin_idx!=n_new and spin_idx!=ms[coh_idx] and spin_idx!=ns[coh_idx]: dE3 =  J_new[m_new,n_new]*spins[m_new]*spins[n_new]-self.J[ms[coh_idx],ns[coh_idx]]*spins[ms[coh_idx]]*spins[ns[coh_idx]]
+        return self.c1*dE1/self.N_beads+self.c2*dE2/(2*self.N_lef)
 
     def get_dE_bind(self,ms,ns,m_new,n_new,idx):
         return self.b*(self.L[m_new]+self.R[n_new]-self.L[ms[idx]]-self.R[ns[idx]])/(np.sum(self.L)+np.sum(self.R))
@@ -359,21 +360,22 @@ class RepliSage:
         corr_exp_heat(sim_heat,self.bedpe_file,self.region,self.chrom,self.N_beads,self.path)
 
 def main():
+    # Set MC parameters
     N_steps, MC_step, burnin, T, T_min, rep_duration = int(1e4), int(1e2), 1000, 4, 1, 5000
     
     # For method paper
-    region, chrom =  [178421513, 179491193], 'chr1'
+    region, chrom =  [0, 140273252], 'chr9'
     
     out_path=f'with_md'
     bedpe_file = '/home/skorsak/Documents/data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/skorsak/Documents/data/Replication/timing/iPSC_individual_level_data.txt'
+    rept_path = '/home/skorsak/Documents/data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
     ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
     # coh_track_file = '/home/skorsak/Documents/data/Petros_project/bw/RAD21_ChIPseq/mm_BMDM_WT_Rad21_heme_0min.bw'
     # bw_file1 = '/home/skorsak/Documents/data/Petros_project/bw/BACH1_ChIPseq/mm_Bach1_1h_rep1_heme_merged.bw'
     # bw_file2 = '/home/skorsak/Documents/data/Petros_project/bw/RNAPol_ChIPseq/WT-RNAPOLIIS2-1h-heme100-rep1_S5.bw'
     # bw_files = [bw_file1,bw_file2]
     
-    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=1000,rep_duration=rep_duration)
+    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=2000,rep_duration=rep_duration,N_lef=200)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
     sim.run_MD('CUDA')
 
