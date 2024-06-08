@@ -59,7 +59,7 @@ class RepliSage:
         self.loop_pdist = stats.maxwell.pdf(np.arange(self.N_beads), *self.params)
         self.N_lef = self.N_CTCF if N_lef==None else N_lef
         print('Number of LEFs:',self.N_lef)
-        self.f = -4000*np.sqrt(self.log_avg_loop/3.5)*self.N_CTCF/self.N_lef if f==None else f
+        self.f = -self.N_beads*np.sqrt(self.log_avg_loop/3.5)*self.N_CTCF/self.N_lef if f==None else f
         self.b = self.f/2
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
@@ -361,21 +361,17 @@ class RepliSage:
 
 def main():
     # Set MC parameters
-    N_steps, MC_step, burnin, T, T_min, rep_duration = int(1e4), int(1e2), 1000, 4, 1, 5000
+    N_steps, MC_step, burnin, T, T_min, rep_duration = int(1e4), int(5e2), 1000, 4, 1, 5000
     
     # For method paper
-    region, chrom =  [0, 140273252], 'chr9'
+    region, chrom =  [0, 150617247], 'chr9'
     
     out_path=f'with_md'
-    bedpe_file = '/home/skorsak/Documents/data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/skorsak/Documents/data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
-    ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
-    # coh_track_file = '/home/skorsak/Documents/data/Petros_project/bw/RAD21_ChIPseq/mm_BMDM_WT_Rad21_heme_0min.bw'
-    # bw_file1 = '/home/skorsak/Documents/data/Petros_project/bw/BACH1_ChIPseq/mm_Bach1_1h_rep1_heme_merged.bw'
-    # bw_file2 = '/home/skorsak/Documents/data/Petros_project/bw/RNAPol_ChIPseq/WT-RNAPOLIIS2-1h-heme100-rep1_S5.bw'
-    # bw_files = [bw_file1,bw_file2]
+    bedpe_file = '/mnt/raid/data/encode/ChIAPET/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
+    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
     
-    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=2000,rep_duration=rep_duration,N_lef=200)
+    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=20000,rep_duration=rep_duration)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
     sim.run_MD('CUDA')
 

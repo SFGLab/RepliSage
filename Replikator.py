@@ -7,7 +7,15 @@ from scipy.optimize import minimize
 from scipy.signal import find_peaks
 from sklearn import preprocessing
 import scipy.io
+from scipy.interpolate import interp1d
 from tqdm import tqdm
+
+chrom_sizes = {'chr1':248387328,'chr2':242696752,'chr3':201105948,'chr4':193574945,
+               'chr5':182045439,'chr6':172126628,'chr7':160567428,'chr8':146259331,
+               'chr9':150617247,'chr10':134758134,'chr11':135127769,'chr12':133324548,
+               'chr13':113566686,'chr14':101161492,'chr15':99753195,'chr16':96330374,
+               'chr17':84276897,'chr18':80542538,'chr19':61707364,'chr20':66210255,
+               'chr21':45090682,'chr22':51324926,'chrX':154259566,'chrY':62460029}
 
 def expand_columns(array, new_columns):
     """
@@ -55,7 +63,7 @@ def min_max_normalize(matrix, Min, Max):
 
     return normalized_matrix
 
-def reshape_array_by_averaging(input_array, new_dimension):
+def reshape_array(input_array, new_dimension):
     """
     Reshape the input numpy array by computing averages across windows.
 
@@ -70,31 +78,43 @@ def reshape_array_by_averaging(input_array, new_dimension):
     # Calculate the size of each window
     original_length = len(input_array)
     window_size = original_length // new_dimension  # Calculate the size of each window
-
-    # Initialize the reshaped array
     reshaped_array = np.zeros(new_dimension)
 
     # Iterate over each segment/window and compute the average
-    for i in range(new_dimension):
-        start_idx = i * window_size
-        end_idx = (i + 1) * window_size
+    if original_length>new_dimension:
+        # In case that we want to downgrade the dimension we can compute averages
+        for i in range(new_dimension):
+            start_idx = i * window_size
+            end_idx = (i + 1) * window_size
 
-        # Compute the average of values in the current window
-        if i == new_dimension - 1:  # Handle the last segment
-            reshaped_array[i] = np.average(input_array[start_idx:])
-        else:
-            reshaped_array[i] = np.average(input_array[start_idx:end_idx])
+            # Compute the average of values in the current window
+            if i == new_dimension - 1:  # Handle the last segment
+                reshaped_array[i] = np.average(input_array[start_idx:])
+            else:
+                reshaped_array[i] = np.average(input_array[start_idx:end_idx])
+    else:
+        # In case that we need higher dimension we perform spline interpolation
+        original_indices = np.linspace(0, original_length - 1, original_length)
+        new_indices = np.linspace(0, original_length - 1, new_dimension)
+        spline_interpolation = interp1d(original_indices, input_array, kind='cubic')
+        reshaped_array = spline_interpolation(new_indices)
 
     return reshaped_array
 
 class Replikator:
-    def __init__(self,rept_data_path,oris_path,sim_L,sim_T):
+    def __init__(self,rept_data_path,oris_path,sim_L,sim_T,chrom='chr9',coords=None):
+        self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
         self.mat = scipy.io.loadmat(rept_data_path)['Chr9_replication_state_filtered']
         self.oris_df = pd.read_csv(oris_path,sep='\t',header=None)
         self.L, self.T = sim_L, sim_T
 
-    def proces_oris(self,chrom_length=140273252):
+    def proces_oris(self,chrom_length=150617247):
+        chrom_length = chrom_sizes[self.chrom]
         self.oris_df = self.oris_df[self.oris_df[0]=='chr9'].reset_index(drop=True)
+        if self.is_region:
+            self.oris_df = self.oris_df[(self.oris_df[1]>coords[0])&(self.oris_df[2]<coords[1])].reset_index(drop=True)
+            self.oris_df[1],  self.oris_df[2] = self.oris_df[1]-coords[0],  self.oris_df[2]-coords[1]
+            chrom_length = coords[1]-coords[0]
         self.oris, self.oris_log_pvals = self.L*self.oris_df[1].values//chrom_length, self.oris_df[3].values
 
     def process_matrix(self):
@@ -102,12 +122,18 @@ class Replikator:
         self.mat = np.nan_to_num(self.mat,nan=min_value)
         min_max_scaler = preprocessing.MinMaxScaler()
         self.mat = min_max_scaler.fit_transform(self.mat)
+        if self.is_region:
+            resolution = chrom_length//len(self.mat)
+            idxs = self.coords//resolution
+            self.mat = self.mat[:,idxs[0]:idxs[1]]
 
     def compute_f(self):
-        self.avg_fx = reshape_array_by_averaging(np.average(self.mat,axis=0),self.L)
-        self.std_fx = reshape_array_by_averaging(np.std(self.mat,axis=0),self.L)
-        self.avg_ft = reshape_array_by_averaging(np.average(self.mat,axis=1),self.T)
-        self.std_ft = reshape_array_by_averaging(np.std(self.mat,axis=1),self.T)
+        self.avg_fx = reshape_array(np.average(self.mat,axis=0),self.L)
+        self.std_fx = reshape_array(np.std(self.mat,axis=0),self.L)
+        self.avg_ft = reshape_array(np.average(self.mat,axis=1),self.T)
+        self.std_ft = reshape_array(np.std(self.mat,axis=1),self.T)
+        min_avg, min_std = np.min(self.avg_fx[self.avg_fx>0]), np.min(self.std_fx[self.std_fx>0])
+        self.avg_fx[self.avg_fx<=0], self.std_fx[self.std_fx<=0] = min_avg, min_std
 
     def compute_peaks(self,prominence=0.01):
         self.peaks, _ = find_peaks(self.avg_fx,prominence=prominence)
@@ -127,8 +153,9 @@ class Replikator:
             sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
             avg_slopes[extr] = np.abs(segment_slope)
             std_slopes[extr] = sigma_slope
-        self.speed_avg = 2000*np.average(avg_slopes)
-        self.speed_std = 2000*np.average(std_slopes)
+        self.speed_avg = 10000*np.average(avg_slopes)
+        self.speed_std = 10000*np.average(std_slopes)
+        print(f'Speed = {self.speed_avg}+/-{self.speed_std}')
         print('Done!\n')
 
     def compute_init_rate(self):
@@ -139,15 +166,14 @@ class Replikator:
         print('Computing initiation rate...')
         mus = self.T*(1-ms)
         stds = self.T*ss
-        for i in tqdm(self.oris):
-            s = np.round(np.random.normal(mus[i], stds[i], 10000)).astype(int)
+        for i, ori in enumerate(self.oris):
+            s = np.round(np.random.normal(mus[i], stds[i], 20000)).astype(int)
             s[s<0] = 0
             s[s>=self.T] = self.T-1
             unique_locations, counts = np.unique(s, return_counts=True)
-            self.initiation_rate[i,unique_locations] = counts
-            self.initiation_rate[i,:] /= np.sum(self.initiation_rate[i,:])
+            self.initiation_rate[ori,unique_locations] = counts
+            self.initiation_rate[ori,:] /= np.sum(self.initiation_rate[ori,:])
         print('Computation Done! <3\n')
-
 
     def prepare_data(self):
         self.process_matrix()
@@ -232,7 +258,6 @@ class Replikator:
             r_forks, l_forks = expand_columns(r_forks,self.T), expand_columns(l_forks,self.T)
             zero_columns = np.all(f == 0, axis=0) & (np.arange(self.T)>self.T/2)
             f[:, zero_columns] = 1
-        print('Dimension of r_forks:', r_forks.shape)
 
         if viz:
             # Replication fraction
@@ -266,16 +291,44 @@ class Replikator:
             plt.ylabel('Computational Time',fontsize=18)
             plt.show()
 
-        return l_forks, r_forks
+        return f, l_forks, r_forks
 
     def run(self,scale=100,viz=True):
         self.prepare_data()
-        l_forks, r_forks = self.numerical_simulator(scale,viz=viz)
-        return l_forks, r_forks
+        f, l_forks, r_forks = self.numerical_simulator(scale,viz=viz)
+        return f, l_forks, r_forks
+
+def run_loop(N_trials):
+    N_beads,rep_duration = 10000,5000
+    sf = np.zeros((N_beads,rep_duration))
+    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
+    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
+    rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
+    rep.prepare_data()
+    for i in range(100):
+        f, l_forks, r_forks = rep.numerical_simulator(100,viz=False)
+        sf += f
+    sf /= 10
+    
+    # Replication fraction
+    plt.figure(figsize=(12.6, 6))
+    plt.imshow(1-sf.T, cmap='bwr', aspect='auto', origin='lower')
+    plt.colorbar(label='Replication Fraction')
+    plt.title('DNA Replication Simulation')
+    plt.xlabel('DNA position',fontsize=16)
+    plt.ylabel('Computational Time',fontsize=16)
+    plt.show()
+
+    # Replication fraction
+    plt.figure(figsize=(15, 6))
+    plt.plot(np.average(sf,axis=1))
+    plt.xlabel('DNA position',fontsize=16)
+    plt.ylabel('Average Replication Fraction',fontsize=16)
+    plt.show()
 
 def main():
-    N_beads,rep_duration = 5000,5000
-    rept_path = '/home/skorsak/Documents/data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
-    ori_path = '/home/skorsak/Documents/data/Replication/LCL_MCM_replication_origins.bed'
+    N_beads,rep_duration = 10000,5000
+    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
+    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
     rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
     l_forks, r_forks = rep.run()

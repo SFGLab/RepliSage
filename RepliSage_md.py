@@ -87,7 +87,7 @@ class MD_LE:
                     if write_files: PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.path+f'/pdbs/MDLE_{i//self.step-self.burnin}.cif', 'w'))
                     save_path = self.path+f'/heatmaps/heat_{i//self.step-self.burnin}.svg' if write_files else None
                     heats.append(get_heatmap(self.state.getPositions(),save_path=save_path,save=write_files))
-                    time.sleep(1)
+                    time.sleep(5)
             end = time.time()
             elapsed = end - start
 
@@ -126,10 +126,10 @@ class MD_LE:
             locs2 = np.nonzero(self.r_forks[:,i-self.t_rep])[0]
             locs = np.union1d(locs1,locs2)
             for l in locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.2,5e1])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.4,5e1])
         elif i>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[6.0,5.0])
+                self.repli_force.setBondParameters(j,j,j+self.N_beads,[10.0,5.0])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def add_evforce(self):
