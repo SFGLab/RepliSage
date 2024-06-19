@@ -107,14 +107,15 @@ class Replikator:
         self.mat = scipy.io.loadmat(rept_data_path)['Chr9_replication_state_filtered']
         self.oris_df = pd.read_csv(oris_path,sep='\t',header=None)
         self.L, self.T = sim_L, sim_T
+        self.chrom_length = chrom_sizes[self.chrom]
 
-    def proces_oris(self,chrom_length=150617247):
-        chrom_length = chrom_sizes[self.chrom]
+    def proces_oris(self):
+        chrom_length = self.chrom_length
         self.oris_df = self.oris_df[self.oris_df[0]=='chr9'].reset_index(drop=True)
         if self.is_region:
-            self.oris_df = self.oris_df[(self.oris_df[1]>coords[0])&(self.oris_df[2]<coords[1])].reset_index(drop=True)
-            self.oris_df[1],  self.oris_df[2] = self.oris_df[1]-coords[0],  self.oris_df[2]-coords[1]
-            chrom_length = coords[1]-coords[0]
+            self.oris_df = self.oris_df[(self.oris_df[1]>self.coords[0])&(self.oris_df[2]<self.coords[1])].reset_index(drop=True)
+            self.oris_df[1],  self.oris_df[2] = self.oris_df[1]-self.coords[0],  self.oris_df[2]-self.coords[1]
+            chrom_length = self.coords[1]-self.coords[0]
         self.oris, self.oris_log_pvals = self.L*self.oris_df[1].values//chrom_length, self.oris_df[3].values
 
     def process_matrix(self):
@@ -123,7 +124,7 @@ class Replikator:
         min_max_scaler = preprocessing.MinMaxScaler()
         self.mat = min_max_scaler.fit_transform(self.mat)
         if self.is_region:
-            resolution = chrom_length//len(self.mat)
+            resolution = self.chrom_length//len(self.mat)
             idxs = self.coords//resolution
             self.mat = self.mat[:,idxs[0]:idxs[1]]
 
@@ -153,9 +154,11 @@ class Replikator:
             sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
             avg_slopes[extr] = np.abs(segment_slope)
             std_slopes[extr] = sigma_slope
-        self.speed_avg = 10000*np.average(avg_slopes)
-        self.speed_std = 10000*np.average(std_slopes)
-        print(f'Speed = {self.speed_avg}+/-{self.speed_std}')
+        speed_avg = np.average(avg_slopes)
+        speed_std = np.average(std_slopes)
+        self.speed_ratio = speed_std/speed_avg
+        print(f'Speed = {speed_avg}+/-{speed_std}.')
+        print(f'Std - Average ratio is {speed_std/speed_avg}.')
         print('Done!\n')
 
     def compute_init_rate(self):
@@ -183,7 +186,7 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
     
-    def numerical_simulator(self,scale,viz=False):
+    def numerical_simulator(self,scale,speed_mean=2,viz=False):
         # Initialize arrays
         vs = np.zeros(self.L)  # Fork propagation speed
         f = np.zeros((self.L, self.T))  # Replication fraction
@@ -193,7 +196,7 @@ class Replikator:
         init_t, init_x, coal_t, coal_x = list(), list(), list(), list()
 
         # Monte Carlo simulation
-        print('Running replikator....')
+        if viz: print('Running replikator....')
         dna_is_replicated = False
         t, T = 1, self.T
         while not dna_is_replicated:
@@ -202,7 +205,7 @@ class Replikator:
             init_locs = np.nonzero(initiate_forks)[0]
             for init in init_locs:
                 if replicated_dna[init, t-1]==0:
-                    vel = np.random.normal(self.speed_avg, self.speed_std, 1)[0]
+                    vel = np.random.normal(speed_mean, speed_mean*self.speed_ratio, 1)[0]
                     vs[init] = vel if vel>=1 else 1
             replicated_dna[initiate_forks, t] = 1
             
@@ -248,7 +251,7 @@ class Replikator:
             # Calculate replication fraction
             f[:, t] = replicated_dna[:, t]
             t+=1
-        print('Done! ;)')
+        if viz: print('Done! ;)')
 
         replicated_dna, f = replicated_dna[:,:T], f[:,:T]
         r_forks, l_forks = r_forks[:,:T], l_forks[:,:T]
@@ -293,42 +296,56 @@ class Replikator:
 
         return f, l_forks, r_forks
 
-    def run(self,scale=100,viz=True):
+    def run(self,scale=50,viz=True):
         self.prepare_data()
         f, l_forks, r_forks = self.numerical_simulator(scale,viz=viz)
         return f, l_forks, r_forks
 
-def run_loop(N_trials):
+def run_loop(N_trials,scale=10):
+    # region, chrom =  [150617247//2, 150617247], 'chr9'
     N_beads,rep_duration = 10000,5000
     sf = np.zeros((N_beads,rep_duration))
-    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
-    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+    ori_path = '/home/skorsak/Data/Replication/origins/LCL_MCM_replication_origins.bed'
     rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
     rep.prepare_data()
-    for i in range(100):
-        f, l_forks, r_forks = rep.numerical_simulator(100,viz=False)
+    print('Running Replikators...')
+    for i in tqdm(range(N_trials)):
+        f, l_forks, r_forks = rep.numerical_simulator(scale,viz=False)
         sf += f
-    sf /= 10
+    sf /= N_trials
+    print('Done :D')
     
     # Replication fraction
-    plt.figure(figsize=(12.6, 6))
+    plt.figure(figsize=(17, 4))
     plt.imshow(1-sf.T, cmap='bwr', aspect='auto', origin='lower')
     plt.colorbar(label='Replication Fraction')
     plt.title('DNA Replication Simulation')
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Computational Time',fontsize=16)
+    plt.ylim((0,2000))
+    plt.savefig(f'averafe_rep_frac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
     plt.show()
 
     # Replication fraction
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(17, 4))
     plt.plot(np.average(sf,axis=1))
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Average Replication Fraction',fontsize=16)
+    plt.ylim((0.6,1.0))
+    plt.savefig(f'averafe_rep_frac_x_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
     plt.show()
+    return sf
 
 def main():
+    # Parameters
+    # region, chrom =  [150617247//2, 150617247], 'chr9'
     N_beads,rep_duration = 10000,5000
-    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
-    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
+
+    # Paths
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+    ori_path = '/home/skorsak/Data/Replication/origins/LCL_MCM_replication_origins.bed'
+
+    # 
     rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
-    l_forks, r_forks = rep.run()
+    f, l_forks, r_forks = rep.run()

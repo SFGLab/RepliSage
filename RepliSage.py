@@ -44,7 +44,7 @@ class RepliSage:
         b (float): binding coefficient of Hamiltonian.
         r (list): strength of each ChIP-Seq experinment.
         '''
-
+        
         self.N_beads = N_beads
         self.N_bws = len(bw_files) if np.all(bw_files!=None) else 0
         print('Number of beads:',self.N_beads)
@@ -64,7 +64,7 @@ class RepliSage:
         self.c_rep = 4*self.b
         self.r = np.full(self.N_bws,self.b/2) if (not r) and self.N_bws>0 else r
         rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
-        self.l_forks, self.r_forks = rep.run()
+        rep_frac, self.l_forks, self.r_forks = rep.run()
         self.rep_duration = rep_duration
         self.N_rep = np.max(np.sum(self.l_forks+self.r_forks,axis=0))
         print('Number of replication forks',self.N_rep)
@@ -361,17 +361,17 @@ class RepliSage:
 
 def main():
     # Set MC parameters
-    N_steps, MC_step, burnin, T, T_min, rep_duration = int(1e4), int(5e2), 1000, 4, 1, 5000
+    N_steps, MC_step, burnin, T, T_min, rep_duration = int(2e4), int(5e2), 1000, 4, 1, 10000
     
     # For method paper
     region, chrom =  [0, 150617247], 'chr9'
     
     out_path=f'with_md'
-    bedpe_file = '/mnt/raid/data/encode/ChIAPET/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/mnt/raid/data/replication/single_cell/Chr9_replication_state_filtered.mat'
-    ori_path = '/mnt/raid/data/replication/LCL_MCM_replication_origins.bed'
+    bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+    ori_path = '/home/skorsak/Data/Replication/origins/LCL_MCM_replication_origins.bed'
     
-    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=20000,rep_duration=rep_duration)
+    sim = RepliSage(region,chrom,bedpe_file,rept_path,ori_path,out_path=out_path,N_beads=10000,rep_duration=rep_duration,N_lef=1000)
     Es, Ms, Ns, Bs, Ks, Fs, ufs = sim.run_energy_minimization(N_steps,MC_step,burnin,T,T_min,poisson_choice=True,mode='Metropolis',viz=True,save=True)
     sim.run_MD('CUDA')
 
