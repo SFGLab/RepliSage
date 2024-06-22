@@ -221,28 +221,7 @@ def combine_matrices(path_upper,path_lower,label_upper,label_lower,th1=0,th2=50,
     plt.savefig('comparison_reg3.pdf',format='pdf',dpi=200)
     plt.show()
 
-def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
-    figure(figsize=(10, 8), dpi=200)
-    plt.plot(Bs, 'cyan', label='Binding Energy')
-    plt.plot(Ks, 'green', label='Crossing Energy')
-    plt.plot(Fs, 'red', label='Folding Energy')
-    plt.axvline(x=burnin, color='blue')
-    plt.ylabel('Metrics', fontsize=16)
-    plt.xlabel('Monte Carlo Step', fontsize=16)
-    min_val = np.min([np.min(Bs),np.min(Ks),np.min(Fs)])
-    plt.ylim((min_val,np.std(np.abs(Bs))))
-    # plt.yscale('symlog')
-    plt.legend(fontsize=16)
-    plt.grid()
-
-    if path!=None:
-        save_path = path+'/plots/energies.png'
-        plt.savefig(save_path,format='png',dpi=200)
-        save_path = path+'/plots/energies.svg'
-        plt.savefig(save_path,format='svg',dpi=200)
-        save_path = path+'/plots/energies.pdf'
-        plt.savefig(save_path,format='pdf',dpi=200)
-    plt.close()
+def make_timeplots(Es, burnin, mode, path=None):
 
     plt.plot(Es, 'k')
     plt.ylabel('Energy', fontsize=16)
@@ -257,9 +236,9 @@ def make_timeplots(Es, Bs, Ks, Fs, burnin, mode, path=None):
     if mode=='Annealing':
         x = np.arange(0,len(Fs[burnin:])) 
         p3 = np.poly1d(np.polyfit(x, Fs[burnin:], 3))
-        ys = np.array(Fs)[burnin:]-p3(x)
+        ys = np.array(Es)[burnin:]-p3(x)
     else:
-        ys = np.array(Fs)[burnin:]
+        ys = np.array(Es)[burnin:]
     plot_acf(ys, title=None, lags = len(np.array(Fs)[burnin:])//2)
     plt.ylabel("Autocorrelations", fontsize=16)
     plt.xlabel("Lags", fontsize=16)
