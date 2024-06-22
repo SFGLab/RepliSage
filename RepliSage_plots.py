@@ -124,7 +124,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     plt.savefig(save_path, format='svg', dpi=200)
     save_path = path+'/plots/coh_trajectories.pdf' if path!=None else 'coh_trajectories.pdf'
     plt.savefig(save_path, format='pdf', dpi=200)
-    plt.close()
+    plt.show()
 
 def coh_probdist_plot(ms,ns,N_beads,path):
     Ntime = len(ms[0,:])
@@ -226,20 +226,20 @@ def make_timeplots(Es, burnin, mode, path=None):
     plt.plot(Es, 'k')
     plt.ylabel('Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    plt.ylim((np.min(Es),np.std(np.abs(Bs))))
+    plt.ylim((np.min(Es),np.std(np.abs(Es))))
     save_path = path+'/plots/total_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/total_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    plt.close()
+    plt.show()
     # Autocorrelation plot
     if mode=='Annealing':
-        x = np.arange(0,len(Fs[burnin:])) 
-        p3 = np.poly1d(np.polyfit(x, Fs[burnin:], 3))
+        x = np.arange(0,len(Es[burnin:])) 
+        p3 = np.poly1d(np.polyfit(x, Es[burnin:], 3))
         ys = np.array(Es)[burnin:]-p3(x)
     else:
         ys = np.array(Es)[burnin:]
-    plot_acf(ys, title=None, lags = len(np.array(Fs)[burnin:])//2)
+    plot_acf(ys, title=None, lags = len(np.array(Es)[burnin:])//2)
     plt.ylabel("Autocorrelations", fontsize=16)
     plt.xlabel("Lags", fontsize=16)
     plt.grid()
@@ -250,4 +250,4 @@ def make_timeplots(Es, burnin, mode, path=None):
         plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/autoc.pdf'
         plt.savefig(save_path,format='pdf',dpi=200)
-    plt.close()
+    plt.show()
