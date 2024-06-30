@@ -32,7 +32,7 @@ class MD_LE:
         self.path = path
         self.platform = platform
     
-    def run_pipeline(self,run_MD=True,sim_step=5,write_files=False,plots=False):
+    def run_pipeline(self,run_MD=True,sim_step=10,write_files=False,plots=False):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -49,7 +49,7 @@ class MD_LE:
         write_mmcif(points1,points2,self.path+'/LE_init_struct.cif')
         generate_psf(self.N_beads,self.path+'/other/LE_init_struct.psf')
         print('Done brother ;D\n')
-
+        
         # Define System
         pdb = PDBxFile(self.path+'/LE_init_struct.cif')
         forcefield = ForceField('forcefields/classic_sm_ff.xml')
@@ -60,13 +60,13 @@ class MD_LE:
         print('Adding forces...')
         self.add_forcefield()
         print('Forces added ;)\n')
-
+        
         # Minimize energy
         print('Minimizing energy...')
         platform = mm.Platform.getPlatformByName(self.platform)
         self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
-        self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//10, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-        self.simulation.reporters.append(DCDReporter(self.path+'/other/stochastic_LE.dcd', 5))
+        self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//100, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
+        self.simulation.reporters.append(DCDReporter(self.path+'/other/stochastic_LE.dcd', 100))
         self.simulation.context.setPositions(pdb.positions)
         current_platform = self.simulation.context.getPlatform()
         print(f"self.simulation will run on platform: {current_platform.getName()}")
@@ -75,43 +75,21 @@ class MD_LE:
 
         # Run molecular dynamics self.simulation
         if run_MD:
-            print('Running molecular dynamics (wait for 10 steps)...')
+            print('Running molecular dynamics...')
             start = time.time()
             heats = list()
             for i in range(1,self.N_steps):
                 self.change_loop(i)
-                if i>=self.t_rep: self.change_repliforce(i)      
+                if i>=self.t_rep: self.change_repliforce(i)
                 self.simulation.step(sim_step)
                 if i%self.step==0 and i>self.burnin*self.step:
                     self.state = self.simulation.context.getState(getPositions=True)
                     if write_files: PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.path+f'/pdbs/MDLE_{i//self.step-self.burnin}.cif', 'w'))
-                    save_path = self.path+f'/heatmaps/heat_{i//self.step-self.burnin}.svg' if write_files else None
-                    heats.append(get_heatmap(self.state.getPositions(),save_path=save_path,save=write_files))
-                    time.sleep(5)
+                    time.sleep(2)
             end = time.time()
             elapsed = end - start
 
             print(f'Everything is done! simulation finished succesfully!\nMD finished in {elapsed/60:.2f} minutes.\n')
-
-            self.avg_heat = np.average(heats,axis=0)
-            self.std_heat = np.std(heats,axis=0)
-            np.save(self.path+f'/other/avg_heatmap.npy',self.avg_heat)
-            np.save(self.path+f'/other/std_heatmap.npy',self.std_heat)
-            if plots:
-                figure(figsize=(10, 10))
-                plt.imshow(self.avg_heat,cmap="Reds",vmax=1)
-                plt.colorbar()
-                plt.savefig(self.path+f'/plots/avg_heatmap.svg',format='svg',dpi=500)
-                plt.savefig(self.path+f'/plots/avg_heatmap.pdf',format='pdf',dpi=500)
-                plt.close()
-
-                figure(figsize=(10, 10))
-                plt.imshow(self.std_heat,cmap="Reds",vmax=1)
-                plt.colorbar()
-                plt.savefig(self.path+f'/plots/std_heatmap.svg',format='svg',dpi=500)
-                plt.savefig(self.path+f'/plots/std_heatmap.pdf',format='pdf',dpi=500)
-                plt.close()
-            return self.avg_heat
 
     def change_loop(self,i):
         force_idx = self.system.getNumForces()-1
@@ -135,11 +113,13 @@ class MD_LE:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=20)
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=5)
         self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
         self.ev_force.addPerParticleParameter('sigma')
         for i in range(2*self.N_beads):
             self.ev_force.addParticle([0.05])
+        for i in range(self.N_beads):
+            self.ev_force.addExclusion(i,i+self.N_beads)
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):
@@ -155,17 +135,17 @@ class MD_LE:
         'Harmonic angle force between successive beads so as to make chromatin rigid'
         self.angle_force = mm.HarmonicAngleForce()
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 800)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         for i in range(self.N_beads,2*self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 800)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i=0):
         'LE force that connects cohesin restraints'
         self.LE_force = mm.HarmonicBondForce()
         for nn in range(self.N_coh):
-            self.LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.05, 3e3)
-            self.LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e3)
+            self.LE_force.addBond(self.M[nn,i], self.N[nn,i], 0.05, 3e4)
+            self.LE_force.addBond(self.N_beads+self.M[nn,i], self.N_beads+self.N[nn,i], 0.05, 3e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self):

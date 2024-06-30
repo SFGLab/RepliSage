@@ -7,7 +7,8 @@ from tqdm import tqdm
 
 # Hide warnings
 import warnings
-from numba import njit
+import time
+from numba import njit, prange
 warnings.filterwarnings('ignore')
 
 # scipy
@@ -34,7 +35,21 @@ def Kappa(mi,ni,mj,nj):
     if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
     return k
 
-@njit(parallel=True) 
+@njit(parallel=True)
+def compute_J(ms,ns,N_beads):
+        J = np.zeros((N_beads,N_beads))
+        for i in prange(len(ms)):
+            J[ms[i],ns[i]],J[ns[i],ms[i]]=1,1
+        return J
+
+@njit
+def E_ising(spins,J):
+    N_beads = len(J)
+    E1,E2 = np.sum(h*spins),0
+    for i in range(N_beads): E2 += np.sum(np.sum(J[i,i+1:]*spins[i]*spins[i+1:]))
+    return ising_norm1*E1+ising_norm2*E2
+
+@njit
 def E_bind(L, R, ms, ns, bind_norm):
     binding = np.sum(L[ms] + R[ns])
     E_b = bind_norm * binding
@@ -43,15 +58,14 @@ def E_bind(L, R, ms, ns, bind_norm):
 @njit
 def E_repli(l_forks, r_forks, ms, ns, t, rep_norm):
     replication = np.sum(l_forks[ms, t] + l_forks[ns, t] + r_forks[ms, t] + r_forks[ns, t])
-    E_rep = rep_norm * replication
-    return E_rep
+    return rep_norm * replication
 
 @njit(parallel=True) 
 def E_cross(ms, ns, k_norm):
     crossing = 0
     N_lef = len(ms)
-    for i in range(N_lef):
-        for j in range(i + 1, N_lef):
+    for i in prange(N_lef):
+        for j in prange(i + 1, N_lef):
             crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
     return k_norm * crossing
 
@@ -64,8 +78,7 @@ def E_fold(ms, ns, fold_norm):
 @njit
 def get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, t, l_forks, r_forks):
     energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm) + E_fold(ms, ns, fold_norm)
-    if rep_norm is not None:
-        energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
+    if rep_norm is not None: energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
     return energy
 
 @njit
@@ -80,17 +93,23 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
 def get_dE_rep(l_forks,r_forks, rep_norm, ms,ns,m_new,n_new,t,idx):
     E_rep_new = l_forks[m_new,t]+l_forks[n_new,t]+r_forks[m_new,t]+r_forks[n_new,t]
     E_rep_old = l_forks[ms[idx],t-1]+l_forks[ns[idx],t-1]+r_forks[ms[idx],t-1]+r_forks[ns[idx],t-1]
-    dE_rep = rep_norm*(E_rep_new-E_rep_old)
-    return dE_rep
+    return rep_norm*(E_rep_new-E_rep_old)
 
 @njit(parallel=True)
 def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     K1, K2 = 0, 0
-    for i in range(N_lef):
+    for i in prange(N_lef):
         if i != idx:
             K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
             K2 += Kappa(m_new, n_new, ms[i], ns[i])
     return k_norm * (K2 - K1)
+
+@njit
+def getdE_ising(ms,ns,spins,J,J_new,m_new,n_new,coh_idx,spin_idx):
+    dE1 = -2*self.h[spin_idx]*spins[spin_idx] # 2 because of the difference calculation
+    dE2 = -np.sum((J_new[spin_idx,]+J[spin_idx,])*spins[spin_idx]*spins)+(J_new[spin_idx,spin_idx]+J[spin_idx,spin_idx])*spins[spin_idx]*spins[spin_idx]
+    if spin_idx!=m_new and spin_idx!=n_new and spin_idx!=ms[coh_idx] and spin_idx!=ns[coh_idx]: dE3 =  J_new[m_new,n_new]*spins[m_new]*spins[n_new]-J[ms[coh_idx],ns[coh_idx]]*spins[ms[coh_idx]]*spins[ns[coh_idx]]
+    return ising_norm1*dE1+ising_norm2*dE2
 
 @njit
 def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks):
@@ -98,16 +117,13 @@ def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, i
     dE += get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm)
-    if rep_norm is not None:
-        dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
+    if rep_norm is not None: dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
     return dE
 
 @njit
 def unbind_bind(N_beads, avg_loop):
     m_new = rd.randint(0, N_beads - 2)
-    n_new = m_new + 5
-    if n_new >= N_beads:
-        n_new = rd.randint(m_new + 1, N_beads - 1)
+    n_new = m_new + 1
     return int(m_new), int(n_new)
 
 @njit
@@ -117,67 +133,60 @@ def slide(m_old, n_old, N_beads):
     r2 = np.random.choice(choices)
     m_new = (m_old + r1) % N_beads
     n_new = (n_old + r2) % N_beads
-    return m_new, n_new
+    return int(m_new), int(n_new)
 
-@njit(parallel=True) 
+@njit(parallel=True)
 def initialize(N_lef, N_beads, avg_loop):
     ms, ns = np.zeros(N_lef, dtype=np.int64), np.zeros(N_lef, dtype=np.int64)
-    for i in range(N_lef):
+    for i in prange(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads, avg_loop)
     return ms, ns
 
-def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, N_CTCF, l_forks, r_forks, viz, save, path):
+@njit
+def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, N_CTCF, l_forks, r_forks):
     N_rep = np.max(np.sum(l_forks+r_forks,axis=0))
-    fold_norm, bind_norm, k_norm, rep_norm = f/(N_lef*np.log(avg_loop)), b/(np.sum(L)+np.sum(R)), kappa/N_lef, c_rep/N_rep
-    
+    fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(avg_loop)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
     Ti = T
-    Ts = []
     bi = burnin // MC_step
     ms, ns = initialize(N_lef, N_beads, avg_loop)
     E = get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, 0, l_forks, r_forks)
-    Es = []
+    Es = np.zeros(N_steps//MC_step, dtype=np.float64)
+    Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
+    Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
+    Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Ms, Ns = np.zeros((N_lef, N_steps), dtype=np.int32), np.zeros((N_lef, N_steps), dtype=np.int32)
-    
-    if viz: print('Running simulation...')
-    for i in tqdm(range(N_steps)):
-        Ti = T - (T - T_min) * (i + 1) / N_steps if mode == 'Annealing' else T
-        Ts.append(Ti)
+
+    for i in range(N_steps):
+        rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration - 1)
+        Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         for j in range(N_lef):
-            r = rd.choice([0, 1, 2])
+            r = np.random.choice(np.array([0, 1, 2]))
             if r == 0:
                 m_new, n_new = unbind_bind(N_beads, avg_loop)
             else:
                 m_new, n_new = slide(ms[j], ns[j], N_beads)
-            if i < t_rep:
-                dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j,  0, l_forks, r_forks)
-            elif i >= t_rep and i < t_rep + rep_duration:
-                dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j, i - t_rep,  l_forks, r_forks)
-            else:
-                dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j,  rep_duration - 1, l_forks, r_forks)
+
+            # if ising_norm1!=None and ising_norm2!=None:
+            #     J_new = J.copy()
+            #     J_new[m_new,n_new],J_new[n_new,m_new]=1,1
+
+            dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j, rt, l_forks, r_forks)
             if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                 ms[j], ns[j] = m_new, n_new
                 E += dE
             Ms[j, i], Ns[j, i] = ms[j], ns[j]
         if i % MC_step == 0:
-            Es.append(E)
-    if viz: 
-        print('Done! ;D')
-        coh_traj_plot(Ms, Ns, N_beads, path)
-        make_timeplots(Es, bi, mode, path)
-    if save:
-        np.save(f'{path}/other/Ms.npy', Ms)
-        np.save(f'{path}/other/Ns.npy', Ns)
-        np.save(f'{path}/other/Ts.npy', Ts)
-        np.save(f'{path}/other/Es.npy', Es)
+            Es[i//MC_step] = E
+            Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
+            Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
+            Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
+    return Ms, Ns, Es, Fs, Bs, Rs
 
-    return Ms, Ns, Es
-
-# Set MC parameters
-N_beads, N_lef = 10000, 1000
-N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(5e2), 1000, 4, 1, int(5e3), int(1e4)
+N_beads = int(2e3)
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(2e2), int(1e3), 1.5, 0, int(5e3), int(1e4)
 
 # For method paper
-region, chrom =  [0, 150617247], 'chr9'
+region, chrom =  [0, 3*150617247//20], 'chr9'
 
 out_path=f'with_md'
 bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
@@ -186,18 +195,35 @@ ori_path = '/home/skorsak/Data/Replication/origins/LCL_MCM_replication_origins.b
 out_path = 'output'
 make_folder(out_path)
 
-rep = Replikator(rept_path,ori_path,N_beads,rep_duration)
-rep_frac, l_forks, r_forks = rep.run()
-N_rep = np.max(np.sum(l_forks+r_forks,axis=0))
+rep = Replikator(rept_path,N_beads,rep_duration,chrom,region)
+rep_frac, l_forks, r_forks = rep.run(scale=50)
 
 # Preprocessing
 L, R, dists, N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=N_beads)
+N_lef= N_CTCF
 avg_loop = int(np.average(dists))+1
+print('N_CTCF=',N_CTCF)
 
 # Running the simulation
-Ms, Ns, Es = run_energy_minimization(
-    N_steps=N_steps, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, t_rep=1e5, rep_duration=rep_duration,
-    mode='Annealing', viz=True, save=False, N_lef=N_lef, N_beads=N_beads,
-    avg_loop=avg_loop, L=L, R=R, kappa=1e5, f=-2000, b=-1000, c_rep=-4000, N_CTCF=N_CTCF, 
-    l_forks=l_forks, r_forks=r_forks, path='./output'
+start = time.time()
+print('\nRunning RepliSage...')
+Ms, Ns, Es, Fs, Bs, Rs = run_energy_minimization(
+    N_steps=N_steps, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, t_rep=t_rep, rep_duration=rep_duration,
+    mode='Metropolis', N_lef=N_lef, N_beads=N_beads,
+    avg_loop=avg_loop, L=L, R=R, kappa=10, f=1, b=0.2, c_rep=2, N_CTCF=N_CTCF,
+    l_forks=l_forks, r_forks=r_forks
 )
+end = time.time()
+elapsed = end - start
+print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
+
+make_timeplots(Es, Fs, Bs, Rs, burnin//MC_step, out_path)
+coh_traj_plot(Ms, Ns, N_beads, out_path)
+
+np.save(f'{out_path}/other/Ms.npy', Ms)
+np.save(f'{out_path}/other/Ns.npy', Ns)
+np.save(f'{out_path}/other/Es.npy', Es)
+
+platform='OpenCL'
+md = MD_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform)
+md.run_pipeline(write_files=True,plots=True)
