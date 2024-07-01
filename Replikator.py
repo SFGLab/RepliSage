@@ -85,8 +85,13 @@ class Replikator:
 
     def run(self,scale=10,viz=True):
         self.prepare_data()
-        f, l_forks, r_forks = numerical_simulator(self.L,self.T,scale*self.initiation_rate,self.speed_ratio,viz=viz)
-        return f, l_forks, r_forks
+        self.sim_f, l_forks, r_forks = numerical_simulator(self.L,self.T,scale*self.initiation_rate,self.speed_ratio,viz=viz)
+        return self.sim_f, l_forks, r_forks
+    
+    def calculate_ising_parameters(self):
+        magnetic_field = min_max_normalize(self.avg_fx,-1,1)
+        state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
+        return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int64)
 
 def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     sf = np.zeros((N_beads,rep_duration))
@@ -131,3 +136,4 @@ def main():
     # Run simulation
     rep = Replikator(rept_path,N_beads,rep_duration)
     f, l_forks, r_forks = rep.run()
+    magnetic_field, state = rep.calculate_ising_parameters()

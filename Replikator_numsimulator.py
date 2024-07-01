@@ -132,7 +132,6 @@ def run_Ntrials(N_trials, L, T, initiation_rate, speed_ratio, speed_mean=2):
             l_forks = expand_columns(l_forks, T)
             zero_columns = np.all(f == 0, axis=0) & (np.arange(T,dtype=np.int64) > T / 2)
             f[:, zero_columns] = 1
-
         sf += f
     sf /= N_trials
     return sf

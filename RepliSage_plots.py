@@ -128,3 +128,12 @@ def make_timeplots(Es, Fs, Bs, Rs, burnin, path=None):
         save_path = path+'/plots/autoc.pdf'
         plt.savefig(save_path,format='pdf',dpi=200)
     plt.show()
+
+def ising_traj_plot(traj,save_path):
+    figure(figsize=(20, 10))
+    plt.imshow(traj,cmap='coolwarm',aspect='auto')
+    plt.xlabel('Computational Time',fontsize=20)
+    plt.ylabel('Region', fontsize=20)
+    plt.title('Epigenetic Coloring Spread',fontsize=25)
+    plt.savefig(save_path+'/plots/ising_traj.png',format='png',dpi=200)
+    plt.show()
