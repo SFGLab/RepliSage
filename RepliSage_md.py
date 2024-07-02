@@ -15,24 +15,24 @@ from openmm.app import PDBFile, PDBxFile, ForceField, Simulation, PDBReporter, P
 from RepliSage_utils import *
 
 class MD_LE:
-    def __init__(self,M,N,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,path,platform):
+    def __init__(self,M,N,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,Cs=None):
         '''
         M, N (np arrays): Position matrix of two legs of cohesin m,n. 
                           Rows represent  loops/cohesins and columns represent time
         N_beads (int): The number of beads of initial structure.
         step (int): sampling rate
-        path (int): the path where the simulation will save structures etc.
+        out_path (int): the out_path where the simulation will save structures etc.
         '''
-        self.M, self.N = M, N
+        self.M, self.N, self.Cs = M, N, Cs
         self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, t_rep
         self.rep_duration = len(self.l_forks[0,:])
         print('Duration of Replication',self.rep_duration)
         self.N_coh, self.N_steps = M.shape
         self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
-        self.path = path
+        self.out_path = out_path
         self.platform = platform
     
-    def run_pipeline(self,run_MD=True,sim_step=10,write_files=False,plots=False):
+    def run_pipeline(self,run_MD=True,sim_step=10,write_files=False):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -40,18 +40,17 @@ class MD_LE:
         run_MD (bool): True if user wants to run molecular simulation (not only energy minimization).
         sim_step (int): the simulation step of Langevin integrator.
         write_files (bool): True if the user wants to save the structures that determine the simulation ensemble.
-        plots (bool): True if the user wants to see the output average heatmaps.
         '''
         # Define initial structure
         print('Building initial structure...')
         points1 = polymer_circle(self.N_beads)
         points2 = points1 + [0.2,0.2,0.2]
-        write_mmcif(points1,points2,self.path+'/LE_init_struct.cif')
-        generate_psf(self.N_beads,self.path+'/other/LE_init_struct.psf')
+        write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
+        generate_psf(self.N_beads,self.out_path+'/other/LE_init_struct.psf')
         print('Done brother ;D\n')
         
         # Define System
-        pdb = PDBxFile(self.path+'/LE_init_struct.cif')
+        pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
         forcefield = ForceField('forcefields/classic_sm_ff.xml')
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=1*u.nanometer)
         integrator = mm.LangevinIntegrator(310, 0.1, 50 * mm.unit.femtosecond)
@@ -66,10 +65,10 @@ class MD_LE:
         platform = mm.Platform.getPlatformByName(self.platform)
         self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
         self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//100, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-        self.simulation.reporters.append(DCDReporter(self.path+'/other/stochastic_LE.dcd', 100))
+        self.simulation.reporters.append(DCDReporter(self.out_path+'/other/stochastic_LE.dcd', 100))
         self.simulation.context.setPositions(pdb.positions)
         current_platform = self.simulation.context.getPlatform()
-        print(f"self.simulation will run on platform: {current_platform.getName()}")
+        print(f"Simulation will run on platform: {current_platform.getName()}")
         self.simulation.minimizeEnergy()
         print('Energy minimization done :D\n')
 
@@ -77,19 +76,24 @@ class MD_LE:
         if run_MD:
             print('Running molecular dynamics...')
             start = time.time()
-            heats = list()
             for i in range(1,self.N_steps):
+                if np.all(self.Cs!=None): self.change_blocks(i)
                 self.change_loop(i)
                 if i>=self.t_rep: self.change_repliforce(i)
                 self.simulation.step(sim_step)
                 if i%self.step==0 and i>self.burnin*self.step:
                     self.state = self.simulation.context.getState(getPositions=True)
-                    if write_files: PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.path+f'/pdbs/MDLE_{i//self.step-self.burnin}.cif', 'w'))
+                    if write_files: PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/pdbs/MDLE_{i//self.step-self.burnin}.cif', 'w'))
                     time.sleep(2)
             end = time.time()
             elapsed = end - start
 
             print(f'Everything is done! simulation finished succesfully!\nMD finished in {elapsed/60:.2f} minutes.\n')
+
+    def change_blocks(self,i):
+        for j in range(2*self.N_beads):
+            self.comp_force.setParticleParameters(j,[self.Cs[j%self.N_beads,i]])
+        self.comp_force.updateParametersInContext(self.simulation.context)
 
     def change_loop(self,i):
         force_idx = self.system.getNumForces()-1
@@ -156,6 +160,20 @@ class MD_LE:
         for i in range(self.N_beads):
             self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
         self.system.addForce(self.repli_force)
+
+    def add_blocks(self):
+        'Block copolymer forcefield for the modelling of compartments.'
+        self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
+        self.comp_force.addGlobalParameter('sigma',defaultValue=1)
+        self.comp_force.addGlobalParameter('r0',defaultValue=0.4)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-2.0)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-4.0)
+        self.comp_force.addPerParticleParameter('s')
+        for i in range(2*self.N_beads):
+            self.comp_force.addParticle([self.Cs[i%self.N_beads,0]])
+        for i in range(self.N_beads):
+            self.comp_force.addExclusion(i,i+self.N_beads)
+        self.system.addForce(self.comp_force)
     
     def add_forcefield(self):
         '''
@@ -170,6 +188,7 @@ class MD_LE:
         self.add_evforce()
         self.add_bonds()
         self.add_stiffness()
+        if np.all(self.Cs!=None): self.add_blocks()
         self.add_repliforce()
         self.add_loops()
         

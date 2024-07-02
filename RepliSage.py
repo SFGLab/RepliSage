@@ -112,7 +112,7 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     return k_norm * (K2 - K1)
 
 @njit
-def get_dE_ising(ms, ns, spins, J, h, m_new, n_new, coh_idx, spin_idx, ising_norm1, ising_norm2):
+def get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2):
     spin_value = spins[spin_idx]
     J_diff = J[spin_idx, :] - J[spin_idx, :]
     dE1 = -2 * h[spin_idx] * spin_value
@@ -154,7 +154,7 @@ def initialize(N_lef, N_beads, avg_loop):
 def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, N_CTCF, l_forks, r_forks, c_ising1=None, c_ising2=None, ising_field=None, spin_state=None):
     N_rep = np.max(np.sum(l_forks+r_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(avg_loop)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
-    ising_norm1, ising_norm2 = -c_ising1, -c_ising2
+    ising_norm1, ising_norm2 = -c_ising1, -N_beads*c_ising2/(2*N_lef)
     Ti = T
     ms, ns = initialize(N_lef, N_beads, avg_loop)
     spin_traj = np.zeros((N_beads, N_steps),dtype=np.int32)
@@ -187,7 +187,7 @@ def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_durat
                 J[m_new,n_new],J[n_new,m_new]=1,1
                 J[ms[j],ns[j]],J[ns[j],ms[j]]=0,0
                 spin_idx = np.random.randint(N_beads)
-                dE_ising = get_dE_ising(ms, ns, spin_state, J, ising_field, m_new, n_new, j, spin_idx, ising_norm1, ising_norm2)
+                dE_ising = get_dE_ising(spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2)
                 if dE_ising <= 0 or np.exp(-dE_ising / Ti) > np.random.rand():
                     E_is += dE_ising
                     spin_state[spin_idx] *= -1
@@ -233,7 +233,7 @@ Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj = run_energy_minimization(
     mode='Metropolis', N_lef=N_lef, N_beads=N_beads,
     avg_loop=avg_loop, L=L, R=R, kappa=10, f=1, b=0.2, c_rep=2, N_CTCF=N_CTCF,
     l_forks=l_forks, r_forks=r_forks,
-    c_ising1=1.0, c_ising2=1.0, spin_state=state, ising_field=magnetic_field
+    c_ising1=0.4, c_ising2=10.0, spin_state=state, ising_field=magnetic_field
 )
 end = time.time()
 elapsed = end - start
@@ -249,5 +249,5 @@ np.save(f'{out_path}/other/Es.npy', Es)
 np.save(f'{out_path}/other/spin_traj.npy', spin_traj)
 
 platform='OpenCL'
-md = MD_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform)
-md.run_pipeline(write_files=True,plots=True)
+md = MD_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,spin_traj)
+md.run_pipeline(write_files=True)
