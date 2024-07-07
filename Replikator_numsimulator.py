@@ -57,7 +57,7 @@ def run_simulation(L, T, initiation_rate, speed_ratio, speed_mean):
     dna_is_replicated = False
 
     # Initialize typed lists
-    init_t, init_x, coal_t, coal_x, rep_fract = list(), list(), list(), list(), list()
+    rep_fract = list()
 
     # Initialize arrays
     vs = np.zeros(L, dtype=np.float64)  # Fork propagation speed
@@ -75,13 +75,7 @@ def run_simulation(L, T, initiation_rate, speed_ratio, speed_mean):
                 vs[init] = max(vel, 1)
         replicated_dna[initiate_forks, t] = 1
         
-        previously_initiated = replicated_dna[:, t-1] == 1
-        xs = np.nonzero(initiate_forks * (~previously_initiated))[0]
-        for x in xs:
-            init_x.append(x)
-            init_t.append(t)
-        
-        vs, r_forks, l_forks, coal_t, coal_x = propagate_forks(L, t, vs, replicated_dna, r_forks, l_forks, coal_t, coal_x)
+        vs, r_forks, l_forks = propagate_forks(L, t, vs, replicated_dna, r_forks, l_forks)
         
         rep_fract.append(np.count_nonzero(replicated_dna[:, t-1]) / L)
         if np.all(replicated_dna[:, t-1] == 1):
@@ -93,17 +87,11 @@ def run_simulation(L, T, initiation_rate, speed_ratio, speed_mean):
 
     return f[:, :T_final], l_forks[:, :T_final], r_forks[:, :T_final], T_final, rep_fract
 
-def propagate_forks(L, t, vs, replicated_dna, r_forks, l_forks, coal_t, coal_x):
+def propagate_forks(L, t, vs, replicated_dna, r_forks, l_forks):
     for i in prange(L):
         if replicated_dna[i, t - 1] == 1:
             v = vs[i]
             distance = int(round(np.random.uniform(0, v + 1, 1)[0]))
-            if replicated_dna[(i + distance + 1) % L, t-1] == 1 and replicated_dna[(i+1) % L, t - 1] == 0:
-                coal_t.append(t)
-                coal_x.append((i + distance) % L)
-            if replicated_dna[(i - distance - 1) % L, t-1] == 1 and replicated_dna[(i-1) % L, t - 1] == 0:
-                coal_t.append(t)
-                coal_x.append((i - distance) % L)
 
             if (i - distance) % L < (i + distance) % L:
                 replicated_dna[(i - distance) % L:(i + distance) % L, t] = 1
@@ -118,7 +106,7 @@ def propagate_forks(L, t, vs, replicated_dna, r_forks, l_forks, coal_t, coal_x):
             replicated_dna[(i - distance) % L, t], replicated_dna[(i + distance) % L, t] = 1, 1
             r_forks[(i + distance) % L, t] = 1 if replicated_dna[(i + distance) % L, t - 1] == 0 else 0
             l_forks[(i - distance) % L, t] = 1 if replicated_dna[(i - distance) % L, t - 1] == 0 else 0
-    return vs, r_forks, l_forks, coal_t, coal_x
+    return vs, r_forks, l_forks
 
 def run_Ntrials(N_trials, L, T, initiation_rate, speed_ratio, speed_mean=2):
     sf = np.zeros((L,T), dtype=np.float64)

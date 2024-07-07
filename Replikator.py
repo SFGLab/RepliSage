@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 
 class Replikator:
-    def __init__(self,rept_data_path,sim_L,sim_T,chrom='',coords=None):
+    def __init__(self,rept_data_path,sim_L,sim_T,chrom,coords=None):
         self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
         self.data = mat73.loadmat(rept_data_path)
         self.gen_windows = self.data['genome_windows'][eval(chrom[-1])-1][0]
@@ -52,11 +52,11 @@ class Replikator:
             sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
             avg_slopes[extr] = 1/np.abs(segment_slope)
             std_slopes[extr] = 1/sigma_slope
-        speed_avg = np.average(avg_slopes)
-        speed_std = np.average(std_slopes)
-        self.speed_ratio = speed_std/speed_avg
-        print(f'Average speed {speed_avg}, std speed {speed_std}.')
-        print(f'Std - Average ratio is {speed_std/speed_avg}.')
+        self.speed_avg = np.average(avg_slopes)
+        self.speed_std = np.average(std_slopes)
+        self.speed_ratio = self.speed_std/self.speed_avg
+        print(f'Average speed {self.speed_avg}, std speed {self.speed_std}.')
+        print(f'Std - Average ratio is {self.speed_std/self.speed_avg}.')
         print('Done!\n')
 
     def compute_init_rate(self):
@@ -82,7 +82,7 @@ class Replikator:
 
     def run(self,scale=10,viz=True):
         self.prepare_data()
-        self.sim_f, l_forks, r_forks = numerical_simulator(self.L,self.T,scale*self.initiation_rate,self.speed_ratio,viz=viz)
+        self.sim_f, l_forks, r_forks = numerical_simulator(self.L,self.T,scale*self.initiation_rate,self.speed_ratio,self.speed_avg,viz=viz)
         return self.sim_f, l_forks, r_forks
     
     def calculate_ising_parameters(self):
@@ -92,13 +92,14 @@ class Replikator:
 
 def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     sf = np.zeros((N_beads,rep_duration))
-    rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
-    rep = Replikator(rept_path,N_beads,rep_duration)
+    chrom = 'chr9'
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+    rep = Replikator(rept_path,N_beads,rep_duration,chrom)
     rep.prepare_data()
 
     print('Running Replikators...')
     start = time.time()
-    sf = run_Ntrials(N_trials,rep.L,rep.T,scale*rep.initiation_rate,rep.speed_ratio)
+    sf = run_Ntrials(N_trials,rep.L,rep.T,scale*rep.initiation_rate,rep.speed_ratio,rep.speed_avg)
     end = time.time()
     elapsed = end - start
     print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
@@ -111,7 +112,7 @@ def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Computational Time',fontsize=16)
     plt.savefig(f'averafe_rep_frac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
-    plt.close()
+    plt.show()
 
     # Replication fraction
     plt.figure(figsize=(17, 4))
@@ -119,7 +120,7 @@ def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Average Replication Fraction',fontsize=16)
     plt.savefig(f'averafe_rep_frac_x_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
-    plt.close()
+    plt.show()
     return sf
 
 def main():
