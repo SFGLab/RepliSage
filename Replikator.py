@@ -1,33 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-from matplotlib.pyplot import figure
-from scipy.stats import norm
-from scipy.optimize import minimize
 from scipy.signal import find_peaks
 from sklearn import preprocessing
 from common import *
 from Replikator_numsimulator import *
-import scipy.io
+import mat73
 import time
 from tqdm import tqdm
 
 class Replikator:
-    def __init__(self,rept_data_path,sim_L,sim_T,chrom='chr9',coords=None):
+    def __init__(self,rept_data_path,sim_L,sim_T,chrom='',coords=None):
         self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
-        self.mat = scipy.io.loadmat(rept_data_path)['Chr9_replication_state_filtered']
+        self.data = mat73.loadmat(rept_data_path)
+        self.gen_windows = self.data['genome_windows'][eval(chrom[-1])-1][0]
+        self.mat = self.data['replication_state_filtered'][eval(chrom[-1])-1][0].T
         self.L, self.T = sim_L, sim_T
-        self.chrom_length = chrom_sizes[self.chrom]
-
+    
     def process_matrix(self):
         min_value = np.min(np.nan_to_num(self.mat[self.mat>0]))
         self.mat = np.nan_to_num(self.mat,nan=min_value)
         min_max_scaler = preprocessing.MinMaxScaler()
         self.mat = min_max_scaler.fit_transform(self.mat)
         if self.is_region:
-            resolution = self.chrom_length//len(self.mat)
-            idxs = self.coords//resolution
-            self.mat = self.mat[:,idxs[0]:idxs[1]]
+            winds_str, winds_end = self.gen_windows[:,0], self.gen_windows[:,2]
+            self.mat = self.mat[:,(winds_end > self.coords[0]) & (winds_str < self.coords[1])]
 
     def compute_f(self):
         afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
@@ -54,11 +50,12 @@ class Replikator:
             delta_x = (end_idx - start_idx)
             segment_slope = (self.avg_fx[end_idx] - self.avg_fx[start_idx]) / delta_x
             sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
-            avg_slopes[extr] = np.abs(segment_slope)
-            std_slopes[extr] = sigma_slope
+            avg_slopes[extr] = 1/np.abs(segment_slope)
+            std_slopes[extr] = 1/sigma_slope
         speed_avg = np.average(avg_slopes)
         speed_std = np.average(std_slopes)
         self.speed_ratio = speed_std/speed_avg
+        print(f'Average speed {speed_avg}, std speed {speed_std}.')
         print(f'Std - Average ratio is {speed_std/speed_avg}.')
         print('Done!\n')
 
@@ -114,7 +111,7 @@ def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Computational Time',fontsize=16)
     plt.savefig(f'averafe_rep_frac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
-    plt.show()
+    plt.close()
 
     # Replication fraction
     plt.figure(figsize=(17, 4))
@@ -122,18 +119,18 @@ def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     plt.xlabel('DNA position',fontsize=16)
     plt.ylabel('Average Replication Fraction',fontsize=16)
     plt.savefig(f'averafe_rep_frac_x_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
-    plt.show()
+    plt.close()
     return sf
 
 def main():
     # Parameters
-    region, chrom =  [0, 150617247], 'chr9'
-    N_beads,rep_duration = 10000,5000
+    region, chrom =  [10600000, 21520000], 'chr9'
+    N_beads,rep_duration = 1000,5000
 
     # Paths
-    rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 
     # Run simulation
-    rep = Replikator(rept_path,N_beads,rep_duration)
+    rep = Replikator(rept_path,N_beads,rep_duration,chrom,region)
     f, l_forks, r_forks = rep.run()
     magnetic_field, state = rep.calculate_ising_parameters()

@@ -15,7 +15,7 @@ from openmm.app import PDBFile, PDBxFile, ForceField, Simulation, PDBReporter, P
 from RepliSage_utils import *
 
 class MD_LE:
-    def __init__(self,M,N,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,Cs=None):
+    def __init__(self,M,N,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,Cs=None,dynamic_blocks=False):
         '''
         M, N (np arrays): Position matrix of two legs of cohesin m,n. 
                           Rows represent  loops/cohesins and columns represent time
@@ -26,13 +26,13 @@ class MD_LE:
         self.M, self.N, self.Cs = M, N, Cs
         self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, t_rep
         self.rep_duration = len(self.l_forks[0,:])
-        print('Duration of Replication',self.rep_duration)
+        self.dynamic_blocks = dynamic_blocks
         self.N_coh, self.N_steps = M.shape
         self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
         self.out_path = out_path
         self.platform = platform
     
-    def run_pipeline(self,run_MD=True,sim_step=10,write_files=False):
+    def run_pipeline(self,run_MD=True,sim_step=5,write_files=False):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -77,7 +77,7 @@ class MD_LE:
             print('Running molecular dynamics...')
             start = time.time()
             for i in range(1,self.N_steps):
-                if np.all(self.Cs!=None): self.change_blocks(i)
+                if np.all(self.Cs!=None) and self.dynamic_blocks: self.change_blocks(i)
                 self.change_loop(i)
                 if i>=self.t_rep: self.change_repliforce(i)
                 self.simulation.step(sim_step)
@@ -116,8 +116,8 @@ class MD_LE:
 
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
-        self.ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=5)
+        self.ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))')
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=50)
         self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
         self.ev_force.addPerParticleParameter('sigma')
         for i in range(2*self.N_beads):
@@ -166,8 +166,8 @@ class MD_LE:
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.addGlobalParameter('sigma',defaultValue=1)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.4)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-2.0)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-4.0)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-1.0)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-2.0)
         self.comp_force.addPerParticleParameter('s')
         for i in range(2*self.N_beads):
             self.comp_force.addParticle([self.Cs[i%self.N_beads,0]])

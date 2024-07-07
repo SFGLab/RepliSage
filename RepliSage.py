@@ -1,9 +1,6 @@
 #Basic Libraries
-import matplotlib.pyplot as plt
 import numpy as np
 import random as rd
-import scipy.stats as stats
-from tqdm import tqdm
 
 # Hide warnings
 import warnings
@@ -154,7 +151,7 @@ def initialize(N_lef, N_beads, avg_loop):
 def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, N_CTCF, l_forks, r_forks, c_ising1=None, c_ising2=None, ising_field=None, spin_state=None):
     N_rep = np.max(np.sum(l_forks+r_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(avg_loop)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
-    ising_norm1, ising_norm2 = -c_ising1, -N_beads*c_ising2/(2*N_lef)
+    ising_norm1, ising_norm2 = -c_ising1, -c_ising2
     Ti = T
     ms, ns = initialize(N_lef, N_beads, avg_loop)
     spin_traj = np.zeros((N_beads, N_steps),dtype=np.int32)
@@ -205,7 +202,7 @@ def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_durat
 
 # Set parameters
 N_beads = int(2e3)
-N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(2e2), int(1e3), 1.5, 0, int(5e3), int(1e4)
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(5e2), int(1e3), 1.5, 0, int(5e3), int(1e4)
 
 # For method paper
 region, chrom =  [0, 3*150617247//20], 'chr9'
@@ -233,7 +230,7 @@ Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj = run_energy_minimization(
     mode='Metropolis', N_lef=N_lef, N_beads=N_beads,
     avg_loop=avg_loop, L=L, R=R, kappa=10, f=1, b=0.2, c_rep=2, N_CTCF=N_CTCF,
     l_forks=l_forks, r_forks=r_forks,
-    c_ising1=0.4, c_ising2=10.0, spin_state=state, ising_field=magnetic_field
+    c_ising1=1.0, c_ising2=1.0, spin_state=state, ising_field=magnetic_field
 )
 end = time.time()
 elapsed = end - start
