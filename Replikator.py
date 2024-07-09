@@ -88,7 +88,7 @@ class Replikator:
     def calculate_ising_parameters(self):
         magnetic_field = min_max_normalize(self.avg_fx,-1,1)
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
-        return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int64)
+        return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
 def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
     sf = np.zeros((N_beads,rep_duration))

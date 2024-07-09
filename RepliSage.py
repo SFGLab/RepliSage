@@ -17,7 +17,6 @@ from Replikator import *
 from RepliSage_preproc import *
 from RepliSage_plots import *
 from RepliSage_md import *
-from RepliSage_em import *
 
 def preprocessing(bedpe_file, region, chrom, N_beads):
     L, R, dists = binding_vectors_from_bedpe(bedpe_file, N_beads, region, chrom, False, False)
@@ -111,9 +110,8 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
 @njit
 def get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2):
     spin_value = spins[spin_idx]
-    J_diff = J[spin_idx, :] - J[spin_idx, :]
     dE1 = -2 * h[spin_idx] * spin_value
-    dE2 = -2 * np.sum(J_diff * spin_value * spins) + 2 * J_diff[spin_idx] * spin_value ** 2
+    dE2 = -2 * np.sum(J[spin_idx, :] * spins)
     return ising_norm1 * dE1 + ising_norm2 * dE2
 
 @njit
@@ -190,7 +188,7 @@ def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_durat
                     spin_state[spin_idx] *= -1
                     
             Ms[j, i], Ns[j, i] = ms[j], ns[j]
-            if ising_norm1!=0 or ising_norm2!=0: spin_traj[:,i] = spin_state
+            spin_traj[:,i] = spin_state
 
         if i % MC_step == 0:
             Es[i//MC_step] = E
@@ -208,7 +206,7 @@ N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(5e2), in
 region, chrom =  [0, 3*150617247//20], 'chr9'
 out_path = f'with_md'
 bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-rept_path = '/home/skorsak/Data/Replication/sc_timing/Chr9_replication_state_filtered.mat'
+rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 out_path = 'output'
 make_folder(out_path)
 
