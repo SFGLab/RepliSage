@@ -20,7 +20,7 @@ def make_folder(folder_name):
         os.mkdir(folder_name+'/other')
         os.mkdir(folder_name+'/pdbs')
     except OSError as error:
-        print(f'Directory with name "{folder_name}" already exists! No problem lets continue!')
+        print(f'Directory with name "{folder_name}" already exists! Directory will be overwritten.')
     return folder_name
 
 ############# Creation of mmcif and psf files #############

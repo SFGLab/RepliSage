@@ -8,10 +8,6 @@ import time
 from numba import njit
 warnings.filterwarnings('ignore')
 
-# scipy
-from scipy.stats import norm
-from scipy.stats import poisson
-
 # My own libraries
 from Replikator import *
 from RepliSage_preproc import *
@@ -74,7 +70,6 @@ def E_cross(ms, ns, k_norm):
 
 @njit
 def E_fold(ms, ns, fold_norm):
-    N_lef = len(ms)
     folding = np.sum(np.log(ns - ms))
     return fold_norm * folding
 
@@ -109,9 +104,8 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
 
 @njit
 def get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2):
-    spin_value = spins[spin_idx]
-    dE1 = -2 * h[spin_idx] * spin_value
-    dE2 = -2 * np.sum(J[spin_idx, :] * spins)
+    dE1 = 2 * h[spin_idx] * spins[spin_idx]
+    dE2 = 2 * (np.sum(J[spin_idx, :] * spins)-J[spin_idx, spin_idx] * spins[spin_idx])
     return ising_norm1 * dE1 + ising_norm2 * dE2
 
 @njit
@@ -146,10 +140,10 @@ def initialize(N_lef, N_beads, avg_loop):
     return ms, ns
 
 @njit
-def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, N_CTCF, l_forks, r_forks, c_ising1=None, c_ising2=None, ising_field=None, spin_state=None):
+def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mode, avg_loop, L, R, kappa, f, b, c_rep, N_lef, N_beads, l_forks, r_forks, c_ising1=None, c_ising2=None, ising_field=None, spin_state=None):
     N_rep = np.max(np.sum(l_forks+r_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(avg_loop)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
-    ising_norm1, ising_norm2 = -c_ising1, -c_ising2
+    ising_norm1, ising_norm2 = -c_ising1, -N_beads*c_ising2/N_lef
     Ti = T
     ms, ns = initialize(N_lef, N_beads, avg_loop)
     spin_traj = np.zeros((N_beads, N_steps),dtype=np.int32)
@@ -178,15 +172,15 @@ def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_durat
                 ms[j], ns[j] = m_new, n_new
                 E += dE
 
-            if ising_norm1 != 0 or ising_norm2 != 0:
-                J[m_new,n_new],J[n_new,m_new]=1,1
-                J[ms[j],ns[j]],J[ns[j],ms[j]]=0,0
-                spin_idx = np.random.randint(N_beads)
-                dE_ising = get_dE_ising(spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2)
-                if dE_ising <= 0 or np.exp(-dE_ising / Ti) > np.random.rand():
-                    E_is += dE_ising
-                    spin_state[spin_idx] *= -1
-                    
+                if ising_norm1 != 0 or ising_norm2 != 0:
+                    J[m_new,n_new],J[n_new,m_new]=1,1
+                    J[ms[j],ns[j]],J[ns[j],ms[j]]=0,0
+                    spin_idx = np.random.randint(N_beads)
+                    dE_ising = get_dE_ising(spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2)
+                    if dE_ising <= 0 or np.exp(-dE_ising / Ti) > np.random.rand():
+                        E_is += dE_ising
+                        spin_state[spin_idx] *= -1
+                
             Ms[j, i], Ns[j, i] = ms[j], ns[j]
             spin_traj[:,i] = spin_state
 
@@ -199,11 +193,11 @@ def run_energy_minimization(N_steps, MC_step, burnin, T, T_min, t_rep, rep_durat
     return Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj
 
 # Set parameters
-N_beads = int(2e3)
-N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(5e2), int(1e3), 1.5, 0, int(5e3), int(1e4)
+N_beads = int(1e4)
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e4), int(5e2), int(1e3), 1.5, 0, int(2e3), int(5e3)
 
 # For method paper
-region, chrom =  [0, 3*150617247//20], 'chr9'
+region, chrom =  [0, 150617247], 'chr9'
 out_path = f'with_md'
 bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
 rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
@@ -212,11 +206,16 @@ make_folder(out_path)
 
 rep = Replikator(rept_path,N_beads,rep_duration,chrom,region)
 rep_frac, l_forks, r_forks = rep.run()
-magnetic_field, state = rep.calculate_ising_parameters()
+epigenetic_field, state = rep.calculate_ising_parameters()
+
+plt.plot(epigenetic_field)
+plt.ylabel('Epigenetic Field')
+plt.grid()
+plt.show()
 
 # Preprocessing
 L, R, dists, N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=N_beads)
-N_lef= N_CTCF
+N_lef= 1000
 avg_loop = int(np.average(dists))+1
 print('N_CTCF=',N_CTCF)
 
@@ -224,11 +223,11 @@ print('N_CTCF=',N_CTCF)
 start = time.time()
 print('\nRunning RepliSage...')
 Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj = run_energy_minimization(
-    N_steps=N_steps, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, t_rep=t_rep, rep_duration=rep_duration,
+    N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=t_rep, rep_duration=rep_duration,
     mode='Metropolis', N_lef=N_lef, N_beads=N_beads,
-    avg_loop=avg_loop, L=L, R=R, kappa=10, f=1, b=0.2, c_rep=2, N_CTCF=N_CTCF,
+    avg_loop=avg_loop, L=L, R=R, kappa=10, f=1, b=0.2, c_rep=2.0,
     l_forks=l_forks, r_forks=r_forks,
-    c_ising1=1.0, c_ising2=1.0, spin_state=state, ising_field=magnetic_field
+    c_ising1=1.0, c_ising2=0.5, spin_state=state, ising_field=epigenetic_field
 )
 end = time.time()
 elapsed = end - start
@@ -243,6 +242,6 @@ np.save(f'{out_path}/other/Ns.npy', Ns)
 np.save(f'{out_path}/other/Es.npy', Es)
 np.save(f'{out_path}/other/spin_traj.npy', spin_traj)
 
-platform='OpenCL'
-md = MD_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,spin_traj)
-md.run_pipeline(write_files=True)
+# platform='OpenCL'
+# md = MD_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,spin_traj)
+# md.run_pipeline(write_files=True)
