@@ -56,10 +56,10 @@ class EM_LE:
             # Forcefield
             cs = self.Cs[:,i] if np.all(self.Cs!=None) else None
             self.add_forcefield(ms,ns,cs)
-            self.change_repliforce(i)
             
             # Minimize energy
             self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
+            self.change_repliforce(i)
             self.simulation.context.setPositions(pdb.positions)
             self.simulation.minimizeEnergy()
             self.state = self.simulation.context.getState(getPositions=True)
