@@ -50,8 +50,8 @@ class Replikator:
             delta_x = (end_idx - start_idx)
             segment_slope = (self.avg_fx[end_idx] - self.avg_fx[start_idx]) / delta_x
             sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
-            avg_slopes[extr] = 1/np.abs(segment_slope)
-            std_slopes[extr] = 1/sigma_slope
+            avg_slopes[extr] = np.abs(segment_slope)
+            std_slopes[extr] = sigma_slope
         self.speed_avg = np.average(avg_slopes)
         self.speed_std = np.average(std_slopes)
         self.speed_ratio = self.speed_std/self.speed_avg

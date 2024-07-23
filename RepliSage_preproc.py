@@ -32,14 +32,20 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     
     # Compute the matrix
     distances = list()
-    L, R = np.zeros(N_beads),np.zeros(N_beads)
+    J = np.zeros((N_beads,N_beads), dtype=np.float64)
+    L, R = np.zeros(N_beads, dtype=np.float64),np.zeros(N_beads, dtype=np.float64)
     for i in range(len(df)):
         x, y = (df[1][i]+df[2][i])//2, (df[4][i]+df[5][i])//2
         distances.append(distance_point_line(x,y))
+        J[x,y] = J[y,x] = 1
         if df[7][i]>=0: L[x] += df[6][i]*(1-df[7][i])
         if df[8][i]>=0: L[y] += df[6][i]*(1-df[8][i])
         if df[7][i]>=0: R[x] += df[6][i]*df[7][i]
         if df[8][i]>=0: R[y] += df[6][i]*df[8][i]
+
+    for i in range(N_beads):
+        J[i,(i+1)%N_beads], J[i,(i-1)%N_beads] = 1, 1
+        J[(i+1)%N_beads,i], J[(i-1)%N_beads,i] = 1, 1
     
     # Normalize (if neccesary): it means to convert values to probabilities
     if normalization:
@@ -67,7 +73,7 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     print('Average Initial loop size <average loop size>/8=',np.average(distances)/8)
     print('Average logarithmic loop size',np.average(np.log(distances+1)))
 
-    return L, R, distances
+    return L, R, J, distances
 
 def get_rnap_energy(path,region,chrom,N_beads,normalization):
     '''

@@ -71,7 +71,7 @@ def run_simulation(L, T, initiation_rate, speed_ratio, speed_mean):
         init_locs = np.nonzero(initiate_forks)[0]
         for init in init_locs:
             if replicated_dna[init, t-1] == 0:
-                vel = np.random.normal(speed_mean, speed_mean * speed_ratio, 1)[0]
+                vel = np.random.normal(2, speed_mean * speed_ratio, 1)[0]
                 vs[init] = max(vel, 1)
         replicated_dna[initiate_forks, t] = 1
         

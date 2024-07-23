@@ -131,9 +131,9 @@ def make_timeplots(Es, Fs, Bs, Rs, burnin, path=None):
 
 def ising_traj_plot(traj,save_path):
     figure(figsize=(10, 15),dpi=100)
-    plt.imshow(traj,cmap='bwr',aspect='auto')
+    plt.imshow(traj,cmap='bwr_r',aspect='auto')
     plt.xlabel('Computational Time',fontsize=20)
     plt.ylabel('Region', fontsize=20)
-    plt.title('Epigenetic Coloring Spread',fontsize=25)
+    plt.title('Epigenetic Mark Spread',fontsize=25)
     plt.savefig(save_path+'/plots/ising_traj.png',format='png',dpi=100)
     plt.show()
