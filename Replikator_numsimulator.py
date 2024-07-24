@@ -81,7 +81,7 @@ def run_simulation(L, T, initiation_rate, speed_ratio, speed_mean):
         if np.all(replicated_dna[:, t-1] == 1):
             dna_is_replicated = True
             T_final = t
-
+        
         f[:, t] = replicated_dna[:, t]
         t += 1
 

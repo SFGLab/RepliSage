@@ -9,7 +9,7 @@ from openmm.app import PDBxFile, ForceField, Simulation, PDBxReporter, DCDReport
 from RepliSage_utils import *
 
 class EM_LE:
-    def __init__(self,M,N,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,Cs=None,dynamic_blocks=True):
+    def __init__(self,M,N,rep_frac,t_rep,N_beads,burnin,MC_step,out_path,platform,Cs=None,dynamic_blocks=True):
         '''
         M, N (np arrays): Position matrix of two legs of cohesin m,n. 
                           Rows represent  loops/cohesins and columns represent time
@@ -18,8 +18,8 @@ class EM_LE:
         out_path (int): the out_path where the simulation will save structures etc.
         '''
         self.M, self.N, self.Cs = M, N, Cs
-        self.l_forks, self.r_forks, self.t_rep = l_forks, r_forks, t_rep
-        self.rep_duration = len(self.l_forks[0,:])
+        self.replicated_dna, self.t_rep = rep_frac, t_rep
+        self.rep_duration = len(self.replicated_dna[0,:])
         self.dynamic_blocks = dynamic_blocks
         self.N_coh, self.N_steps = M.shape
         self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
@@ -64,15 +64,15 @@ class EM_LE:
             self.simulation.minimizeEnergy()
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/pdbs/model_{(i-self.burnin)//self.step}.cif', 'w'))
-        print('Energy minimization done :D\n')
+        print('Energy minimization done :D')
 
     def change_repliforce(self,i):
         if i>=self.t_rep and i<self.t_rep+self.rep_duration:
-            locs1 = np.nonzero(self.l_forks[:,i-self.t_rep])[0]
-            locs2 = np.nonzero(self.r_forks[:,i-self.t_rep])[0]
-            locs = np.union1d(locs1,locs2)
-            for l in locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.4,5e1])
+            rep_dna = self.replicated_dna[:,i-self.t_rep]
+            rep_locs = np.nonzero(rep_dna)[0]
+            print(f'Percentage of replicated dna {len(rep_locs)/self.N_beads*100}%')
+            for l in rep_locs:
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.4,1e3])
         elif i>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
                 self.repli_force.setBondParameters(j,j,j+self.N_beads,[10.0,5.0])
@@ -113,7 +113,7 @@ class EM_LE:
         self.LE_force = mm.HarmonicBondForce()
         for i in range(self.N_coh):
             self.LE_force.addBond(ms[i], ns[i], 0.05, 3e4)
-            self.LE_force.addBond(self.N_beads+ms[i], self.N_beads+ns[i], 0.05, 3e4)
+            self.LE_force.addBond(self.N_beads+ms[i], self.N_beads+ns[i], 0.0, 3e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self):
@@ -122,7 +122,7 @@ class EM_LE:
         self.repli_force.addPerBondParameter('r0')
         self.repli_force.addPerBondParameter('D')
         for i in range(self.N_beads):
-            self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
+            self.repli_force.addBond(i, i + self.N_beads, [0,5e3])
         self.system.addForce(self.repli_force)
 
     def add_blocks(self,cs):
@@ -130,8 +130,8 @@ class EM_LE:
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.addGlobalParameter('sigma',defaultValue=1)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.4)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-1.0)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-2.0)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-4.0)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-8.0)
         self.comp_force.addPerParticleParameter('s')
         for i in range(2*self.N_beads):
             self.comp_force.addParticle([cs[i%self.N_beads]])

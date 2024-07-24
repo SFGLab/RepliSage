@@ -188,13 +188,6 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
                     J[m_old,n_old],J[n_old,m_old]=0,0
                     J[ms[j],ns[j]],J[ns[j],ms[j]]=1,1
 
-            # Spin energy difference
-            # if (ising_norm1 != 0 or ising_norm2 != 0) and i%MC_step==0:
-            #     for spin_idx in range(N_beads):
-            #         dE_ising = get_dE_ising(spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2,m_old,n_old,ms[j],ns[j])
-            #         if dE_ising <= 0 or np.exp(-dE_ising / Ti) > np.random.rand():
-            #             E_is += dE_ising
-            #             spin_state[spin_idx] *= -1
             if ising_norm1 != 0 or ising_norm2 != 0:
                 choices = np.array([ms[j],ns[j]],dtype=np.int32)
                 spin_idx = np.random.choice(choices)
@@ -202,7 +195,7 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
                 if dE_ising <= 0 or np.exp(-dE_ising / Ti) > np.random.rand():
                     E_is += dE_ising
                     spin_state[spin_idx] *= -1
-                
+
             Ms[j, i], Ns[j, i] = ms[j], ns[j]
             spin_traj[:,i] = spin_state
 
@@ -218,7 +211,7 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
 
 # Set parameters
 N_beads = int(2e3)
-N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(2e2), int(1e3), 1.5, 0.0, int(5e3), int(1e4)
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(1e2), int(1e3), 1.5, 0.0, int(5e3), int(1e4)
 
 # For method paper
 region, chrom =  [0, 150617247//20], 'chr9'
@@ -267,5 +260,5 @@ np.save(f'{out_path}/other/Es.npy', Es)
 np.save(f'{out_path}/other/spin_traj.npy', spin_traj)
 
 platform='OpenCL'
-md = EM_LE(Ms,Ns,l_forks,r_forks,t_rep,N_beads,burnin,MC_step,out_path,platform,spin_traj)
+md = EM_LE(Ms,Ns,rep_frac,t_rep,N_beads,burnin,MC_step,out_path,platform,spin_traj)
 md.run_pipeline()
