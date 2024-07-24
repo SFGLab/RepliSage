@@ -45,15 +45,27 @@ class EM_LE:
         
         # Define System
         print('Minimizing energy...')
+        pbar = tqdm(total=(self.N_steps-self.burnin)//self.step, desc='Progress of Simulation.')
         platform = mm.Platform.getPlatformByName(self.platform)
-        for i in tqdm(range(self.burnin,self.N_steps,self.step)):
+        for i in range(self.burnin,self.N_steps,self.step):
+            # Compyte replicated DNA
+            if i<self.t_rep:
+                rep_per = 0
+            elif i>=self.t_rep and i<self.t_rep+self.rep_duration:
+                rep_per = np.count_nonzero(self.replicated_dna[:,i-self.t_rep])/self.N_beads*100
+            else:
+                rep_per = 100
+            pbar.update(1)
+            pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
+
+            # Set up simulation
             pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
             forcefield = ForceField('forcefields/classic_sm_ff.xml')
             self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=1*mm.unit.nanometer)
             integrator = mm.LangevinIntegrator(310, 0.1, 1 * mm.unit.femtosecond)
-            ms,ns=self.M[:,i], self.N[:,i]
             
             # Forcefield
+            ms,ns=self.M[:,i], self.N[:,i]
             cs = self.Cs[:,i] if np.all(self.Cs!=None) else None
             self.add_forcefield(ms,ns,cs)
             
@@ -64,18 +76,18 @@ class EM_LE:
             self.simulation.minimizeEnergy()
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/pdbs/model_{(i-self.burnin)//self.step}.cif', 'w'))
+        pbar.close()
         print('Energy minimization done :D')
 
     def change_repliforce(self,i):
         if i>=self.t_rep and i<self.t_rep+self.rep_duration:
             rep_dna = self.replicated_dna[:,i-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
-            print(f'Percentage of replicated dna {len(rep_locs)/self.N_beads*100}%')
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.4,1e3])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[1.0,1e3])
         elif i>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[10.0,5.0])
+                self.repli_force.setBondParameters(j,j,j+self.N_beads,[4.0,5.0])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def add_evforce(self):
