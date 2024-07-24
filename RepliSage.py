@@ -154,7 +154,7 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
     ising_norm1, ising_norm2 = -c_ising1, -c_ising2
     Ti = T
     ms, ns = initialize(N_lef, N_beads)
-    spin_traj = np.zeros((N_beads, N_steps),dtype=np.int32)
+    spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
     if ising_norm1!=0 or ising_norm2!=0: J = compute_J(ms,ns,N_beads)
     E = get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, 0, l_forks, r_forks)
     if ising_norm1!=0 or ising_norm2!=0: E_is = E_ising(spin_state,J,ising_field,ising_norm1,ising_norm2)
@@ -163,8 +163,7 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Js = np.zeros((N_beads,N_beads,(N_steps//MC_step)), dtype=np.int32)
-    Ms, Ns = np.zeros((N_lef, N_steps), dtype=np.int32), np.zeros((N_lef, N_steps), dtype=np.int32)
+    Ms, Ns = np.zeros((N_lef, N_steps//MC_step), dtype=np.int32), np.zeros((N_lef, N_steps//MC_step), dtype=np.int32)
 
     for i in range(N_steps):
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration - 1)
@@ -196,22 +195,22 @@ def run_energy_minimization(N_steps, MC_step, T, T_min, t_rep, rep_duration, mod
                     E_is += dE_ising
                     spin_state[spin_idx] *= -1
 
-            Ms[j, i], Ns[j, i] = ms[j], ns[j]
-            spin_traj[:,i] = spin_state
+            if i % MC_step == 0:
+                Ms[j, i//MC_step], Ns[j, i//MC_step] = ms[j], ns[j]
+                spin_traj[:,i//MC_step] = spin_state
 
         if i % MC_step == 0:
             Es[i//MC_step] = E
-            if ising_norm1!=0 or ising_norm2!=0: 
+            if ising_norm1!=0 or ising_norm2!=0:
                 Es_ising[i//MC_step] = E_is
-                Js[:,:,i//MC_step] = J
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
-    return Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj, Js
+    return Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj
 
 # Set parameters
 N_beads = int(2e3)
-N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(1e2), int(1e3), 1.5, 0.0, int(5e3), int(1e4)
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(4e2), int(1e3), 1.8, 0.0, int(5e3), int(1e4)
 
 # For method paper
 region, chrom =  [0, 150617247//20], 'chr9'
@@ -239,7 +238,7 @@ print('N_CTCF=',N_CTCF)
 # Running the simulation
 start = time.time()
 print('\nRunning RepliSage...')
-Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj, Js = run_energy_minimization(
+Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj = run_energy_minimization(
     N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=t_rep, rep_duration=rep_duration,
     mode='Metropolis', N_lef=N_lef, N_beads=N_beads,
     avg_loop=avg_loop, L=L, R=R, kappa=10, f=1.0, b=0.2, c_rep=2.0,

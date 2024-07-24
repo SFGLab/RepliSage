@@ -45,14 +45,14 @@ class EM_LE:
         
         # Define System
         print('Minimizing energy...')
-        pbar = tqdm(total=(self.N_steps-self.burnin)//self.step, desc='Progress of Simulation.')
+        pbar = tqdm(total=self.N_steps-self.burnin+1, desc='Progress of Simulation.')
         platform = mm.Platform.getPlatformByName(self.platform)
-        for i in range(self.burnin,self.N_steps,self.step):
+        for i in range(self.burnin,self.N_steps):
             # Compyte replicated DNA
-            if i<self.t_rep:
+            if i*self.step<self.t_rep:
                 rep_per = 0
-            elif i>=self.t_rep and i<self.t_rep+self.rep_duration:
-                rep_per = np.count_nonzero(self.replicated_dna[:,i-self.t_rep])/self.N_beads*100
+            elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
+                rep_per = np.count_nonzero(self.replicated_dna[:,i*self.step-self.t_rep])/self.N_beads*100
             else:
                 rep_per = 100
             pbar.update(1)
@@ -65,8 +65,8 @@ class EM_LE:
             integrator = mm.LangevinIntegrator(310, 0.1, 1 * mm.unit.femtosecond)
             
             # Forcefield
-            ms,ns=self.M[:,i], self.N[:,i]
-            cs = self.Cs[:,i] if np.all(self.Cs!=None) else None
+            ms,ns=self.M[:,i//self.step], self.N[:,i//self.step]
+            cs = self.Cs[:,i//self.step] if np.all(self.Cs!=None) else None
             self.add_forcefield(ms,ns,cs)
             
             # Minimize energy
