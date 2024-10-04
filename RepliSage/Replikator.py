@@ -3,16 +3,25 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.signal import find_peaks
 from sklearn import preprocessing
-from sklearn.metrics import mutual_info_score
 from common import *
-from numsimulator import *
+from replication_simulator import *
 import mat73
 from minepy import MINE
 import time
 from tqdm import tqdm
 
 class Replikator:
-    def __init__(self,rept_data_path,sim_L,sim_T,chrom,coords=None):
+    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None):
+        '''
+        Initialization of the data preprocessing.
+        ------------------------------------------
+        Input data needed:
+        rept_data_path: the path with single cell replication timing data.
+        sim_L: the simulation length of the replication simulation
+        sim_T: the replication time duration of replication simulation.
+        chrom: the chromosome of interest
+        coords: the region of interest as list [start,end]. It should be a list.
+        '''
         self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
         self.data = mat73.loadmat(rept_data_path)
         self.gen_windows = self.data['genome_windows'][eval(chrom[-1])-1][0]
@@ -20,6 +29,9 @@ class Replikator:
         self.L, self.T = sim_L, sim_T
     
     def process_matrix(self):
+        '''
+        Import and rescale the matrices of single cell replication timing.
+        '''
         min_value = np.min(np.nan_to_num(self.mat[self.mat>0]))
         self.mat = np.nan_to_num(self.mat,nan=min_value)
         min_max_scaler = preprocessing.MinMaxScaler()
@@ -29,6 +41,10 @@ class Replikator:
             self.mat = self.mat[:,(winds_end > self.coords[0]) & (winds_str < self.coords[1])]
 
     def compute_f(self):
+        '''
+        Compute the averages and standard deviations across the single cell replication matrix.
+        Here we compute both averages over cell circle time and over spartial dimensions.
+        '''
         afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
         min_avg, max_std = np.min(afx[afx>0]), np.min(sfx)
         afx[afx<=0], sfx[sfx<=0] = min_avg, max_std
@@ -38,10 +54,20 @@ class Replikator:
         self.std_ft = min_max_normalize(reshape_array(sft,self.T))        
 
     def compute_peaks(self,prominence=0.01):
+        '''
+        Here we compute peaks and dips of the replication timing curves.
+        ----------------------------------------------
+        Input:
+        prominence: it is the prominence parameter from the scipy function: find_peaks().
+        '''
         self.peaks, _ = find_peaks(self.avg_fx,prominence=prominence)
         self.dips, _ = find_peaks(-self.avg_fx,prominence=prominence)
 
     def compute_slopes(self):
+        '''
+        Here the slopes between successive maxima of the replication curves are estimated.
+        Slopes of replication timing curve should correlate with the speed of replication forks.
+        '''
         extrema_indices = np.sort(np.concatenate((self.peaks, self.dips)))
         extrema_indices_sorted = np.sort(extrema_indices)
         print('Computing slopes of replication curves...')
@@ -63,6 +89,9 @@ class Replikator:
         print('Done!\n')
 
     def compute_init_rate(self):
+        '''
+        Estimation of the initiation rate function I(x,t).
+        '''
         self.initiation_rate = np.zeros((self.L,self.T))
         print('Computing initiation rate...')
         mus = self.T*(1-self.avg_fx)
@@ -77,23 +106,42 @@ class Replikator:
         print('Computation Done! <3\n')
 
     def prepare_data(self):
+        '''
+        This function prepares the data and computes the initiation rate.
+        The functions are called in the correct sequence here.
+        '''
         self.process_matrix()
         self.compute_f()
         self.compute_peaks()
         self.compute_slopes()
         self.compute_init_rate()
 
-    def run(self,scale=10,viz=True):
+    def run(self):
+        '''
+        This function calls replication simulation.
+        '''
         self.prepare_data()
-        self.sim_f, l_forks, r_forks = numerical_simulator(self.L,self.T,scale*self.initiation_rate,self.speed_ratio,self.speed_avg,viz=viz)
+        repsim = ReplicationSimulator(self.L, self.T, self.initiation_rate, self.speed_ratio)
+        self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
+        repsim.visualize_simulation()
         return self.sim_f, l_forks, r_forks
     
     def calculate_ising_parameters(self):
+        '''
+        Calculate compartmentalization related data.
+        We connect compartmentalization with early and late replication timing sites.
+        '''
         magnetic_field = -2*(self.avg_fx-np.mean(self.avg_fx))/(np.max(self.avg_fx)-np.min(self.avg_fx))
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
-def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
+def run_loop(N_trials:int,scale=10,N_beads=10000,rep_duration=5000):
+    '''
+    For validation purposes, we can run a number of independent replication timing experiments.
+    When we run these experiments, we can average the replication fraction of each one of them.
+    The result should correlate highly with the experimental replication timing.
+    Otherwise, the hyperparameters needs to be reconfigured.
+    '''
     sf = np.zeros((N_beads,rep_duration))
     chrom = 'chr9'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
@@ -109,7 +157,7 @@ def run_loop(N_trials,scale=10,N_beads=10000,rep_duration=5000):
 
     # Replication fraction plots
     plt.figure(figsize=(20, 5),dpi=200)
-    plt.plot(np.average(sf,axis=1),'b-',label='Simulated')
+    plt.plot(min_max_normalize(np.average(sf,axis=1)),'b-',label='Simulated')
     plt.xlabel('DNA position',fontsize=18)
     plt.ylabel('Simulated Replication Fraction',fontsize=18)
     plt.ylim((0.5,1))

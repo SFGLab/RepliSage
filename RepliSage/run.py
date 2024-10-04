@@ -1,4 +1,13 @@
-#Basic Libraries
+#############################################################################
+################### SEBASTIAN KORSAK 2024, WARSAW, POLAND ###################
+#############################################################################
+## This script runs a stochastic simulation, similar like LoopSage. #########
+## The given script is parallelized across CPU cores and has been modified ##
+## to simulate the propagation of replication forks, which act as barriers. #
+#############################################################################
+#############################################################################
+# 
+# Basic Libraries
 import numpy as np
 import random as rd
 
@@ -15,13 +24,25 @@ from plots import *
 from md import *
 from em import *
 
-def preprocessing(bedpe_file, region, chrom, N_beads):
+def preprocessing(bedpe_file:str, region:list, chrom:str, N_beads:int):
+    '''
+    It computes the binding potential and the number of CTCF motifs.
+    ---------------------------------------------------------------
+    Input:
+    bedpe_file: the path of the bedpe file.
+    region: the coordinates of region in genomic distance units, in format of list [start,end].
+    chrom: the chromosome of interest.
+    N_beads: the number of simulation beads.
+    '''
     L, R, J, dists = binding_vectors_from_bedpe(bedpe_file, N_beads, region, chrom, False, False)
     N_CTCF = np.max([np.count_nonzero(L), np.count_nonzero(R)])
     return L, R, J, dists, N_CTCF
 
 @njit
 def Kappa(mi,ni,mj,nj):
+    '''
+    Computes the crossing function of LoopSage.
+    '''
     k=0
     if mi<mj and mj<ni and ni<nj: k+=1 # np.abs(ni-mj)+1
     if mj<mi and mi<nj and nj<ni: k+=1 # np.abs(nj-mi)+1
@@ -30,17 +51,26 @@ def Kappa(mi,ni,mj,nj):
 
 @njit
 def E_bind(L, R, ms, ns, bind_norm):
+    '''
+    The binding energy.
+    '''
     binding = np.sum(L[ms] + R[ns])
     E_b = bind_norm * binding
     return E_b
 
 @njit
 def E_repli(l_forks, r_forks, ms, ns, t, rep_norm):
+    '''
+    The replication energy.
+    '''
     replication = np.sum(l_forks[ms, t] + l_forks[ns, t] + r_forks[ms, t] + r_forks[ns, t])
     return rep_norm * replication
 
 @njit(parallel=True)
 def E_cross(ms, ns, k_norm):
+    '''
+    The crossing energy.
+    '''
     crossing = 0
     N_lef = len(ms)
     for i in range(N_lef):
@@ -50,31 +80,49 @@ def E_cross(ms, ns, k_norm):
 
 @njit
 def E_fold(ms, ns, fold_norm):
+    ''''
+    The folding energy.
+    '''
     folding = np.sum(np.log(ns - ms))
     return fold_norm * folding
 
 @njit
 def get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, t, l_forks, r_forks):
+    ''''
+    The totdal energy.
+    '''
     energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm) + E_fold(ms, ns, fold_norm)
     if rep_norm!=None: energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
     return energy
 
 @njit
 def get_dE_bind(L,R,bind_norm,ms,ns,m_new,n_new,idx):
+    '''
+    Energy difference for binding energy.
+    '''
     return bind_norm*(L[m_new]+R[n_new]-L[ms[idx]]-R[ns[idx]])
     
 @njit
 def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
+    '''
+    Energy difference for folding energy.
+    '''
     return fold_norm*(np.log(n_new-m_new)-np.log(ns[idx]-ms[idx]))
 
 @njit
 def get_dE_rep(l_forks,r_forks, rep_norm, ms,ns,m_new,n_new,t,idx):
+    '''
+    Energy difference for replication energy.
+    '''
     E_rep_new = l_forks[m_new,t]+l_forks[n_new,t]+r_forks[m_new,t]+r_forks[n_new,t]
     E_rep_old = l_forks[ms[idx],t-1]+l_forks[ns[idx],t-1]+r_forks[ms[idx],t-1]+r_forks[ns[idx],t-1]
     return rep_norm*(E_rep_new-E_rep_old)
 
 @njit(parallel=True)
 def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
+    '''
+    Energy difference for crossing energy.
+    '''
     K1, K2 = 0, 0
     N_lef = len(ms)
     for i in range(N_lef):
@@ -85,6 +133,9 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
 
 @njit
 def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks):
+    '''
+    Total energy difference.
+    '''
     dE = 0
     dE += get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
@@ -94,12 +145,18 @@ def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, i
 
 @njit
 def unbind_bind(N_beads):
+    '''
+    Rebinding Monte-Carlo step.
+    '''
     m_new = rd.randint(0, N_beads - 3)
     n_new = m_new + 2
     return int(m_new), int(n_new)
 
 @njit
 def slide(m_old, n_old, N_beads, rw=True):
+    '''
+    Sliding Monte-Carlo step.
+    '''
     choices = np.array([-1, 1], dtype=np.int64)
     r1 = np.random.choice(choices) if rw else -1
     r2 = np.random.choice(choices) if rw else 1
@@ -109,6 +166,9 @@ def slide(m_old, n_old, N_beads, rw=True):
 
 @njit(parallel=True)
 def initialize(N_lef, N_beads):
+    '''
+    Random initial condition of the simulation.
+    '''
     ms, ns = np.zeros(N_lef, dtype=np.int64), np.zeros(N_lef, dtype=np.int64)
     for i in range(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads)
@@ -116,6 +176,9 @@ def initialize(N_lef, N_beads):
 
 @njit
 def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, kappa, f, b, c_rep=1.0, t_rep=np.inf, rep_duration=np.inf, l_forks=None, r_forks=None):
+    '''
+    It performs Monte Carlo or simulated annealing of the simulation.
+    '''
     N_rep = np.max(np.sum(l_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
     Ti = T
@@ -220,7 +283,7 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads = int(1e3)
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 1.8, 0.0, int(1e4), int(2e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 1.7, 0.0, int(1e4), int(2e4)
 
     # Define data and coordinates
     region, chrom =  [178421513, 179421513], 'chr1'
