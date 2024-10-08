@@ -127,7 +127,7 @@ def make_timeplots(Es, Fs, Bs, Rs, burnin, path=None):
     plt.show()
 
 def ising_traj_plot(traj,save_path):
-    figure(figsize=(10, 15),dpi=100)
+    figure(figsize=(20, 15),dpi=200)
     plt.imshow(traj,cmap='bwr_r',aspect='auto')
     plt.xlabel('Computational Time',fontsize=20)
     plt.ylabel('Region', fontsize=20)

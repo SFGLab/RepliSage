@@ -46,8 +46,8 @@ class Replikator:
         Here we compute both averages over cell circle time and over spartial dimensions.
         '''
         afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
-        min_avg, max_std = np.min(afx[afx>0]), np.min(sfx)
-        afx[afx<=0], sfx[sfx<=0] = min_avg, max_std
+        min_avg, avg_std = np.min(afx[afx>0]), np.average(sfx)
+        afx[afx<=0], sfx[sfx<=0] = min_avg, avg_std
         self.avg_fx = min_max_normalize(reshape_array(afx,self.L))
         self.std_fx = min_max_normalize(reshape_array(sfx,self.L))
         self.avg_ft = min_max_normalize(reshape_array(aft,self.T))
@@ -116,12 +116,12 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
 
-    def run(self):
+    def run(self,scale=1):
         '''
         This function calls replication simulation.
         '''
         self.prepare_data()
-        repsim = ReplicationSimulator(self.L, self.T, self.initiation_rate, self.speed_ratio)
+        repsim = ReplicationSimulator(self.L, self.T, scale*self.initiation_rate, self.speed_ratio)
         self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
         repsim.visualize_simulation()
         return self.sim_f, l_forks, r_forks
@@ -135,7 +135,7 @@ class Replikator:
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
-def run_loop(N_trials:int,scale=10,N_beads=10000,rep_duration=5000):
+def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     '''
     For validation purposes, we can run a number of independent replication timing experiments.
     When we run these experiments, we can average the replication fraction of each one of them.
@@ -158,18 +158,12 @@ def run_loop(N_trials:int,scale=10,N_beads=10000,rep_duration=5000):
     # Replication fraction plots
     plt.figure(figsize=(20, 5),dpi=200)
     plt.plot(min_max_normalize(np.average(sf,axis=1)),'b-',label='Simulated')
-    plt.xlabel('DNA position',fontsize=18)
-    plt.ylabel('Simulated Replication Fraction',fontsize=18)
-    plt.ylim((0.5,1))
-    plt.savefig(f'sim_repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
-    plt.show()
-
-    # Replication fraction plots
-    plt.figure(figsize=(20, 5),dpi=200)
     plt.plot(rep.avg_fx,'r-',label='Experimental')
     plt.xlabel('DNA position',fontsize=18)
-    plt.ylabel('Experimental Replication Fraction',fontsize=18)
-    plt.savefig(f'exp_repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
+    plt.ylabel('Replication Fraction',fontsize=18)
+    # plt.ylim((0.5,1))
+    plt.legend()
+    plt.savefig(f'repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
     plt.show()
 
     # Correlations computations
@@ -189,7 +183,7 @@ def main():
     # Parameters
     region, chrom =  [0, 248387328], 'chr1'
     N_beads,rep_duration = 50000,5000
-
+    
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 

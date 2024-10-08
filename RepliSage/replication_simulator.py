@@ -2,9 +2,81 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 from common import *
+from numba import njit, prange
+
+@njit
+def simulator(L,T,initiation_rate,speed_ratio,speed_mean):
+    '''
+    Run replication simulation.
+    '''
+    t, T_final = 1, T
+    dna_is_replicated = False
+
+    # Initialize typed lists
+    rep_fract = list()
+
+    # Initialize arrays
+    vs, t0s = np.zeros(L, dtype=np.float64), np.zeros(L, dtype=np.float64) # Fork propagation speed
+    f = np.zeros((L, T), dtype=np.float64)  # Replication fraction
+    replicated_dna = np.zeros((L, T), dtype=np.int64)  # Forks position
+    r_forks = np.zeros((L, T), dtype=np.int64)
+    l_forks = np.zeros((L, T), dtype=np.int64)
+
+    # Fire randomly origins and propagate forks till dna will be fully replicated
+    while not dna_is_replicated:
+        initiate_forks = np.random.rand(L) < initiation_rate[:, t] # fire origins
+        init_locs = np.nonzero(initiate_forks)[0]
+        for init in init_locs: 
+            if replicated_dna[init, t-1] == 0:
+                vs[init] = np.random.normal(speed_mean, speed_mean * speed_ratio, 1)[0]
+                t0s[init] = t
+        replicated_dna[initiate_forks, t] = 1
+        replicated_dna, vs, t0s, l_forks, r_forks = propagate_forks(L,t,replicated_dna, vs, t0s, l_forks, r_forks)
+        rep_fract.append(np.count_nonzero(replicated_dna[:, t-1]) / L)
+        if np.all(replicated_dna[:, t-1] == 1):
+            dna_is_replicated = True
+            T_final = t
+        
+        f[:, t] = replicated_dna[:, t]
+        t += 1
+
+    f, l_forks, r_forks = f[:, :T_final], l_forks[:, :T_final], r_forks[:, :T_final]
+
+    return f, l_forks, r_forks, T_final, rep_fract
+
+@njit
+def propagate_forks(L,t,replicated_dna, vs, t0s, l_forks, r_forks):
+    '''
+    Propagation of replication forks.
+    ------------------------------------------------
+    Input:
+    t: it is the given time point of the simulation.
+    '''
+    for i in range(L):
+        if replicated_dna[i, t - 1] == 1:
+            v, t0 = vs[i], t0s[i]
+            distance = np.abs(int(round(v*(t-t0))))
+
+            if (i - distance) % L < (i + distance) % L:
+                replicated_dna[(i - distance) % L:(i + distance) % L, t] = 1
+                vs[(i - distance) % L:(i + distance) % L] = v
+                t0s[(i - distance) % L:(i + distance) % L] = t0
+            else:
+                if (i + distance) > L:
+                    replicated_dna[i:L, t], replicated_dna[0:(i + distance) % L, t] = 1, 1
+                    vs[i:L], vs[0:(i + distance) % L] = v, v
+                    t0s[i:L], t0s[0:(i + distance) % L] = t0, t0
+                if (i - distance) < 0:
+                    replicated_dna[0:i, t], replicated_dna[(i - distance) % L:L, t] = 1, 1
+                    vs[0:i], vs[(i - distance) % L:L] = v, v
+                    t0s[0:i], t0s[(i - distance) % L:L] = t0, t0
+            replicated_dna[(i - distance) % L, t], replicated_dna[(i + distance) % L, t] = 1, 1
+            r_forks[(i + distance) % L, t] = 1 if replicated_dna[(i + distance) % L, t - 1] == 0 else 0
+            l_forks[(i - distance) % L, t] = 1 if replicated_dna[(i - distance) % L, t - 1] == 0 else 0
+    return replicated_dna, vs, t0s, l_forks, r_forks
 
 class ReplicationSimulator:
-    def __init__(self,L:int, T:int, initiation_rate:np.ndarray, speed_ratio:float, speed_mean=0.05):
+    def __init__(self,L:int, T:int, initiation_rate:np.ndarray, speed_ratio:float, speed_mean=0.1):
         '''
         Set parameters for replication simulation.
         ------------------------------------------
@@ -24,38 +96,7 @@ class ReplicationSimulator:
         '''
         Run replication simulation.
         '''
-        t, T_final = 1, self.T
-        dna_is_replicated = False
-
-        # Initialize typed lists
-        self.rep_fract = list()
-
-        # Initialize arrays
-        self.vs, self.t0s = np.zeros(self.L, dtype=np.float64), np.zeros(self.L, dtype=np.float64) # Fork propagation speed
-        self.f = np.zeros((self.L, self.T), dtype=np.float64)  # Replication fraction
-        self.replicated_dna = np.zeros((self.L, self.T), dtype=np.int64)  # Forks position
-        self.r_forks = np.zeros((self.L, self.T), dtype=np.int64)
-        self.l_forks = np.zeros((self.L, self.T), dtype=np.int64)
-
-        while not dna_is_replicated:
-            initiate_forks = np.random.rand(self.L) < self.initiation_rate[:, t]
-            init_locs = np.nonzero(initiate_forks)[0]
-            for init in init_locs:
-                if self.replicated_dna[init, t-1] == 0:
-                    vel = np.random.normal(2, self.speed_mean * self.speed_ratio, 1)[0]
-                    self.vs[init] = max(vel, 1)
-                    self.t0s[init] = t
-            self.replicated_dna[initiate_forks, t] = 1
-            self.propagate_forks(t)
-            self.rep_fract.append(np.count_nonzero(self.replicated_dna[:, t-1]) / self.L)
-            if np.all(self.replicated_dna[:, t-1] == 1):
-                dna_is_replicated = True
-                T_final = t
-            
-            self.f[:, t] = self.replicated_dna[:, t]
-            t += 1
-
-        self.f, self.l_forks, self.r_forks = self.f[:, :T_final], self.l_forks[:, :T_final], self.r_forks[:, :T_final]
+        self.f, self.l_forks, self.r_forks, T_final, self.rep_fract = simulator(self.L,self.T,self.initiation_rate,self.speed_ratio,self.speed_mean)
 
         if T_final < self.T:
             self.f = expand_columns(self.f, self.T)
@@ -64,35 +105,6 @@ class ReplicationSimulator:
             zero_columns = np.all(self.f == 0, axis=0) & (np.arange(self.T) > self.T / 2)
             self.f[:, zero_columns] = 1
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract
-    
-    def propagate_forks(self,t:int):
-        '''
-        Propagation of replication forks.
-        ---------------------------------
-        Input:
-        t: it is the given time point of the simulation.
-        '''
-        for i in range(self.L):
-            if self.replicated_dna[i, t - 1] == 1:
-                v, t0 = self.vs[i], self.t0s[i]
-                distance = int(round(v*(t-t0)))#int(round(np.random.uniform(0, v + 1, 1)[0]))
-
-                if (i - distance) % self.L < (i + distance) % self.L:
-                    self.replicated_dna[(i - distance) % self.L:(i + distance) % self.L, t] = 1
-                    self.vs[(i - distance) % self.L:(i + distance) % self.L] = v
-                    self.t0s[(i - distance) % self.L:(i + distance) % self.L] = t0
-                else:
-                    if (i + distance) > self.L:
-                        self.replicated_dna[i:self.L, t], self.replicated_dna[0:(i + distance) % self.L, t] = 1, 1
-                        self.vs[i:self.L], self.vs[0:(i + distance) % self.L] = v, v
-                        self.t0s[i:self.L], self.t0s[0:(i + distance) % self.L] = t0, t0
-                    if (i - distance) < 0:
-                        self.replicated_dna[0:i, t], self.replicated_dna[(i - distance) % self.L:self.L, t] = 1, 1
-                        self.vs[0:i], self.vs[(i - distance) % self.L:self.L] = v, v
-                        self.t0s[0:i], self.t0s[(i - distance) % self.L:self.L] = t0, t0
-                self.replicated_dna[(i - distance) % self.L, t], self.replicated_dna[(i + distance) % self.L, t] = 1, 1
-                self.r_forks[(i + distance) % self.L, t] = 1 if self.replicated_dna[(i + distance) % self.L, t - 1] == 0 else 0
-                self.l_forks[(i - distance) % self.L, t] = 1 if self.replicated_dna[(i - distance) % self.L, t - 1] == 0 else 0
 
     def visualize_simulation(self):
         '''
