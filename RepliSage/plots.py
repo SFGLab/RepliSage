@@ -131,6 +131,5 @@ def ising_traj_plot(traj,save_path):
     plt.imshow(traj,cmap='bwr_r',aspect='auto')
     plt.xlabel('Computational Time',fontsize=20)
     plt.ylabel('Region', fontsize=20)
-    plt.title('Epigenetic Mark Spread',fontsize=25)
     plt.savefig(save_path+'/plots/ising_traj.png',format='png',dpi=100)
     plt.show()

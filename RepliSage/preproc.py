@@ -66,11 +66,11 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
         fig.show()
 
     distances = np.array(distances)
-    print('Average loop size:', np.average(distances))
-    print('Median loop size:', np.median(distances))
-    print('Maximum loop size:', np.max(distances))
-    print('Average Initial loop size <average loop size>/8=',np.average(distances)/8)
-    print('Average logarithmic loop size',np.average(np.log(distances+1)))
+    # print('Average loop size:', np.average(distances))
+    # print('Median loop size:', np.median(distances))
+    # print('Maximum loop size:', np.max(distances))
+    # print('Average Initial loop size <average loop size>/8=',np.average(distances)/8)
+    # print('Average logarithmic loop size',np.average(np.log(distances+1)))
 
     return L, R, J, distances
 

@@ -116,7 +116,7 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
 
-    def run(self,scale=1):
+    def run(self,scale=10):
         '''
         This function calls replication simulation.
         '''
@@ -135,7 +135,7 @@ class Replikator:
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
-def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
+def run_loop(N_trials:int,scale=10,N_beads=10000,rep_duration=1000):
     '''
     For validation purposes, we can run a number of independent replication timing experiments.
     When we run these experiments, we can average the replication fraction of each one of them.
@@ -163,7 +163,7 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     plt.ylabel('Replication Fraction',fontsize=18)
     # plt.ylim((0.5,1))
     plt.legend()
-    plt.savefig(f'repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
+    # plt.savefig(f'repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
     plt.show()
 
     # Correlations computations
