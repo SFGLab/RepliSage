@@ -164,11 +164,8 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
 @njit
 def get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, m_old, n_old, m_new, n_new):
     dE1 = -2 * h[spin_idx] * spins[spin_idx]
-    arr = np.arange(len(h))
-    mask = (arr==spin_idx) | (arr==m_old) | (arr==n_old) | (arr==m_new) | (arr==n_new)
-    Js, Ss = J[spin_idx, ~mask], spins[~mask]
-    dE2 = -2 * np.sum(Js*Ss) * spins[spin_idx]
-    dE2 += spins[m_new]*spins[n_new]-spins[m_old]*spins[n_old]
+    dE2 = -2*spins[spin_idx]* np.sum(J[spin_idx,:]*spins)
+    dE2 += np.sum(spins[m_new:n_new]**2)-np.sum(spins[m_old:n_old]**2)
     return ising_norm1 * dE1 + ising_norm2 * dE2
 
 @njit
@@ -222,7 +219,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
     '''
     N_rep = np.max(np.sum(l_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
-    (ising_norm1, ising_norm2) = (-c_ising1, -c_ising2/(N_lef*np.log(N_beads/N_CTCF))) if (c_ising1!=None and c_ising2!=None) else (None, None)
+    (ising_norm1, ising_norm2) = (-c_ising1, -c_ising2/N_lef) if (c_ising1!=None and c_ising2!=None) else (None, None)
     Ti = T
     ms, ns = initialize(N_lef, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
@@ -247,9 +244,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
                 m_new, n_new = slide(ms[j], ns[j], N_beads, rw)
             
             if c_ising1!=None and c_ising2!=None:
-                choices = np.arange(N_beads)
-                # choices = np.array([ms[j],ns[j]],dtype=np.int32)
-                spin_idx = np.random.choice(choices)
+                spin_idx = np.random.choice(np.arange(N_beads))
             
             # Cohesin energy difference
             dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j, rt, l_forks, r_forks, spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2) 
@@ -283,7 +278,7 @@ class StochasticSimulation:
         Import simulation parameters and data.
         '''
         # Import parameters
-        self.N_beads = N_beads if N_beads!=None else int(np.round((region[1]-region[0])/1000))
+        self.N_beads = N_beads if N_beads!=None else int(np.round((region[1]-region[0])/2000))
         self.chrom, self.region = chrom, region
         self.t_rep, self.rep_duration = t_rep, rep_duration
         self.out_path = out_path
@@ -298,7 +293,7 @@ class StochasticSimulation:
 
         # Import loop data
         self.L, self.R, J, dists, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
-        self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
+        self.N_lef= self.N_CTCF if N_lef==None else N_lef
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.')
 
@@ -346,14 +341,14 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads = None
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 1.8, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 0.4, 10.0, 2.0
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
+    f, b, kappa, c_rep = 1.0, 0.5, 10.0, 2.0
     c_ising1, c_ising2 = 1.0, 1.0
     mode, rw, random_spin_state = 'Metropolis', True, True
 
     # Define data and coordinates
-    region, chrom =  [0, 248387328//20], 'chr1'
-    # region, chrom =  [178421513, 179421513], 'chr1'
+    # region, chrom =  [0, 248387328//30], 'chr1'
+    region, chrom =  [178421513, 183421513], 'chr1'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
@@ -362,7 +357,7 @@ def main():
     sim = StochasticSimulation(N_beads,chrom,region, bedpe_file, out_path, None, rept_path, t_rep, rep_duration)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, mode, rw, random_spin_state)
     sim.show_plots()
-    sim.run_em('CUDA')
+    # sim.run_em('CPU')
 
 if __name__=='__main__':
     main()

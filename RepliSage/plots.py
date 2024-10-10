@@ -62,7 +62,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     print('\nPlotting trajectories of cohesins...')
     start = time.time()
     N_coh = len(ms)
-    figure(figsize=(20, 15),dpi=200)
+    figure(figsize=(20, 35),dpi=200)
     color = ["#"+''.join([rd.choice('0123456789ABCDEF') for j in range(6)]) for i in range(N_coh)]
     size = 0.1
     
