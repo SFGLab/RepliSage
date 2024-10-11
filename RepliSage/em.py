@@ -145,7 +145,7 @@ class EM_LE:
         'Block copolymer forcefield for the modelling of compartments.'
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.addGlobalParameter('sigma',defaultValue=1)
-        self.comp_force.addGlobalParameter('r0',defaultValue=0.4)
+        self.comp_force.addGlobalParameter('r0',defaultValue=0.6)
         self.comp_force.addGlobalParameter('Ea',defaultValue=-4.0)
         self.comp_force.addGlobalParameter('Eb',defaultValue=-8.0)
         self.comp_force.addPerParticleParameter('s')

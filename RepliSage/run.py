@@ -57,14 +57,10 @@ def compute_J(ms,ns,N_beads):
     '''
     J = np.zeros((N_beads,N_beads),dtype=np.int32)
     N_lef = len(ms)
-    for i in range(N_lef):
-        m, n = ms[i], ns[i]
-        # J[m,n] = 1
-        # J[n,m] = 1
-        J[m:n,m:n] = 1
-    # for i in range(N_beads):
-    #     J[i,(i+1)%N_beads], J[i,(i-1)%N_beads] = 1, 1
-    #     J[(i+1)%N_beads,i], J[(i-1)%N_beads,i] = 1, 1
+    
+    for i in range(N_beads):
+        J[i,(i+1)%N_beads], J[i,(i-1)%N_beads] = 1, 1
+        J[(i+1)%N_beads,i], J[(i-1)%N_beads,i] = 1, 1
     return J
 
 @njit
@@ -165,11 +161,11 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
 def get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, m_old, n_old, m_new, n_new):
     dE1 = -2 * h[spin_idx] * spins[spin_idx]
     dE2 = -2*spins[spin_idx]* np.sum(J[spin_idx,:]*spins)
-    dE2 += np.sum(spins[m_new:n_new]**2)-np.sum(spins[m_old:n_old]**2)
+    dE2 += np.sum(np.outer(spins[m_new:n_new],spins[m_new:n_new]))-np.sum(np.outer(spins[m_old:n_old],spins[m_old:n_old]))
     return ising_norm1 * dE1 + ising_norm2 * dE2
 
 @njit
-def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks, spins, J, h, spin_idx, ising_norm1, ising_norm2):
+def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks, spins, J, h, spin_idx, ising_norm1=0, ising_norm2=0.0):
     '''
     Total energy difference.
     '''
@@ -178,7 +174,7 @@ def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, i
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm)
     if rep_norm!=None: dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
-    if ising_norm1!=None and ising_norm2!=None: dE += get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, ms[idx], ns[idx], m_new, n_new)
+    if ising_norm1!=0 or ising_norm2!=0: dE += get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, ms[idx], ns[idx], m_new, n_new)
     return dE
 
 @njit
@@ -213,17 +209,19 @@ def initialize(N_lef, N_beads):
     return ms, ns
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, kappa, f, b, c_rep=None, t_rep=np.inf, rep_duration=np.inf, l_forks=None, r_forks=None, c_ising1=None, c_ising2=None, ising_field=None, spin_state=None, rw=True):
+def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, kappa, f, b, c_rep=None, t_rep=np.inf, rep_duration=np.inf, l_forks=None, r_forks=None, c_ising1=0.0, c_ising2=0.0, ising_field=None, spin_state=None, rw=True):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
+    # Initialization of parameters
     N_rep = np.max(np.sum(l_forks,axis=0))
-    fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), N_beads*kappa/N_lef, -N_beads*c_rep/N_rep
-    (ising_norm1, ising_norm2) = (-c_ising1, -c_ising2/N_lef) if (c_ising1!=None and c_ising2!=None) else (None, None)
+    fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), kappa*1e4, -N_beads*c_rep/N_rep
+    (ising_norm1, ising_norm2) = (-c_ising1, -c_ising2/N_lef) if (c_ising1!=0 or c_ising2!=0) else (None, None)
     Ti = T
+    # Initialization of matrices
     ms, ns = initialize(N_lef, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
-    J = compute_J(ms,ns,N_beads) if (c_ising1!=None and c_ising2!=None) else None
+    J = compute_J(ms,ns,N_beads) if (c_ising1!=0 or c_ising2!=0) else None
     E = get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, 0, l_forks, r_forks)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_ising = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -233,18 +231,21 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
     Ms, Ns = np.zeros((N_lef, N_steps//MC_step), dtype=np.int32), np.zeros((N_lef, N_steps//MC_step), dtype=np.int32)
 
     for i in range(N_steps):
+        # Calculate replication time
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
-        for j in prange(N_lef):
-            r = np.random.choice(np.array([0, 1, 2]))
+
+        for j in prange(N_lef): # In each swift we move one cohesin and one random spin
+            # Propose a move for cohesins
+            r = np.random.choice(np.array([0, 1]))
             m_old, n_old = ms[j], ns[j]
             if r == 0:
                 m_new, n_new = unbind_bind(N_beads)
             else:
                 m_new, n_new = slide(ms[j], ns[j], N_beads, rw)
             
-            if c_ising1!=None and c_ising2!=None:
-                spin_idx = np.random.choice(np.arange(N_beads))
+            # Propose a move for spin
+            spin_idx = np.random.choice(np.arange(N_beads))
             
             # Cohesin energy difference
             dE = get_dE(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, m_new, n_new, j, rt, l_forks, r_forks, spin_state, J, ising_field, spin_idx, ising_norm1, ising_norm2) 
@@ -253,20 +254,16 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
             if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                 E += dE
                 ms[j], ns[j] = m_new, n_new
-                if c_ising1!=None and c_ising2!=None:
-                    # J[m_old,n_old],J[n_old,m_old]=0,0
-                    # J[ms[j],ns[j]],J[ns[j],ms[j]]=1,1
-                    J[m_old:n_old,m_old:n_old]-=1
-                    J[ms[j]:ns[j],ms[j]:ns[j]]+=1
+                if c_ising1!=0 or c_ising2!=0:
+                    J[m_old:n_old,m_old:n_old] = 0
+                    J[ms[j]:ns[j],ms[j]:ns[j]] = 1
                     spin_state[spin_idx] *= -1
 
-            if i % MC_step == 0:
-                Ms[j, i//MC_step], Ns[j, i//MC_step] = ms[j], ns[j]
-                spin_traj[:,i//MC_step] = spin_state
-
+        # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
-            # if c_ising1!=None or c_ising2!=None: Es_ising[i//MC_step] = E_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, m_old, n_old, m_new, n_new)
+            Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
+            spin_traj[:,i//MC_step] = spin_state
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=None: Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
@@ -297,15 +294,15 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, b=1.0, kappa=10.0, c_rep=None, c_ising1=None, c_ising2=None, mode='Metropolis',rw=True, random_spin_state=True):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, b=1.0, kappa=10.0, c_rep=None, c_ising1=0.0, c_ising2=0.0, mode='Metropolis',rw=True, random_spin_state=True):
         '''
         Energy minimization script.
         '''
         # Running the simulation
         start = time.time()
         print('\nRunning RepliSage...')
-        self.is_ising = c_ising1!=None and c_ising2!=0
-        if random_spin_state: self.state = np.random.choice([-1, 1], size=self.N_beads)
+        self.is_ising = c_ising1!=0 or c_ising2!=0
+        self.state = np.random.choice([-1, 1], size=self.N_beads).astype(np.int32) if random_spin_state else self.state
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
         self.Ms, self.Ns, self.Es, self.Es_ising, self.Fs, self.Bs, self.Rs, self.spin_traj = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration,
@@ -342,13 +339,13 @@ def main():
     # Set parameters
     N_beads = None
     N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 0.5, 10.0, 2.0
-    c_ising1, c_ising2 = 1.0, 1.0
+    f, b, kappa, c_rep = 1.0, 1.0, 1.0, 2.0
+    c_ising1, c_ising2 = 1.0, 2.0
     mode, rw, random_spin_state = 'Metropolis', True, True
 
     # Define data and coordinates
     # region, chrom =  [0, 248387328//30], 'chr1'
-    region, chrom =  [178421513, 183421513], 'chr1'
+    region, chrom =  [178421513, 186421513], 'chr1'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
@@ -357,7 +354,7 @@ def main():
     sim = StochasticSimulation(N_beads,chrom,region, bedpe_file, out_path, None, rept_path, t_rep, rep_duration)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, mode, rw, random_spin_state)
     sim.show_plots()
-    # sim.run_em('CPU')
+    sim.run_em('CPU')
 
 if __name__=='__main__':
     main()
