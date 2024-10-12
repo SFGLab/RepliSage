@@ -43,7 +43,7 @@ def Kappa(mi,ni,mj,nj):
     '''
     Computes the crossing function of LoopSage.
     '''
-    k=0
+    k=0.0
     if mi<mj and mj<ni and ni<nj: k+=1 # np.abs(ni-mj)+1
     if mj<mi and mi<nj and nj<ni: k+=1 # np.abs(nj-mi)+1
     if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
@@ -85,7 +85,7 @@ def E_cross(ms, ns, k_norm):
     '''
     The crossing energy.
     '''
-    crossing = 0
+    crossing = 0.0
     N_lef = len(ms)
     for i in range(N_lef):
         for j in range(i + 1, N_lef):
@@ -113,12 +113,13 @@ def E_ising(spins, J, h, ising_norm1, ising_norm2):
     return ising_norm1 * E1 + ising_norm2 * E2
 
 @njit
-def get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, t, l_forks, r_forks):
+def get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, t, l_forks, r_forks, spins, J, h, ising_norm1, ising_norm2):
     ''''
     The totdal energy.
     '''
     energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm) + E_fold(ms, ns, fold_norm)
-    if rep_norm!=None: energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
+    if rep_norm!=0.0: energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
+    if ising_norm1!=0.0 or ising_norm2!=0.0: energy += E_ising(spins, J, h, ising_norm1, ising_norm2)
     return energy
 
 @njit
@@ -169,11 +170,14 @@ def get_dE(L, R, bind_norm, fold_norm, k_norm ,rep_norm, ms, ns, m_new, n_new, i
     '''
     Total energy difference.
     '''
-    dE = 0
+    dE = 0.0
     dE += get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm)
-    if rep_norm!=None: dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
+    if rep_norm!=0.0: 
+        dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
+    else:
+        dE+= 0
     if ising_norm1!=0 or ising_norm2!=0: dE += get_dE_ising(spins, J, h, spin_idx, ising_norm1, ising_norm2, ms[idx], ns[idx], m_new, n_new)
     return dE
 
@@ -209,20 +213,21 @@ def initialize(N_lef, N_beads):
     return ms, ns
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, kappa, f, b, c_rep=None, t_rep=np.inf, rep_duration=np.inf, l_forks=None, r_forks=None, c_ising1=0.0, c_ising2=0.0, ising_field=None, spin_state=None, rw=True):
+def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, kappa, f, b, c_rep=0.0, t_rep=np.inf, rep_duration=np.inf, l_forks=np.array([[1,0],[1,0]],dtype=np.int32), r_forks=np.array([[1,0],[1,0]],dtype=np.int32), c_ising1=0.0, c_ising2=0.0, ising_field=None, spin_state=None, rw=True):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
     # Initialization of parameters
     N_rep = np.max(np.sum(l_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), kappa*1e4, -N_beads*c_rep/N_rep
-    (ising_norm1, ising_norm2) = (-c_ising1, -c_ising2/N_lef) if (c_ising1!=0 or c_ising2!=0) else (None, None)
+    ising_norm1, ising_norm2 = -c_ising1, -c_ising2/N_lef
     Ti = T
+    
     # Initialization of matrices
     ms, ns = initialize(N_lef, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
-    J = compute_J(ms,ns,N_beads) if (c_ising1!=0 or c_ising2!=0) else None
-    E = get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, 0, l_forks, r_forks)
+    J = compute_J(ms,ns,N_beads)
+    E = get_E(L, R, bind_norm, fold_norm, k_norm, rep_norm, ms, ns, 0, l_forks, r_forks, spin_state, J, ising_field, ising_norm1, ising_norm2)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_ising = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -254,7 +259,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
             if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                 E += dE
                 ms[j], ns[j] = m_new, n_new
-                if c_ising1!=0 or c_ising2!=0:
+                if c_ising1!=0.0 or c_ising2!=0.0:
                     J[m_old:n_old,m_old:n_old] = 0
                     J[ms[j]:ns[j],ms[j]:ns[j]] = 1
                     spin_state[spin_idx] *= -1
@@ -266,7 +271,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
             spin_traj[:,i//MC_step] = spin_state
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
-            if rep_norm!=None: Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
+            if rep_norm!=0.0: Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
     return Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj
 
 class StochasticSimulation:
@@ -287,6 +292,9 @@ class StochasticSimulation:
             rep = Replikator(rept_path,self.N_beads,rep_duration,chrom,region)
             self.rep_frac, self.l_forks, self.r_forks = rep.run()
             self.epigenetic_field, self.state = rep.calculate_ising_parameters()
+        else:
+            self.l_forks, self.r_forks = np.array([[1,0],[1,0]],dtype=np.int32),  np.array([[1,0],[1,0]],dtype=np.int32)
+            self.epigenetic_field, self.state = np.array(list(),dtype=np.float64), np.array(list(),dtype=np.int32)
 
         # Import loop data
         self.L, self.R, J, dists, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
@@ -298,10 +306,12 @@ class StochasticSimulation:
         '''
         Energy minimization script.
         '''
+        if not self.run_replication: c_rep, c_ising1, c_ising2 = 0.0, 0.0, 0.0
+        self.is_ising = c_ising1!=0.0 or c_ising2!=0.0
+
         # Running the simulation
         start = time.time()
         print('\nRunning RepliSage...')
-        self.is_ising = c_ising1!=0 or c_ising2!=0
         self.state = np.random.choice([-1, 1], size=self.N_beads).astype(np.int32) if random_spin_state else self.state
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
         self.Ms, self.Ns, self.Es, self.Es_ising, self.Fs, self.Bs, self.Rs, self.spin_traj = run_energy_minimization(
