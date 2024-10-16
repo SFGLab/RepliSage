@@ -1,11 +1,11 @@
-#############################################################################
-################### SEBASTIAN KORSAK 2024, WARSAW, POLAND ###################
-#############################################################################
-## This script runs a stochastic simulation, similar like LoopSage. #########
-## The given script is parallelized across CPU cores and has been modified ##
-## to simulate the propagation of replication forks, which act as barriers. #
-#############################################################################
-#############################################################################
+##############################################################################
+################### SEBASTIAN KORSAK 2024, WARSAW, POLAND ####################
+##############################################################################
+## This script runs a stochastic simulation, similar like LoopSage. ##########
+## The given script is parallelized across CPU cores and has been modified ###
+## to simulate the propagation of replication forks, which act as barriers. ##
+##############################################################################
+##############################################################################
 # 
 # Basic Libraries
 import numpy as np
@@ -21,7 +21,6 @@ warnings.filterwarnings('ignore')
 from Replikator import *
 from preproc import *
 from plots import *
-from md import *
 from em import *
 
 def preprocessing(bedpe_file:str, region:list, chrom:str, N_beads:int):
@@ -220,7 +219,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
     # Initialization of parameters
     N_rep = np.max(np.sum(l_forks,axis=0))
     fold_norm, bind_norm, k_norm, rep_norm = -N_beads*f/(N_lef*np.log(N_beads/N_CTCF)), -N_beads*b/(np.sum(L)+np.sum(R)), kappa*1e4, -N_beads*c_rep/N_rep
-    ising_norm1, ising_norm2 = -c_ising1, -c_ising2/N_lef
+    ising_norm1, ising_norm2 = -c_ising1, -c_ising2/(2*N_lef)
     Ti = T
     
     # Initialization of matrices
@@ -338,23 +337,22 @@ class StochasticSimulation:
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
         if self.is_ising: ising_traj_plot(self.spin_traj,self.out_path)
 
-    def run_em(self,platform='CPU'):
+    def run_openmm(self,platform='CPU'):
         ''' 
         Run OpenMM energy minimization.
         '''
-        md = EM_LE(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.state)
+        md = EM_LE(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
         md.run_pipeline()
 
 def main():
     # Set parameters
     N_beads = None
     N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 1.0, 1.0, 2.0
-    c_ising1, c_ising2 = 1.0, 2.0
+    f, b, kappa, c_rep = 1.0, 0.2, 1.0, 1.0
+    c_ising1, c_ising2 = 1.0, 1.0
     mode, rw, random_spin_state = 'Metropolis', True, True
 
     # Define data and coordinates
-    # region, chrom =  [0, 248387328//30], 'chr1'
     region, chrom =  [178421513, 186421513], 'chr1'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
@@ -364,7 +362,7 @@ def main():
     sim = StochasticSimulation(N_beads,chrom,region, bedpe_file, out_path, None, rept_path, t_rep, rep_duration)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, mode, rw, random_spin_state)
     sim.show_plots()
-    sim.run_em('CPU')
+    sim.run_openmm('CPU')
 
 if __name__=='__main__':
     main()

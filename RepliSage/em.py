@@ -25,7 +25,7 @@ class EM_LE:
         self.out_path = out_path
         self.platform = platform
         self.run_repli = np.all(rep_frac!=None)
-    
+
     def run_pipeline(self):
         '''
         This is the basic function that runs the molecular simulation pipeline.
@@ -66,7 +66,8 @@ class EM_LE:
             
             # Forcefield
             ms,ns=self.M[:,i], self.N[:,i]
-            self.add_forcefield(ms,ns,self.Cs)
+            cs = self.Cs[i] if self.Cs.ndim>1 else self.Cs
+            self.add_forcefield(ms,ns,cs)
             
             # Minimize energy
             self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
@@ -74,7 +75,7 @@ class EM_LE:
             self.simulation.context.setPositions(pdb.positions)
             self.simulation.minimizeEnergy()
             self.state = self.simulation.context.getState(getPositions=True)
-            PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/pdbs/model_{i-self.burnin+1}.cif', 'w'))
+            PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/model_{i-self.burnin+1}.cif', 'w'))
         pbar.close()
         print('Energy minimization done :D')
 
@@ -145,7 +146,7 @@ class EM_LE:
         'Block copolymer forcefield for the modelling of compartments.'
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.addGlobalParameter('sigma',defaultValue=1)
-        self.comp_force.addGlobalParameter('r0',defaultValue=0.6)
+        self.comp_force.addGlobalParameter('r0',defaultValue=0.7)
         self.comp_force.addGlobalParameter('Ea',defaultValue=-4.0)
         self.comp_force.addGlobalParameter('Eb',defaultValue=-8.0)
         self.comp_force.addPerParticleParameter('s')
