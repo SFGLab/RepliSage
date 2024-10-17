@@ -1,4 +1,3 @@
-import shutil
 import numpy as np
 import random as rd
 import pandas as pd

@@ -347,13 +347,13 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads = None
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 0.2, 1.0, 1.0
-    c_ising1, c_ising2 = 1.0, 1.0
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(5e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
+    f, b, kappa, c_rep = 1.0, 0.5, 1.0, 2.0
+    c_ising1, c_ising2 = 1.0, 4.0
     mode, rw, random_spin_state = 'Metropolis', True, True
 
     # Define data and coordinates
-    region, chrom =  [178421513, 186421513], 'chr1'
+    region, chrom =  [178421513, 182421513], 'chr1'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
@@ -362,7 +362,7 @@ def main():
     sim = StochasticSimulation(N_beads,chrom,region, bedpe_file, out_path, None, rept_path, t_rep, rep_duration)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, mode, rw, random_spin_state)
     sim.show_plots()
-    sim.run_openmm('CPU')
+    sim.run_openmm('OpenCL')
 
 if __name__=='__main__':
     main()

@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
+import os
+import re
 
 chrom_sizes = {'chr1':248387328,'chr2':242696752,'chr3':201105948,'chr4':193574945,
                'chr5':182045439,'chr6':172126628,'chr7':160567428,'chr8':146259331,
@@ -83,3 +85,25 @@ def reshape_array(input_array, new_dimension):
         reshaped_array = spline_interpolation(new_indices)
 
     return reshaped_array
+
+def natural_sort_key(s):
+    # Splits string into parts of digits and non-digits
+    return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
+
+def list_files_in_directory(directory: str) -> list:
+    '''
+    Returns a naturally sorted list of all file names in the given directory.
+    
+    Input:
+    directory (str): the path of the directory.
+    
+    Output:
+    files_list (list): a naturally sorted list of file names.
+    '''
+    # List all files in the directory
+    files_list = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    
+    # Sort files using natural order
+    files_list.sort(key=natural_sort_key)
+    
+    return files_list

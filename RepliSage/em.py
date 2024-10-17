@@ -145,12 +145,12 @@ class EM_LE:
     def add_blocks(self,cs):
         'Block copolymer forcefield for the modelling of compartments.'
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
-        self.comp_force.addGlobalParameter('sigma',defaultValue=1)
-        self.comp_force.addGlobalParameter('r0',defaultValue=0.7)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-4.0)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-8.0)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=10.0)
+        self.comp_force.addGlobalParameter('r0',defaultValue=0.0)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-100.0)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-500.0)
         self.comp_force.addPerParticleParameter('s')
-        for i in range(self.N_beads):
+        for i in range(2*self.N_beads):
             self.comp_force.addParticle([cs[i%self.N_beads]])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):

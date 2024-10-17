@@ -1,3 +1,5 @@
+import os
+import re
 import numpy as np
 import hicstraw as hc
 import matplotlib.pyplot as plt
@@ -9,23 +11,10 @@ from matplotlib.pyplot import figure
 from matplotlib_venn import venn2
 from tqdm import tqdm
 from utils import *
+from common import *
 
 epsilon = np.finfo(float).eps
 
-def list_files_in_directory(directory: str) -> list:
-    '''
-    Returns a list of all file names in the given directory.
-    
-    Input:
-    directory (str): the path of the directory.
-    
-    Output:
-    files_list (list): a list of file names (with paths if needed).
-    '''
-    # List all files in the directory
-    files_list = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
-    
-    return files_list
 
 def get_heatmap(V,viz=False,save_path=None,th=1,duplicated_chain=False):
     '''
