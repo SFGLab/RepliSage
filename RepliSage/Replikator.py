@@ -36,9 +36,6 @@ class Replikator:
         self.mat = np.nan_to_num(self.mat,nan=min_value)
         min_max_scaler = preprocessing.MinMaxScaler()
         self.mat = min_max_scaler.fit_transform(self.mat)
-        if self.is_region:
-            winds_str, winds_end = self.gen_windows[:,0], self.gen_windows[:,2]
-            self.mat = self.mat[:,(winds_end > self.coords[0]) & (winds_str < self.coords[1])]
 
     def compute_f(self):
         '''
@@ -48,10 +45,18 @@ class Replikator:
         afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
         min_avg, avg_std = np.min(afx[afx>0]), np.average(sfx)
         afx[afx<=0], sfx[sfx<=0] = min_avg, avg_std
-        self.avg_fx = min_max_normalize(reshape_array(afx,self.L))
-        self.std_fx = min_max_normalize(reshape_array(sfx,self.L))
-        self.avg_ft = min_max_normalize(reshape_array(aft,self.T))
-        self.std_ft = min_max_normalize(reshape_array(sft,self.T))        
+        self.avg_fx = min_max_normalize(afx)
+        self.std_fx = min_max_normalize(sfx)
+        self.avg_ft = min_max_normalize(aft)
+        self.std_ft = min_max_normalize(sft)
+        if self.is_region:
+            N = len(self.avg_fx)
+            self.avg_fx = self.avg_fx[(self.coords[0]*N)//chrom_sizes[self.chrom]:self.coords[1]*N//chrom_sizes[self.chrom]]
+            self.std_fx = self.std_fx[(self.coords[0]*N)//chrom_sizes[self.chrom]:self.coords[1]*N//chrom_sizes[self.chrom]]
+        self.avg_fx = reshape_array(self.avg_fx,self.L)
+        self.std_fx = reshape_array(self.std_fx,self.L)
+        self.avg_ft = reshape_array(self.avg_ft,self.T)
+        self.std_ft = reshape_array(self.std_ft,self.T)
 
     def compute_peaks(self,prominence=0.01):
         '''
@@ -84,8 +89,6 @@ class Replikator:
         self.speed_avg = np.average(avg_slopes)
         self.speed_std = np.average(std_slopes)
         self.speed_ratio = self.speed_std/self.speed_avg
-        # print(f'Average speed {self.speed_avg}, std speed {self.speed_std}.')
-        # print(f'Std - Average ratio is {self.speed_std/self.speed_avg}.')
         print('Done!\n')
 
     def compute_init_rate(self):
@@ -131,7 +134,7 @@ class Replikator:
         Calculate compartmentalization related data.
         We connect compartmentalization with early and late replication timing sites.
         '''
-        magnetic_field = -2*(self.avg_fx-np.mean(self.avg_fx))/(np.max(self.avg_fx)-np.min(self.avg_fx))
+        magnetic_field = -2*self.avg_fx+1
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
@@ -181,8 +184,8 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
 
 def main():
     # Parameters
-    region, chrom =  [0, 248387328], 'chr1'
-    N_beads,rep_duration = 50000,5000
+    region, chrom =  [170421513, 185491193], 'chr1'
+    N_beads,rep_duration = 5000,5000
     
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'

@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, interp2d
+from scipy.ndimage import zoom
 import os
 import re
 
@@ -91,15 +92,16 @@ def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
 def list_files_in_directory(directory: str) -> list:
-    '''
+    """
     Returns a naturally sorted list of all file names in the given directory.
-    
+    _________________________________________________________________________
     Input:
     directory (str): the path of the directory.
     
     Output:
     files_list (list): a naturally sorted list of file names.
-    '''
+    """
+    
     # List all files in the directory
     files_list = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
     
@@ -107,3 +109,25 @@ def list_files_in_directory(directory: str) -> list:
     files_list.sort(key=natural_sort_key)
     
     return files_list
+
+def expand_array(arr, L):
+    arr = np.array(arr)  # Ensure it's a numpy array
+    original_shape = arr.shape
+    
+    if len(original_shape) == 1:
+        return np.interp(np.linspace(0, N-1, L), np.arange(N), arr)
+    
+    elif len(original_shape) == 2:  # 2D array
+        N, M = original_shape  # Original size (NxM)
+        
+        # Calculate the zoom factors for both dimensions
+        zoom_factor_row = L / N
+        zoom_factor_col = L / M
+        
+        # Use scipy's zoom to interpolate both dimensions
+        expanded_arr = zoom(arr, (zoom_factor_row, zoom_factor_col), order=1)  # Order 1 for linear interpolation
+        
+        return expanded_arr
+    
+    else:
+        raise ValueError("Only 2D arrays are supported for this function.")

@@ -5,7 +5,8 @@
 import numpy as np
 import openmm as mm
 from tqdm import tqdm
-from openmm.app import PDBxFile, ForceField, Simulation, PDBxReporter, DCDReporter, StateDataReporter
+from openmm.app import PDBxFile, ForceField, Simulation
+from initial_structures import *
 from utils import *
 
 class EM_LE:
@@ -26,7 +27,7 @@ class EM_LE:
         self.platform = platform
         self.run_repli = np.all(rep_frac!=None)
 
-    def run_pipeline(self):
+    def run_pipeline(self,init_struct='confined_rw'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -37,7 +38,7 @@ class EM_LE:
         '''
         # Define initial structure
         print('Building initial structure...')
-        points1 = polymer_circle(self.N_beads)
+        points1 = compute_init_struct(self.N_beads,init_struct)
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
         write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
         generate_psf(self.N_beads,self.out_path+'/other/LE_init_struct.psf')
@@ -66,7 +67,7 @@ class EM_LE:
             
             # Forcefield
             ms,ns=self.M[:,i], self.N[:,i]
-            cs = self.Cs[i] if self.Cs.ndim>1 else self.Cs
+            cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
             self.add_forcefield(ms,ns,cs)
             
             # Minimize energy
@@ -93,7 +94,7 @@ class EM_LE:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce('epsilon*((sigma1+sigma2)/(r+r_small))^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=10)
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=100)
         self.ev_force.addGlobalParameter('r_small', defaultValue=0.005)
         self.ev_force.addPerParticleParameter('sigma')
         for i in range(self.N_beads):
@@ -119,10 +120,10 @@ class EM_LE:
         'Harmonic angle force between successive beads so as to make chromatin rigid'
         self.angle_force = mm.HarmonicAngleForce()
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,ms,ns,i=0):
@@ -145,13 +146,13 @@ class EM_LE:
     def add_blocks(self,cs):
         'Block copolymer forcefield for the modelling of compartments.'
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
-        self.comp_force.addGlobalParameter('sigma',defaultValue=10.0)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.0)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-100.0)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-500.0)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-0.4)
         self.comp_force.addPerParticleParameter('s')
-        for i in range(2*self.N_beads):
-            self.comp_force.addParticle([cs[i%self.N_beads]])
+        for i in range(self.N_beads):
+            self.comp_force.addParticle([cs[i]])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
                 self.comp_force.addParticle([cs[i%self.N_beads]])
@@ -172,6 +173,6 @@ class EM_LE:
         self.add_evforce()
         self.add_bonds()
         self.add_stiffness()
-        if np.all(cs==None): self.add_blocks(cs)
+        if np.all(cs!=None): self.add_blocks(cs)
         if self.run_repli: self.add_repliforce()
         self.add_loops(ms,ns)
