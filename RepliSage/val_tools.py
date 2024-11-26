@@ -15,7 +15,6 @@ from common import *
 
 epsilon = np.finfo(float).eps
 
-
 def get_heatmap(V,viz=False,save_path=None,th=1,duplicated_chain=False):
     '''
     It returns the corrdinate matrix V (N,3) of a structure.
@@ -69,11 +68,11 @@ def compute_experimental_heatmap(hic_file,chrom,region,resolution=5000,viz=False
     Imports the path of a .hic file and exports the heatmap as a numpy array.
     '''
     hic = hc.HiCFile(hic_file)
-    hic_mat_obj = hic.getMatrixZoomData(chrom, chrom, "observed", "KR", "BP", resolution)
+    hic_mat_obj = hic.getMatrixZoomData(chrom, chrom, "observed", "NONE", "BP", resolution)
     numpy_hic = hic_mat_obj.getRecordsAsMatrix(region[0], region[1], region[0], region[1])
     if viz:
         figure(figsize=(25, 20))
-        plt.imshow(numpy_hic,cmap="Reds",vmax=np.average(numpy_hic)+np.std(numpy_hic))
+        plt.imshow(numpy_hic,cmap="Reds",vmax=np.average(numpy_hic)+3*np.std(numpy_hic))
         plt.colorbar()
         if save_path!=None: plt.savefig(save_path,format='svg',dpi=500)
         if save_path!=None: np.save(save_path.replace("svg", "npy"),numpy_hic)
@@ -142,6 +141,7 @@ def compare_matrices(mat1: np.ndarray, mat2: np.ndarray):
     print(f"Pearson correlation: {pearson_corr:.4f}, p-value: {pearson_pval:.4e}")
     print(f"Spearman correlation: {spearman_corr:.4f}, p-value: {spearman_pval:.4e}")
     print(f"Kendall Tau correlation: {kendall_corr:.4f}, p-value: {kendall_pval:.4e}")
+    return pearson_corr, spearman_corr, kendall_corr
 
 def remove_diagonals(matrix):
     """

@@ -101,7 +101,7 @@ def E_ising(spins, J, h, ising_norm1, ising_norm2):
 def E_comp(spins,ms,ns,comp_norm):
     Ec = 0
     for i in range(len(ms)):
-        Ec += np.sum(0.1 * spins[ms[i]:ns[i]]) + 0.9*(ns[i]-ms[i])
+        Ec += np.sum(0.5 * spins[ms[i]:ns[i]]) + 0.5*(ns[i]-ms[i])
     
     return comp_norm * Ec
 
@@ -230,7 +230,7 @@ def run_energy_minimization(N_steps, N_lef, N_CTCF, N_beads, MC_step, T, T_min, 
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Ms, Ns = np.zeros((N_lef, N_steps//MC_step), dtype=np.int32), np.zeros((N_lef, N_steps//MC_step), dtype=np.int32)
-
+    
     for i in range(N_steps):
         # Calculate replication time
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
@@ -283,7 +283,7 @@ class StochasticSimulation:
         self.run_replication = rept_path!=None
         if self.run_replication:
             rep = Replikator(rept_path,self.N_beads,rep_duration,chrom,region)
-            self.rep_frac, self.l_forks, self.r_forks = rep.run(scale=100)
+            self.rep_frac, self.l_forks, self.r_forks = rep.run(scale=10)
             self.h, _ = rep.calculate_ising_parameters()
         else:
             self.l_forks, self.r_forks = np.array([[1,0],[1,0]],dtype=np.int32),  np.array([[1,0],[1,0]],dtype=np.int32)
@@ -302,7 +302,7 @@ class StochasticSimulation:
         if not self.run_replication: c_rep, c_ising1, c_ising2, c_comp = 0.0, 0.0, 0.0
         N_rep = np.max(np.sum(self.l_forks,axis=0))
         fold_norm, bind_norm, k_norm, rep_norm = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e4, -self.N_beads*c_rep/N_rep
-        ising_norm1, ising_norm2, comp_norm = -c_ising1, -c_ising2/self.N_CTCF, -c_comp/(2*self.N_lef)
+        ising_norm1, ising_norm2, comp_norm = -c_ising1, -c_ising2/self.N_CTCF, -c_comp/self.N_lef
 
         self.is_ising = ((c_ising1!=0.0 or c_ising2!=0.0) and c_comp!=0.0) and np.all(self.J!=None)
 
@@ -342,15 +342,15 @@ class StochasticSimulation:
         md.run_pipeline(init_struct)
 
 def main():
-    # Set parameterss
-    N_beads, N_lef = 4000, 400
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(5e2), int(5e3), 1.8, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 1.0, 1.0, 5.0
+    # Set parameters
+    N_beads, N_lef = 20000, 2000
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(5e2), int(1e3), 1.6, 0.0, int(1e4), int(2e4)
+    f, b, kappa, c_rep = 1.0, 1.0, 1.0, 2.0
     c_ising1, c_ising2, c_comp = 1.0, 1.0, 1.0
     mode, rw, random_spin_state = 'Metropolis', True, True
     
     # Define data and coordinates
-    region, chrom =  [81221513, 109221513], 'chr8'
+    region, chrom =  [10293500, 106874700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
@@ -359,7 +359,7 @@ def main():
     sim = StochasticSimulation(N_beads,chrom, region, bedpe_file, out_path, N_lef, rept_path, t_rep, rep_duration)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, c_comp, mode, rw)
     sim.show_plots()
-    sim.run_openmm('CUDA')
+    sim.run_openmm('OpenCL')
 
 if __name__=='__main__':
     main()

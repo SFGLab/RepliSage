@@ -84,14 +84,13 @@ def sphere_surface_structure(N_beads, radius=1):
     V = np.column_stack((x, y, z))
     return V
 
-def confined_random_walk(N_beads, box_size=5):
+def confined_random_walk(N_beads, box_size=5, scale=1):
     V = np.zeros((N_beads, 3))
     for i in range(1, N_beads):
         step = np.random.choice([-1, 1], size=3)  # Random step in x, y, z
         V[i] = V[i-1] + step
-        # Keep the points within a confined box (folding in)
         V[i] = np.clip(V[i], -box_size, box_size)
-    return V
+    return scale*V
 
 def trefoil_knot_structure(N_beads, scale=5):
     t = np.linspace(0, 2 * np.pi, N_beads)
@@ -117,7 +116,7 @@ def random_walk_structure(N_beads, step_size=1):
     
     return V
 
-def compute_init_struct(N_beads,mode='rw'):
+def compute_init_struct(N_beads,mode='confined_rw'):
     match mode:
         case 'rw':
             return random_walk_structure(N_beads)
