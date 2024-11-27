@@ -64,7 +64,7 @@ class EM_LE:
             pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
             forcefield = ForceField('forcefields/classic_sm_ff.xml')
             self.system = forcefield.createSystem(pdb.topology)
-            integrator = MTSLangevinIntegrator(300*mm.unit.kelvin, 1/mm.unit.picosecond, 10 * mm.unit.femtosecond, [(0,4),(1,1),(0,1)])
+            integrator = MTSLangevinIntegrator(300*mm.unit.kelvin, 1/mm.unit.picosecond, 10 * mm.unit.femtosecond, [(0,4),(1,2),(0,2)])
             
             # Forcefield
             ms,ns=self.M[:,i], self.N[:,i]
@@ -93,10 +93,10 @@ class EM_LE:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[np.sqrt(self.N_beads)*0.1,1e2])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*np.sqrt(self.N_beads)*0.1,1e2])
         elif i*self.step>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[2.5*np.sqrt(self.N_beads)*0.1,1.0])
+                self.repli_force.setBondParameters(j,j,j+self.N_beads,[2*np.sqrt(self.N_beads)*0.1,1.0])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def add_evforce(self):
@@ -113,7 +113,8 @@ class EM_LE:
             for i in range(self.N_beads,2*self.N_beads):
                 self.ev_force.addParticle()
             for i in range(self.N_beads):
-                self.ev_force.addExclusion(i,i+self.N_beads)
+                for j in range(self.N_beads,2*self.N_beads):
+                    self.ev_force.addExclusion(i,j)
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):
@@ -173,7 +174,8 @@ class EM_LE:
             for i in range(self.N_beads,2*self.N_beads):
                 self.comp_force.addParticle([cs[i%self.N_beads]])
             for i in range(self.N_beads):
-                self.comp_force.addExclusion(i,i+self.N_beads)
+                for j in range(self.N_beads,2*self.N_beads):
+                    self.comp_force.addExclusion(i,j)
         self.system.addForce(self.comp_force)
 
     def add_container(self, R=10.0, C=10.0):
@@ -187,7 +189,8 @@ class EM_LE:
             for i in range(self.N_beads,2*self.N_beads):
                 self.container_force.addParticle()
             for i in range(self.N_beads):
-                self.container_force.addExclusion(i,i+self.N_beads)
+                for j in range(self.N_beads,2*self.N_beads):
+                    self.container_force.addExclusion(i,j)
         self.system.addForce(self.container_force)
     
     def add_forcefield(self,ms,ns,cs=None,use_container=True):
@@ -203,7 +206,7 @@ class EM_LE:
         self.add_evforce()
         self.add_bonds()
         self.add_stiffness()
-        if use_container: self.add_container(R = 2*np.sqrt(self.N_beads)*0.1)
+        if use_container: self.add_container(R = 1.5*np.sqrt(self.N_beads)*0.1)
         if np.all(cs!=None): self.add_blocks(cs)
         if self.run_repli: self.add_repliforce()
         self.add_loops(ms,ns)
