@@ -29,7 +29,7 @@ class EM_LE:
         self.platform = platform
         self.run_repli = np.all(rep_frac!=None)
 
-    def run_pipeline(self,init_struct='rw'):
+    def run_pipeline(self,init_struct='hilbert',tol=1.0):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -63,8 +63,8 @@ class EM_LE:
             # Set up simulation
             pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
             forcefield = ForceField('forcefields/classic_sm_ff.xml')
-            self.system = forcefield.createSystem(pdb.topology)
-            integrator = MTSLangevinIntegrator(300*mm.unit.kelvin, 1/mm.unit.picosecond, 10 * mm.unit.femtosecond, [(0,4),(1,2),(0,2)])
+            self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*np.sqrt(self.N_beads)*0.1)
+            integrator = MTSLangevinIntegrator(300*mm.unit.kelvin, 0.1/mm.unit.picosecond, 10 * mm.unit.femtosecond, [(0,4),(1,2),(0,1)])
             
             # Forcefield
             ms,ns=self.M[:,i], self.N[:,i]
@@ -75,7 +75,7 @@ class EM_LE:
             self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
             if self.run_repli: self.change_repliforce(i)
             self.simulation.context.setPositions(pdb.positions)
-            self.simulation.minimizeEnergy()
+            self.simulation.minimizeEnergy(tolerance=tol)
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/model_{i-self.burnin+1}.cif', 'w'))
             
@@ -102,10 +102,10 @@ class EM_LE:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/r+delta)^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=100)
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=10)
         self.ev_force.addGlobalParameter('r_ev',defaultValue=0.1)
         self.ev_force.addGlobalParameter('delta',defaultValue=0.001)
-        self.ev_force.setCutoffDistance(distance=0.4)
+        self.ev_force.setCutoffDistance(distance=0.2)
         self.ev_force.setForceGroup(0)
         for i in range(self.N_beads):
             self.ev_force.addParticle()
@@ -144,8 +144,8 @@ class EM_LE:
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
         for i in range(self.N_coh):
-            self.LE_force.addBond(ms[i], ns[i], 0.1, 3e5)
-            if self.run_repli: self.LE_force.addBond(self.N_beads+ms[i], self.N_beads+ns[i], 0.1, 3e5)
+            self.LE_force.addBond(ms[i], ns[i], 0.1, 5e4)
+            if self.run_repli: self.LE_force.addBond(self.N_beads+ms[i], self.N_beads+ns[i], 0.1, 5e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self):
@@ -155,17 +155,17 @@ class EM_LE:
         self.repli_force.addPerBondParameter('r0')
         self.repli_force.addPerBondParameter('D')
         for i in range(self.N_beads):
-            self.repli_force.addBond(i, i + self.N_beads, [0,5e5])
+            self.repli_force.addBond(i, i + self.N_beads, [0,5e4])
         self.system.addForce(self.repli_force)
     
     def add_blocks(self,cs):
         'Block copolymer forcefield for the modelling of compartments.'
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=0.4)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.5)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-1.0)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.setCutoffDistance(distance=2.0)
         for i in range(self.N_beads):
@@ -183,6 +183,7 @@ class EM_LE:
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)
         self.container_force.addGlobalParameter('R',defaultValue=R)
+        self.container_force.setCutoffDistance(2*np.sqrt(self.N_beads)*0.1)
         for i in range(self.N_beads):
             self.container_force.addParticle()
         if self.run_repli:
