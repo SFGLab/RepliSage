@@ -62,38 +62,56 @@ def coh_traj_plot(ms,ns,N_beads,path):
     print('\nPlotting trajectories of cohesins...')
     start = time.time()
     N_coh = len(ms)
-    figure(figsize=(20, 20),dpi=500)
+    figure(figsize=(20, 20),dpi=200)
     color = ["#"+''.join([rd.choice('0123456789ABCDEF') for j in range(6)]) for i in range(N_coh)]
     size = 0.1
     
     for nn in tqdm(range(N_coh)):
         tr_m, tr_n = ms[nn], ns[nn]
-        plt.fill_between(np.arange(len(tr_m)), tr_m, tr_n, color=color[nn], alpha=0.5, interpolate=False, linewidth=0)
+        plt.fill_between(np.arange(len(tr_m)), tr_m, tr_n, color=color[nn], alpha=0.4, interpolate=False, linewidth=0)
     plt.xlabel('Simulation Step', fontsize=28)
     plt.ylabel('Position of Cohesin', fontsize=28)
     plt.gca().invert_yaxis()
     save_path = path+'/plots/LEFs.png'
     plt.savefig(save_path,format='png')
-    plt.show()
+    plt.close()
     end = time.time()
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_ising, Fs, Bs, Rs, burnin, path=None):
-    plt.plot(Es, 'k',label='Total Energy')
+def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.plot(Es_ising, 'orange',label='Ising Energy')
+    # plt.plot(E_comps, 'darkcyan',label='Compartmentalization Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
     plt.plot(Bs, 'r',label='Binding Energy')
     plt.plot(Rs, 'g',label='Replication Energy')
     plt.ylabel('Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    plt.yscale('symlog')
+    # plt.yscale('symlog')
     plt.legend()
     save_path = path+'/plots/total_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/total_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    plt.show()
+    plt.close()
+
+    plt.plot(Es, 'k',label='Total Energy')
+    plt.ylabel('Total Energy', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    save_path = path+'/plots/fold_energy.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/fold_energy.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    plt.close()
+
+    plt.plot(mags, 'purple',label='mags')
+    plt.ylabel('Magnetization', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    save_path = path+'/plots/mag.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/mag.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    plt.close()
 
     plt.plot(Fs, 'b')
     plt.ylabel('Folding Energy', fontsize=16)
@@ -102,7 +120,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, burnin, path=None):
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/fold_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    plt.show()
+    plt.close()
 
     plt.plot(Es_ising, 'orange')
     plt.ylabel('Energy of the Ising Model', fontsize=16)
@@ -111,7 +129,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, burnin, path=None):
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/ising_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    plt.show()
+    plt.close()
 
     plt.plot(Rs, 'g')
     plt.ylabel('Replication Energy', fontsize=16)
@@ -120,12 +138,12 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, burnin, path=None):
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/repli_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    plt.show()
+    plt.close()
     
     # Step 1: Fit regression model
     ys = np.array(Fs)[burnin:]
     xs = np.arange(len(ys))
-    coeffs = np.polyfit(xs, ys, 5)  # Polynomial coefficients
+    coeffs = np.polyfit(xs, ys, 6)  # Polynomial coefficients
     trend = np.polyval(coeffs, xs)  # Evaluate the polynomial at x
 
     # Step 2: Detrend the signal
@@ -142,7 +160,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, burnin, path=None):
         plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/autoc.pdf'
         plt.savefig(save_path,format='pdf',dpi=200)
-    plt.show()
+    plt.close()
 
 def ising_traj_plot(traj,save_path):
     figure(figsize=(20, 20),dpi=500)
@@ -150,4 +168,4 @@ def ising_traj_plot(traj,save_path):
     plt.xlabel('Computational Time',fontsize=28)
     plt.ylabel('Region', fontsize=28)
     plt.savefig(save_path+'/plots/ising_traj.png',format='png',dpi=100)
-    plt.show()
+    plt.close()

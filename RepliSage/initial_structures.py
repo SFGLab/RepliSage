@@ -1,21 +1,24 @@
 import numpy as np
 from tqdm import tqdm
+from hilbertcurve.hilbertcurve import HilbertCurve
 
-def dist(p1: np.ndarray, p2: np.ndarray) -> float:
-    """Mierzy dystans w przestrzeni R^3"""
+def dist(p1: np.ndarray, p2: np.ndarray):
+    '''Mierzy dystans w przestrzeni R^3'''
     x1, y1, z1 = p1
     x2, y2, z2 = p2
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2) ** 0.5  # faster than np.linalg.norm
 
-def random_versor() -> np.ndarray:
-    """Losuje wersor"""
+def random_versor():
+    '''
+    Losuje wersor
+    '''
     x = np.random.uniform(-1, 1)
     y = np.random.uniform(-1, 1)
     z = np.random.uniform(-1, 1)
     d = (x ** 2 + y ** 2 + z ** 2) ** 0.5
     return np.array([x / d, y / d, z / d])
 
-def self_avoiding_random_walk(n: int, step: float = 1.0, bead_radius: float = 0.5, epsilon: float = 0.001, two_dimensions=False) -> np.ndarray:
+def self_avoiding_random_walk(n: int, step: float = 1.0, bead_radius: float = 0.5, epsilon: float = 0.001, two_dimensions=False):
     potential_new_step = [0, 0, 0]
     while True:
         points = [np.array([0, 0, 0])]
@@ -37,7 +40,7 @@ def self_avoiding_random_walk(n: int, step: float = 1.0, bead_radius: float = 0.
         points = np.array(points)
         return points
 
-def polymer_circle(n: int, z_stretch: float = 1.0, radius: float = 5.0) -> np.ndarray:
+def polymer_circle(n: int, z_stretch: float = 1.0, radius: float = 5.0):
     points = []
     angle_increment = 360 / float(n)
     radius = 1 / (2 * np.sin(np.radians(angle_increment) / 2.)) if radius==None else radius
@@ -84,7 +87,19 @@ def sphere_surface_structure(N_beads, radius=1):
     V = np.column_stack((x, y, z))
     return V
 
-def confined_random_walk(N_beads, box_size=5, scale=1):
+
+def generate_hilbert_curve(n_points,p=8,n=3,displacement_sigma=0.1,scale=6,viz=False,add_noise=False):
+    hilbert_curve = HilbertCurve(p, n)
+
+    distances = list(range(n_points))
+    points = np.array(hilbert_curve.points_from_distances(distances))
+    if add_noise:
+        displacement = np.random.normal(loc=0.0, scale=displacement_sigma, size=n_points*3).reshape(n_points,3)
+        V_interpol = V_interpol + displacement
+    
+    return points
+
+def confined_random_walk(N_beads, box_size=5, scale=10):
     V = np.zeros((N_beads, 3))
     for i in range(1, N_beads):
         step = np.random.choice([-1, 1], size=3)  # Random step in x, y, z
@@ -132,5 +147,7 @@ def compute_init_struct(N_beads,mode='confined_rw'):
             return spiral_structure(N_beads)
         case 'sphere':
             return sphere_surface_structure(N_beads)
+        case 'hilbert':
+            return generate_hilbert_curve(N_beads)
         case _:
             return IndentationError('Invalid option for initial structure.')
