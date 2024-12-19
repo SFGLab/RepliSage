@@ -48,7 +48,7 @@ class MD_MODEL:
             return 'AFTER_REP', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=500,reporters=False):
+    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=1000,reporters=False,mode='MD'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -106,7 +106,12 @@ class MD_MODEL:
             if self.Cs.ndim>1: self.change_comps(i)
 
             # Update steps of simulations
-            self.simulation.step(sim_step)
+            if mode=='MD':
+                self.simulation.step(sim_step)
+            elif mode=='EM':
+                self.simulation.minimizeEnergy(tolerance=tol)
+            else:
+                raise InterruptedError('Mode can be only EM or MD.')
             label, idx = self.add_label(i)
 
             # Save structure
@@ -148,7 +153,7 @@ class MD_MODEL:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/r+delta)^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=20)
+        self.ev_force.addGlobalParameter('epsilon', defaultValue=100)
         self.ev_force.addGlobalParameter('r_ev',defaultValue=0.1)
         self.ev_force.addGlobalParameter('delta',defaultValue=0.01)
         self.ev_force.setCutoffDistance(distance=0.2)
@@ -179,10 +184,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -190,8 +195,8 @@ class MD_MODEL:
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
         for n in range(self.N_coh):
-            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e4)
-            if self.run_repli: self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e4)
+            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.0, 5e4)
+            if self.run_repli: self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.0, 5e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self,i):
@@ -223,12 +228,12 @@ class MD_MODEL:
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
         self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=0.6)
-        self.comp_force.addGlobalParameter('r0',defaultValue=0.3)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.1)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
+        self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
+        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb',defaultValue=-0.4)
         self.comp_force.addPerParticleParameter('s')
-        self.comp_force.setCutoffDistance(distance=2.0)
+        self.comp_force.setCutoffDistance(distance=4*self.rw_l)
         for i in range(self.N_beads):
             self.comp_force.addParticle([cs[i]])
         if self.run_repli:
@@ -239,7 +244,7 @@ class MD_MODEL:
                     self.comp_force.addExclusion(i,j)
         self.system.addForce(self.comp_force)
 
-    def add_container(self, R=10.0, C=100.0):
+    def add_container(self, R=10.0, C=10.0):
         self.container_force = mm.CustomNonbondedForce('C*(max(0, r-R)^2)')
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)
@@ -255,7 +260,7 @@ class MD_MODEL:
                     self.container_force.addExclusion(i,j)
         self.system.addForce(self.container_force)
     
-    def add_forcefield(self,i,use_container=True):
+    def add_forcefield(self,i,use_container=False):
         '''
         Here is the definition of the forcefield.
 

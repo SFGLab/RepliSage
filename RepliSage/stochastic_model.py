@@ -94,25 +94,25 @@ class StochasticSimulation:
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
         if self.is_ising: ising_traj_plot(self.spin_traj,self.out_path)
 
-    def run_openmm(self,platform='CPU',init_struct='hilbert'):
+    def run_openmm(self,platform='CPU',init_struct='hilbert',mode='MD'):
         ''' 
         Run OpenMM energy minimization.
         '''
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
-        md.run_pipeline(init_struct)
+        md.run_pipeline(init_struct,mode='EM')
 
 def main():
     # Set parameters
-    N_beads, N_lef, N_lef2 = 10000, 1000, 50
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(8e4), int(2e2), int(1e3), 1.8, 1.0, int(2e4), int(4e4)
+    N_beads, N_lef, N_lef2 = 2000, 200, 10
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e5), int(5e2), int(1e3), 1.8, 1.0, int(6e4), int(8e4)
     f, f2, b, kappa  = 1.0, 10.0, 1.0, 1.0
     c_rep, kr = 1.0, 1.0
-    c_state_field, c_state_interact = 0.5, 1.0
+    c_state_field, c_state_interact = 0.01, 3.0
     mode, rw, random_spins = 'Metropolis', True, True
     scale = 200
     
     # Define data and coordinates
-    region, chrom =  [63935000, 89874700], 'chr14'
+    region, chrom =  [80935000, 89874700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
