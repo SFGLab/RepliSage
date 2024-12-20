@@ -76,18 +76,18 @@ def E_fold(ms, ns, fold_norm):
     return fold_norm * folding
 
 @njit(parallel=True)
-def E_ising(spins, J, h, ising_norm1, ising_norm2):
+def E_potts(spins, J, h, potts_norm1, potts_norm2):
     N_beads = len(J)
     E1 = np.sum(h*spins)
     
     E2 = 0.0
     for i in range(N_beads):
-        E2 += np.sum(J[i, i + 1:] * spins[i] * spins[i + 1:])
+        E2 += np.sum(J[i, i + 1:] * (spins[i] == spins[i + 1:]))
     
-    return ising_norm1 * E1 + ising_norm2 * E2
+    return potts_norm1 * E1 + potts_norm2 * E2
 
 @njit
-def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, t, l_forks, r_forks, spins, J, h, ising_norm1=0.0, ising_norm2=0.0):
+def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, t, l_forks, r_forks, spins, J, h, potts_norm1=0.0, potts_norm2=0.0):
     '''
     The totdal energy.
     '''
@@ -96,7 +96,7 @@ def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_nor
     if rep_norm!=0.0: 
         energy += E_repli(l_forks, r_forks, ms, ns, t, rep_norm)
         energy += E_rep_penalty(l_forks,r_forks,ms,ns,t,kr_norm)
-    if (ising_norm1!=0.0 or ising_norm2!=0): energy += E_ising(spins, J, h, ising_norm1, ising_norm2)
+    if (potts_norm1!=0.0 or potts_norm2!=0): energy += E_potts(spins, J, h, potts_norm1, potts_norm2)
     return energy
 
 @njit
@@ -114,7 +114,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     return fold_norm*(np.log(n_new-m_new)-np.log(ns[idx]-ms[idx]))
 
 @njit
-def get_dE_rep(l_forks,r_forks, rep_norm, ms,ns,m_new,n_new,t,idx):
+def get_dE_rep(l_forks,r_forks,rep_norm, ms,ns,m_new,n_new,t,idx):
     '''
     Energy difference for replication energy.
     '''
@@ -142,30 +142,25 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     return k_norm * (K2 - K1)
 
 @njit
-def get_dE_ising_node(spins, J, h, spin_idx, ising_norm1, ising_norm2):
+def get_dE_potts_node(spins, J, h, spin_idx, spin_val, potts_norm1, potts_norm2):
     # In case that we change node state
     dE1 = -2*h[spin_idx]*spins[spin_idx]
-    dE2 = -2*spins[spin_idx]* np.sum(J[spin_idx,:]*spins)
-    return ising_norm1 * dE1 + ising_norm2 * dE2
+    dE2 = np.sum(J[spin_idx,:]*((spin_val==spins)-(spins[spin_idx]==spins)))
+    return potts_norm1 * dE1 + potts_norm2 * dE2
 
 @njit
-def get_dE_node(spins,spin_idx,J,h,ms,ns,ising_norm1,ising_norm2):
-    dE1 = get_dE_ising_node(spins, J, h, spin_idx, ising_norm1, ising_norm2)
+def get_dE_node(spins,spin_idx,spin_val,J,h,ms,ns,potts_norm1,potts_norm2):
+    dE1 = get_dE_potts_node(spins, J, h, spin_idx, spin_val, potts_norm1, potts_norm2)
     return dE1
 
 @njit
-def get_dE_ising_link(spins,m_new,n_new,m_old,n_old, N_lef, ising_norm2=0.0):
+def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,N_lef,potts_norm2=0.0):
     N_beads = len(spins)
-    dE = spins[m_new]*spins[n_new]-spins[m_old]*spins[n_old]
-    # dE += (np.sum(np.outer(spins[m_new+1:n_new],spins[m_new+1:n_new]))-np.sum(np.outer(spins[m_old+1:n_old],spins[m_old+1:n_old])))
-    return ising_norm2*dE
+    dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])-J[m_old,n_old]*(spins[m_old]==spins[n_old])
+    return potts_norm2*dE
 
 @njit
-def exp_decay(d,k=0.001):
-    return np.exp(-k*(d-1))
-
-@njit
-def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm ,rep_norm, kr_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks, spins, ising_norm2=0.0):
+def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm ,rep_norm, kr_norm, ms, ns, m_new, n_new, idx,  t, l_forks, r_forks, spins, J, potts_norm2=0.0):
     '''
     Total energy difference.
     '''
@@ -179,7 +174,7 @@ def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_nor
     if rep_norm!=0.0: 
         dE += get_dE_rep(l_forks, r_forks, rep_norm, ms, ns, m_new, n_new, t, idx)
         dE += get_dE_rep_penalty(l_forks,r_forks, kr_norm, ms,ns,m_new,n_new,t,idx)
-    if ising_norm2!=0.0: dE += get_dE_ising_link(spins, m_new, n_new, ms[idx], ns[idx], len(ms), ising_norm2)
+    if potts_norm2!=0.0: dE += get_dE_potts_link(spins,J, m_new, n_new, ms[idx], ns[idx], len(ms), potts_norm2)
     return dE
 
 @njit
@@ -214,43 +209,45 @@ def initialize(N_lef, N_beads):
     ms, ns = np.zeros(N_lef, dtype=np.int64), np.zeros(N_lef, dtype=np.int64)
     for i in range(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads)
-    state = np.random.randint(0, 2, size=N_beads) * 2 - 1
+    state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     return ms, ns, state
 
 @njit
-def initialize_J(N_beads,ms,ns,mode='square'):
+def initialize_J(N_beads,J,ms,ns):
     N_lef = len(ms)
-    J = np.zeros((N_beads,N_beads),dtype=np.float64)
     for i in range(N_beads-1):
-        J[i,i+1] = 1
-        J[i+1,i] = 1
+        J[i,i+1] += 1
+        J[i+1,i] += 1
     for m, n in zip(ms,ns):
         J[m,n] += 1
         J[n,m] += 1
-        # if mode=='square':
-        #     J[m+1:n,m+1:n]+=1/N_lef
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, kr_norm=0.0, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, l_forks=np.array([[1,0],[1,0]],dtype=np.int32), r_forks=np.array([[1,0],[1,0]],dtype=np.int32), ising_norm1=0.0, ising_norm2=0.0, J=None, h=None, rw=True, spins=None, p1=0.5, p2=0.5, Jmode='square'):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, kr_norm=0.0, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, l_forks=np.array([[1,0],[1,0]],dtype=np.int32), r_forks=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p1=0.5, p2=0.5):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
     # Initialization of parameters@n
     Ti = T
+
+    # Choices for MC
+    spin_choices = np.array([-2,-1,0,1,2]).astype(np.int32)
+    spin_idx_choices = np.arange(N_beads).astype(np.int32)
+    lef_idx_choices = np.arange(N_lef+N_lef2)
     
     # Initialization of matrices
     ms, ns, spins = initialize(N_lef+N_lef2, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
-    J = initialize_J(N_beads,ms,ns,Jmode)
-    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, 0, l_forks, r_forks, spins, J, h, ising_norm1, ising_norm2)
+    J = initialize_J(N_beads,J,ms,ns)
+    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, 0, l_forks, r_forks, spins, J, h, potts_norm1, potts_norm2)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Es_ising = np.zeros(N_steps//MC_step, dtype=np.float64)
+    Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
     mags = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    E_is = E_ising(spins, J, h, ising_norm1, ising_norm2)
+    E_is = E_potts(spins, J, h, potts_norm1, potts_norm2)
     Ms, Ns = np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int32), np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int32)
     
     for i in range(N_steps):
@@ -262,7 +259,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             # Propose a move for cohesins (rewiring)
             do_rewiring = rd.random()<p1
             if do_rewiring:
-                lef_idx = np.random.choice(np.arange(N_lef+N_lef2))
+                lef_idx = np.random.choice(lef_idx_choices)
                 m_old, n_old = ms[lef_idx], ns[lef_idx]
                 do_rebinding = rd.random()<p2
                 if do_rebinding:
@@ -271,26 +268,24 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                     m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, rw)
 
                 # Cohesin energy difference for rewiring move
-                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, m_new, n_new, lef_idx, rt, l_forks, r_forks, spins, ising_norm2)
+                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, kr_norm, ms, ns, m_new, n_new, lef_idx, rt, l_forks, r_forks, spins, J, potts_norm2)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     J[m_old,n_old] -= 1
                     J[n_old,m_old] -= 1
                     J[m_new,n_new] += 1
                     J[n_new,m_new] += 1
-                    # if mode=='square':
-                    #     J[m_old+1:n_old,m_old+1:n_old]-=1/N_lef
-                    #     J[m_new+1:n_new,m_new+1:n_new]+=1/N_lef
                     ms[lef_idx], ns[lef_idx] = m_new, n_new
-            else:        
+            else:
                 # Propose a node state change
-                spin_idx = np.random.choice(np.arange(N_beads))
+                spin_idx = np.random.choice(spin_idx_choices)
+                s = np.random.choice(spin_choices)
 
                 # Compute the energy that corresponds only to the node change
-                dE = get_dE_node(spins,spin_idx,J,h,ms,ns,ising_norm1,ising_norm2)
+                dE = get_dE_node(spins,spin_idx,s,J,h,ms,ns,potts_norm1,potts_norm2)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E_is += dE
-                    spins[spin_idx] *= -1
+                    spins[spin_idx] = s
 
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
@@ -298,8 +293,8 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             mags[i//MC_step] = np.average(spins) 
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
             spin_traj[:,i//MC_step] = spins
-            Es_ising[i//MC_step] = E_ising(spins, J, h, ising_norm1, ising_norm2)
+            Es_potts[i//MC_step] = E_potts(spins, J, h, potts_norm1, potts_norm2)
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
-    return Ms, Ns, Es, Es_ising, Fs, Bs, Rs, spin_traj, J, mags
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, J, mags

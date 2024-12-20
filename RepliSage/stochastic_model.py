@@ -35,7 +35,7 @@ class StochasticSimulation:
         self.run_replication = rept_path!=None
         if self.run_replication:
             rep = Replikator(rept_path,self.N_beads,rep_duration,chrom,region)
-            self.rep_frac, self.l_forks, self.r_forks = rep.run(scale=scale)
+            self.rep_frac, self.l_forks, self.r_forks = rep.run(scale=scale,out_path=self.out_path+'/plots')
             self.h, _ = rep.calculate_ising_parameters()
         else:
             self.l_forks, self.r_forks = np.array([[1,0],[1,0]],dtype=np.int32),  np.array([[1,0],[1,0]],dtype=np.int32)
@@ -47,32 +47,32 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0, b=1.0, kr=1.0, kappa=1.0, c_rep=None, c_ising1=0.0, c_ising2=0.0, mode='Metropolis',rw=True):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0, b=1.0, kr=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True):
         '''
         Energy minimization script.
         '''
         # Normalize strengths
-        if not self.run_replication: c_rep, c_ising1, c_ising2 = 0.0, 0.0, 0.0
+        if not self.run_replication: c_rep, c_potts1, c_potts2 = 0.0, 0.0, 0.0
         N_rep = np.max(np.sum(self.l_forks,axis=0))
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(2*(np.sum(self.L)+np.sum(self.R))), kappa*1e5
         rep_norm, kr_norm = -self.N_beads*c_rep/N_rep, kr*1e5
-        ising_norm1, ising_norm2 = -c_ising1, -c_ising2
+        potts_norm1, potts_norm2 = -c_potts1, -c_potts2
 
-        self.is_ising = (c_ising1!=0.0 or c_ising2!=0.0) and np.all(self.J!=None)
+        self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
 
         # Running the simulation
         print('\nRunning RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_ising, self.Fs, self.Bs, self.Rs, self.spin_traj, self.J, self.mags = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.J, self.mags = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration,
         mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_CTCF=self.N_CTCF, N_beads=self.N_beads,
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
         bind_norm=bind_norm, rep_norm=rep_norm, kr_norm=kr_norm, 
         l_forks=self.l_forks, r_forks=self.r_forks,
-        ising_norm1=ising_norm1, ising_norm2=ising_norm2,
-        h=self.h, rw=rw)
+        potts_norm1=potts_norm1, potts_norm2=potts_norm2,
+        h=self.h, J=self.J, rw=rw)
         end = time.time()
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
@@ -90,11 +90,11 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
-        make_timeplots(self.Es, self.Es_ising, self.Fs, self.Bs, self.Rs, self.mags, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
-        if self.is_ising: ising_traj_plot(self.spin_traj,self.out_path)
+        if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
 
-    def run_openmm(self,platform='CPU',init_struct='hilbert',mode='MD'):
+    def run_openmm(self,platform='CPU',init_struct='hilbert',mode='EM'):
         ''' 
         Run OpenMM energy minimization.
         '''
@@ -104,10 +104,10 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 2000, 200, 10
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e5), int(5e2), int(1e3), 1.8, 1.0, int(6e4), int(8e4)
-    f, f2, b, kappa  = 1.0, 10.0, 1.0, 1.0
-    c_rep, kr = 1.0, 1.0
-    c_state_field, c_state_interact = 0.01, 3.0
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(2e2), int(1e3), 1.8, 1.0, int(3e4), int(4e4)
+    f, f2, b, kappa  = 1.0, 2.0, 1.0, 1.0
+    c_rep, kr = 0.1, 1.0
+    c_state_field, c_state_interact = 1.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     scale = 200
     
@@ -121,7 +121,7 @@ def main():
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, kr, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
-    sim.run_openmm('OpenCL')
+    # sim.run_openmm('OpenCL')
 
 if __name__=='__main__':
     main()
