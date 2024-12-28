@@ -6,7 +6,6 @@ from sklearn import preprocessing
 from common import *
 from replication_simulator import *
 import mat73
-from minepy import MINE
 import time
 from tqdm import tqdm
 
@@ -100,7 +99,7 @@ class Replikator:
         mus = self.T*(1-self.avg_fx)
         stds = self.T*self.std_fx
         for ori in tqdm(range(len(mus))):
-            s = np.round(np.random.normal(mus[ori], stds[ori], 20000)).astype(int)
+            s = np.round(np.random.normal(mus[ori], max(0,stds[ori]), 20000)).astype(int)
             s[s<0] = 0
             s[s>=self.T] = self.T-1
             unique_locations, counts = np.unique(s, return_counts=True)
@@ -119,14 +118,14 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
 
-    def run(self,scale=10):
+    def run(self, scale=10, out_path=None):
         '''
         This function calls replication simulation.
         '''
         self.prepare_data()
         repsim = ReplicationSimulator(self.L, self.T, scale*self.initiation_rate, self.speed_ratio)
         self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
-        repsim.visualize_simulation()
+        repsim.visualize_simulation(out_path)
         return self.sim_f, l_forks, r_forks
     
     def calculate_ising_parameters(self):
@@ -168,7 +167,7 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     plt.legend()
     # plt.savefig(f'repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
     plt.show()
-
+    
     # Correlations computations
     corr, pval = stats.pearsonr(np.average(sf,axis=1), rep.avg_fx)
     print(f'Pearson correlation: {corr}, with p-value {pval}.')
@@ -176,16 +175,12 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     print(f'Spearman correlation: {corr}, with p-value {pval}.')
     corr, pval = stats.kendalltau(np.average(sf,axis=1), rep.avg_fx)
     print(f'Kendall tau correlation: {corr}, with p-value {pval}.')
-    mine = MINE()
-    mine.compute_score(np.average(sf,axis=1), rep.avg_fx)
-    mic = mine.mic()
-    print(f"Maximal Information Coefficient: {mic}")
     return sf
 
 def main():
     # Parameters
-    region, chrom =  [170421513, 185491193], 'chr1'
-    N_beads,rep_duration = 5000,5000
+    region, chrom =  [100421513, 205491193], 'chr1'
+    N_beads,rep_duration = 50000,10000
     
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'

@@ -48,7 +48,7 @@ class MD_MODEL:
             return 'AFTER_REP', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=1000,reporters=False,mode='MD'):
+    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=2000,reporters=False,mode='MD'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 

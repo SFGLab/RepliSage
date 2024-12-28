@@ -1,7 +1,7 @@
 ##############################################################################
 ################### SEBASTIAN KORSAK 2024, WARSAW, POLAND ####################
 ##############################################################################
-## This script runs a stochastic simulation, similar like LoopSage. ##########
+##### This script runs a stochastic simulation, similar like LoopSage. #######
 ## The given script is parallelized across CPU cores and has been modified ###
 ## to simulate the propagation of replication forks, which act as barriers. ##
 ##############################################################################
@@ -47,7 +47,7 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0, b=1.0, kr=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0, b=1.0, kr=1.0, g=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True):
         '''
         Energy minimization script.
         '''
@@ -58,18 +58,18 @@ class StochasticSimulation:
         bind_norm, k_norm = -self.N_beads*b/(2*(np.sum(self.L)+np.sum(self.R))), kappa*1e5
         rep_norm, kr_norm = -self.N_beads*c_rep/N_rep, kr*1e5
         potts_norm1, potts_norm2 = -c_potts1, -c_potts2
-
+        gamma = 2*g*self.N_lef
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
-
+        
         # Running the simulation
         print('\nRunning RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.J, self.mags = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.J, self.mags, self.N_lefs = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration,
         mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_CTCF=self.N_CTCF, N_beads=self.N_beads,
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
-        bind_norm=bind_norm, rep_norm=rep_norm, kr_norm=kr_norm, 
+        bind_norm=bind_norm, rep_norm=rep_norm, kr_norm=kr_norm, gamma=gamma,
         l_forks=self.l_forks, r_forks=self.r_forks,
         potts_norm1=potts_norm1, potts_norm2=potts_norm2,
         h=self.h, J=self.J, rw=rw)
@@ -90,12 +90,12 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
-        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.N_lefs, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
 
     def run_openmm(self,platform='CPU',init_struct='hilbert',mode='EM'):
-        ''' 
+        '''
         Run OpenMM energy minimization.
         '''
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
@@ -104,22 +104,22 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 2000, 200, 10
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(2e2), int(1e3), 1.8, 1.0, int(3e4), int(4e4)
-    f, f2, b, kappa  = 1.0, 2.0, 1.0, 1.0
-    c_rep, kr = 0.1, 1.0
-    c_state_field, c_state_interact = 1.0, 1.0
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(1e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
+    f, f2, b, kappa, g  = 1.0, 10.0, 1.0, 1.0, 1.0
+    c_rep, kr = 1.0, 1.0
+    c_state_field, c_state_interact = 0.4, 4.0
     mode, rw, random_spins = 'Metropolis', True, True
-    scale = 200
+    scale = 100
     
     # Define data and coordinates
-    region, chrom =  [80935000, 89874700], 'chr14'
+    region, chrom =  [75935000, 89874700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, scale)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, kr, c_rep, c_state_field, c_state_interact, mode, rw)
+    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kr, g, kappa, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
     # sim.run_openmm('OpenCL')
 
