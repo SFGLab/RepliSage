@@ -103,16 +103,16 @@ class StochasticSimulation:
 
 def main():
     # Set parameters
-    N_beads, N_lef, N_lef2 = 2000, 200, 10
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(1e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
+    N_beads, N_lef, N_lef2 = 5000, 500, 50
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(1e2), int(2e2), 1.8, 1.0, int(1e4), int(2e4)
     f, f2, b, kappa, g  = 1.0, 10.0, 1.0, 1.0, 1.0
     c_rep, kr = 1.0, 1.0
-    c_state_field, c_state_interact = 0.4, 4.0
+    c_state_field, c_state_interact = 1.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     scale = 100
     
     # Define data and coordinates
-    region, chrom =  [75935000, 89874700], 'chr14'
+    region, chrom =  [62935000, 79874700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../output'
@@ -121,7 +121,7 @@ def main():
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kr, g, kappa, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
-    # sim.run_openmm('OpenCL')
+    sim.run_openmm('CUDA')
 
 if __name__=='__main__':
     main()

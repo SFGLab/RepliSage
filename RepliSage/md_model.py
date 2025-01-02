@@ -41,14 +41,14 @@ class MD_MODEL:
 
     def add_label(self,i):
         if i*self.step<self.t_rep:
-            return 'BEFORE_REP', i-self.burnin+1
+            return 'BR', i-self.burnin+1
         elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
-            return 'REP', i-self.t_rep//self.step+1
+            return 'R', i-self.t_rep//self.step+1
         else:
-            return 'AFTER_REP', i-(self.t_rep+self.rep_duration)//self.step+1
+            return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=2000,reporters=False,mode='MD'):
+    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=500,reporters=False,mode='MD'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -116,7 +116,7 @@ class MD_MODEL:
 
             # Save structure
             self.state = self.simulation.context.getState(getPositions=True)
-            PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/{label}_ensemble_{idx}.cif', 'w'))
+            PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
             
             # Update progress-bar
             pbar.update(1)
@@ -184,10 +184,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 10)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -226,12 +226,15 @@ class MD_MODEL:
     def add_blocks(self,i):
         'Block copolymer forcefield for the modelling of compartments.'
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
-        self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea*delta(s1-1)*delta(s2-1)+Eb*delta(s1+1)*delta(s2+1)')
+        self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1+2)*delta(s2+2)+Ea2*delta(s1+1)*delta(s2+1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1-1)*delta(s2-1)+Eb3*delta(s1-2)*delta(s2-2)')
         self.comp_force.setForceGroup(1)
         self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Eb',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.6)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.8)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.0)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.setCutoffDistance(distance=4*self.rw_l)
         for i in range(self.N_beads):

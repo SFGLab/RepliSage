@@ -49,40 +49,44 @@ def min_max_normalize(matrix, Min=0, Max=1):
 
     return normalized_matrix
 
-def reshape_array(input_array, new_dimension):
+
+def reshape_array(input_array, new_dimension, interpolation_kind='cubic'):
     """
-    Reshape the input numpy array by computing averages across windows.
+    Reshape the input numpy array by computing averages across windows or interpolation.
 
     Parameters:
     input_array (numpy.ndarray): Input array of dimension M.
     new_dimension (int): Desired new dimension N for the reshaped array.
+    interpolation_kind (str): Type of interpolation for upsampling (default: 'cubic').
 
     Returns:
     numpy.ndarray: Reshaped array of dimension N.
     """
+    # Validate inputs
+    if not isinstance(new_dimension, int) or new_dimension <= 0:
+        raise ValueError("new_dimension must be a positive integer.")
+    if len(input_array) == 0:
+        raise ValueError("Input array cannot be empty.")
 
-    # Calculate the size of each window
-    original_length = len(input_array)
-    window_size = original_length // new_dimension  # Calculate the size of each window
-    reshaped_array = np.zeros(new_dimension)
+    input_len = len(input_array)
 
-    # Iterate over each segment/window and compute the average
-    if original_length>new_dimension:
-        # In case that we want to downgrade the dimension we can compute averages
-        for i in range(new_dimension):
-            start_idx = i * window_size
-            end_idx = (i + 1) * window_size
+    # If the dimensions are the same, return the original array
+    if new_dimension == input_len:
+        return input_array
 
-            # Compute the average of values in the current window
-            if i == new_dimension - 1:  # Handle the last segment
-                reshaped_array[i] = np.average(input_array[start_idx:])
-            else:
-                reshaped_array[i] = np.average(input_array[start_idx:end_idx])
+    # Reshape using averages if downsampling
+    if new_dimension < input_len:
+        window_size = input_len // new_dimension
+        reshaped_array = np.array([
+            np.mean(input_array[i * window_size : (i + 1) * window_size])
+            if i < new_dimension - 1 else np.mean(input_array[i * window_size:])
+            for i in range(new_dimension)
+        ])
     else:
-        # In case that we need higher dimension we perform spline interpolation
-        original_indices = np.linspace(0, original_length - 1, original_length)
-        new_indices = np.linspace(0, original_length - 1, new_dimension)
-        spline_interpolation = interp1d(original_indices, input_array, kind='cubic')
+        # Reshape using spline interpolation if upsampling
+        original_indices = np.linspace(0, input_len - 1, input_len)
+        new_indices = np.linspace(0, input_len - 1, new_dimension)
+        spline_interpolation = interp1d(original_indices, input_array, kind=interpolation_kind)
         reshaped_array = spline_interpolation(new_indices)
 
     return reshaped_array
@@ -91,10 +95,10 @@ def natural_sort_key(s):
     # Splits string into parts of digits and non-digits
     return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
-def list_files_in_directory(directory: str) -> list:
+def list_files_in_directory(directory: str):
     """
     Returns a naturally sorted list of all file names in the given directory.
-    _________________________________________________________________________
+    
     Input:
     directory (str): the path of the directory.
     

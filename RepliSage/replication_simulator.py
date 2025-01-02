@@ -76,7 +76,7 @@ def propagate_forks(L,t,replicated_dna, vs, t0s, l_forks, r_forks):
     return replicated_dna, vs, t0s, l_forks, r_forks
 
 class ReplicationSimulator:
-    def __init__(self,L:int, T:int, initiation_rate:np.ndarray, speed_ratio:float, speed_mean=0.1):
+    def __init__(self,L:int, T:int, initiation_rate:np.ndarray, speed_ratio:float, speed_mean=1):
         '''
         Set parameters for replication simulation.
         ------------------------------------------
@@ -106,7 +106,7 @@ class ReplicationSimulator:
             self.f[:, zero_columns] = 1
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract
 
-    def visualize_simulation(self):
+    def visualize_simulation(self,path=None):
         '''
         Vizualize the results.
         '''
@@ -116,13 +116,17 @@ class ReplicationSimulator:
         plt.title('DNA Replication Simulation')
         plt.xlabel('DNA position')
         plt.ylabel('Computational Time')
-        plt.show()
+        if path!=None:
+            plt.savefig(path+'/rep_simulation.png',dpi=200)
+        plt.close()
 
         plt.figure(figsize=(8, 6))
         plt.plot(self.rep_fract)
         plt.xlabel('Time', fontsize=18)
         plt.ylabel('Replication Fraction', fontsize=18)
-        plt.show()
+        if path!=None:
+            plt.savefig(path+'/rep_frac.png',dpi=200)
+        plt.close()
 
 def run_Ntrials(N_trials, L, T, initiation_rate, speed_ratio, speed_mean=3):
     '''

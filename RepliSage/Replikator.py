@@ -1,4 +1,5 @@
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.signal import find_peaks
@@ -22,9 +23,11 @@ class Replikator:
         coords: the region of interest as list [start,end]. It should be a list.
         '''
         self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
+        chrom_nr = int(re.sub(r'\D', '', self.chrom)) - 1
         self.data = mat73.loadmat(rept_data_path)
-        self.gen_windows = self.data['genome_windows'][eval(chrom[-1])-1][0]
-        self.mat = self.data['replication_state_filtered'][eval(chrom[-1])-1][0].T
+        self.gen_windows = self.data['genome_windows'][chrom_nr][0]
+        self.chrom_size = int(np.max(self.gen_windows))
+        self.mat = self.data['replication_state_filtered'][chrom_nr][0].T
         self.L, self.T = sim_L, sim_T
     
     def process_matrix(self):
@@ -33,8 +36,7 @@ class Replikator:
         '''
         min_value = np.min(np.nan_to_num(self.mat[self.mat>0]))
         self.mat = np.nan_to_num(self.mat,nan=min_value)
-        min_max_scaler = preprocessing.MinMaxScaler()
-        self.mat = min_max_scaler.fit_transform(self.mat)
+        self.mat = (self.mat-np.min(self.mat))/(np.max(self.mat)-np.min(self.mat))
 
     def compute_f(self):
         '''
@@ -50,8 +52,8 @@ class Replikator:
         self.std_ft = min_max_normalize(sft)
         if self.is_region:
             N = len(self.avg_fx)
-            self.avg_fx = self.avg_fx[(self.coords[0]*N)//chrom_sizes[self.chrom]:self.coords[1]*N//chrom_sizes[self.chrom]]
-            self.std_fx = self.std_fx[(self.coords[0]*N)//chrom_sizes[self.chrom]:self.coords[1]*N//chrom_sizes[self.chrom]]
+            self.avg_fx = self.avg_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
+            self.std_fx = self.std_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
         self.avg_fx = reshape_array(self.avg_fx,self.L)
         self.std_fx = reshape_array(self.std_fx,self.L)
         self.avg_ft = reshape_array(self.avg_ft,self.T)
@@ -90,21 +92,34 @@ class Replikator:
         self.speed_ratio = self.speed_std/self.speed_avg
         print('Done!\n')
 
-    def compute_init_rate(self):
+    def compute_init_rate(self,viz=False):
         '''
         Estimation of the initiation rate function I(x,t).
         '''
         self.initiation_rate = np.zeros((self.L,self.T))
         print('Computing initiation rate...')
         mus = self.T*(1-self.avg_fx)
-        stds = self.T*self.std_fx
+        stds = self.std_fx*self.T/6
         for ori in tqdm(range(len(mus))):
-            s = np.round(np.random.normal(mus[ori], max(0,stds[ori]), 20000)).astype(int)
+            s = np.round(np.random.normal(mus[ori], max(0,stds[ori]), 2000)).astype(int)
             s[s<0] = 0
             s[s>=self.T] = self.T-1
             unique_locations, counts = np.unique(s, return_counts=True)
             self.initiation_rate[ori,unique_locations] = counts
             self.initiation_rate[ori,:] /= np.sum(self.initiation_rate[ori,:])
+        
+        if viz:
+            plt.figure(figsize=(15, 8),dpi=200)
+            plt.imshow(self.initiation_rate.T,cmap='rainbow',aspect='auto',vmax=np.mean(self.initiation_rate)+np.std(self.initiation_rate))
+            plt.title('Initiation Rate Function',fontsize=24,pad=20)
+            plt.xlabel('Genomic Distance',fontsize=20)
+            plt.ylabel('Pseudo-Time',fontsize=20)
+            plt.xticks([])
+            plt.yticks([])
+            cbar = plt.colorbar()
+            cbar.set_ticks([])  # Removes the tick marks
+            cbar.ax.tick_params(size=0)  # Removes the tick lines
+            plt.show()
         print('Computation Done! <3\n')
 
     def prepare_data(self):
@@ -137,7 +152,7 @@ class Replikator:
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
-def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
+def run_loop(N_trials:int,scale=1.0,N_beads=5000,rep_duration=1000):
     '''
     For validation purposes, we can run a number of independent replication timing experiments.
     When we run these experiments, we can average the replication fraction of each one of them.
@@ -145,7 +160,7 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     Otherwise, the hyperparameters needs to be reconfigured.
     '''
     sf = np.zeros((N_beads,rep_duration))
-    chrom = 'chr9'
+    chrom = 'chr14'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     rep = Replikator(rept_path,N_beads,rep_duration,chrom)
     rep.prepare_data()
@@ -157,35 +172,80 @@ def run_loop(N_trials:int,scale=1,N_beads=10000,rep_duration=1000):
     elapsed = end - start
     print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-    # Replication fraction plots
-    plt.figure(figsize=(20, 5),dpi=200)
-    plt.plot(min_max_normalize(np.average(sf,axis=1)),'b-',label='Simulated')
-    plt.plot(rep.avg_fx,'r-',label='Experimental')
-    plt.xlabel('DNA position',fontsize=18)
-    plt.ylabel('Replication Fraction',fontsize=18)
-    # plt.ylim((0.5,1))
-    plt.legend()
-    # plt.savefig(f'repfrac_Ntrials{N_trials}_scale_{scale}.png',format='png',dpi=200)
+    # Correlations computations
+    pears, pval = stats.pearsonr(np.average(sf,axis=1), rep.avg_fx)
+    print(f'Pearson correlation: {pears:.3f} %, with p-value {pval}.')
+    spear, pval = stats.spearmanr(np.average(sf,axis=1), rep.avg_fx)
+    print(f'Spearman correlation: {spear:.3f} %, with p-value {pval}.')
+    kend, pval = stats.kendalltau(np.average(sf,axis=1), rep.avg_fx)
+    print(f'Kendall tau correlation: {kend:.3f} %, with p-value {pval}.')
+
+    # Improved plot lines with thicker width and transparency
+    sns.set_theme(style="whitegrid", context="talk")
+    plt.figure(figsize=(15, 5),dpi=200)
+    plt.plot(
+        min_max_normalize(np.average(sf, axis=1)), 
+        'b-', 
+        label='Simulated', 
+        linewidth=2.5, 
+        alpha=0.8
+    )
+    plt.plot(
+        rep.avg_fx, 
+        'r-', 
+        label='Experimental', 
+        linewidth=2.5, 
+        alpha=0.8
+    )
+
+    # Enhanced axis labels
+    plt.xlabel('Genomic Distance', fontsize=18, labelpad=10)
+    plt.ylabel('Replication Fraction', fontsize=18, labelpad=10)
+
+    # Custom ticks with lighter grid
+    plt.xticks([], fontsize=12, color='grey')
+    plt.yticks([], fontsize=12, color='grey')
+    plt.grid(color='grey', linestyle='--', linewidth=0.5, alpha=0.7)
+
+    # Adding a styled text box
+    text_x = 2700  # X-coordinate for the text box (adjust as needed)
+    text_y = 0.05  # Y-coordinate for the text box (adjust as needed)
+    plt.text(
+        text_x, text_y, 
+        f'Pearson Correlation: {100 * pears:.2f}%\nSpearman Correlation: {100 * spear:.2f}%', 
+        fontsize=12, 
+        color='black', 
+        bbox=dict(facecolor='lightblue', alpha=0.7, edgecolor='navy', boxstyle='round,pad=0.5')
+    )
+
+    # Stylish legend with custom frame
+    plt.legend(
+        fontsize=14, 
+        loc='upper left', 
+        frameon=True, 
+        framealpha=0.8, 
+        edgecolor='black', 
+        facecolor='white'
+    )
+
+    # Save as high-resolution images with consistent naming
+    plt.savefig(f'ntrial_{N_trials}_scale_{scale}_rep_frac.svg', format='svg', dpi=300, bbox_inches='tight')
+    plt.savefig(f'ntrial_{N_trials}_scale_{scale}_rep_frac.pdf', format='pdf', dpi=300, bbox_inches='tight')
+
+    # Show the plot
     plt.show()
     
-    # Correlations computations
-    corr, pval = stats.pearsonr(np.average(sf,axis=1), rep.avg_fx)
-    print(f'Pearson correlation: {corr}, with p-value {pval}.')
-    corr, pval = stats.spearmanr(np.average(sf,axis=1), rep.avg_fx)
-    print(f'Spearman correlation: {corr}, with p-value {pval}.')
-    corr, pval = stats.kendalltau(np.average(sf,axis=1), rep.avg_fx)
-    print(f'Kendall tau correlation: {corr}, with p-value {pval}.')
     return sf
 
 def main():
     # Parameters
-    region, chrom =  [100421513, 205491193], 'chr1'
+    chrom =  'chr14'
     N_beads,rep_duration = 50000,10000
     
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 
     # Run simulation
-    rep = Replikator(rept_path,N_beads,rep_duration,chrom,region)
+    rep = Replikator(rept_path,N_beads,rep_duration,chrom)
     f, l_forks, r_forks = rep.run()
     magnetic_field, state = rep.calculate_ising_parameters()

@@ -267,8 +267,8 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     for i in range(N_steps):
         # Calculate replication time
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
-        mag_field = - 2 * (1 - 2 * np.arange(rt).astype(np.float64) / rep_duration)
-        ht = np.sum(mag_field * (l_forks[:, :rt] + r_forks[:, :rt]),axis=1)/N_rep
+        mag_field = - 2 * (1 - 2 * rt / rep_duration)
+        ht += mag_field * (l_forks[:, rt] + r_forks[:, rt])/N_lef
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
         for j in range(N_lef):
@@ -298,7 +298,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             else:
                 # Propose a node state change
                 spin_idx = np.random.choice(spin_idx_choices)
-                s = np.random.choice(spin_choices)
+                s = np.random.choice(spin_choices[spin_choices!=spins[spin_idx]])
 
                 # Compute the energy that corresponds only to the node change
                 dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,ms,ns,potts_norm1,potts_norm2, rt, rep_duration, l_forks, r_forks)

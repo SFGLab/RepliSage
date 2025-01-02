@@ -72,6 +72,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     plt.xlabel('Simulation Step', fontsize=28)
     plt.ylabel('Position of Cohesin', fontsize=28)
     plt.gca().invert_yaxis()
+    # plt.gca().set_ylim(bottom=0) 
     save_path = path+'/plots/LEFs.png'
     plt.savefig(save_path,format='png')
     plt.close()
@@ -79,7 +80,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
+def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
     plt.plot(Es_ising, 'orange',label='Ising Energy')
     # plt.plot(E_comps, 'darkcyan',label='Compartmentalization Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
@@ -110,6 +111,15 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     save_path = path+'/plots/mag.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/mag.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    plt.close()
+
+    plt.plot(N_lefs, 'steelblue',label='mags')
+    plt.ylabel('Number of LEFs', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    save_path = path+'/plots/Nlefs.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/Nlefs.svg'
     plt.savefig(save_path,format='svg',dpi=200)
     plt.close()
 
@@ -164,7 +174,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
 
 def ising_traj_plot(traj,save_path):
     figure(figsize=(20, 20),dpi=500)
-    plt.imshow(traj,cmap='bwr_r',aspect='auto')
+    plt.imshow(traj,cmap='rainbow_r',aspect='auto')
     plt.xlabel('Computational Time',fontsize=28)
     plt.ylabel('Region', fontsize=28)
     plt.savefig(save_path+'/plots/ising_traj.png',format='png',dpi=100)
