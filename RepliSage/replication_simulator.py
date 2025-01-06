@@ -100,9 +100,9 @@ class ReplicationSimulator:
 
         if T_final < self.T:
             self.f = expand_columns(self.f, self.T)
-            self.r_forks = expand_columns(self.r_forks, self.T)
-            self.l_forks = expand_columns(self.l_forks, self.T)
-            zero_columns = np.all(self.f == 0, axis=0) & (np.arange(self.T) > self.T / 2)
+            self.r_forks = expand_columns(self.r_forks, self.T, False)
+            self.l_forks = expand_columns(self.l_forks, self.T, False)
+            zero_columns = np.all(self.f == 0, axis=0) & (np.arange(self.T) >9*self.T / 10)
             self.f[:, zero_columns] = 1
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract
 

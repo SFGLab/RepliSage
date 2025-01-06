@@ -10,7 +10,6 @@ import pandas as pd
 from scipy.spatial import distance
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.stats.stats import pearsonr, spearmanr, kendalltau
-# from LoCR import *
 from tqdm import tqdm
 
 def make_folder(folder_name):
@@ -61,8 +60,6 @@ _struct_conn.ptnr2_label_asym_id
 _struct_conn.ptnr2_label_seq_id
 _struct_conn.ptnr2_label_atom_id
 """
-
-
 
 def write_cmm(comps,name):
     comp_old = 2
@@ -164,7 +161,7 @@ def generate_psf(n: int, file_name='stochastic_LE.psf', title="No title provided
         f.writelines(lines)
 
 ############# Computation of heatmaps #############
-def get_coordinates_pdb(file:str) -> np.ndarray:
+def get_coordinates_pdb(file:str):
     '''
     It returns the corrdinate matrix V (N,3) of a .pdb file.
     The main problem of this function is that coordiantes are not always in 
@@ -175,7 +172,7 @@ def get_coordinates_pdb(file:str) -> np.ndarray:
     file (str): the path of the .pdb file.
     
     Output:
-    V (np.array): the matrix of coordinates
+    V (numpy array): the matrix of coordinates
     '''
     V = list()
     
@@ -218,57 +215,6 @@ def get_coordinates_cif(file:str):
                 V.append([x, y, z])
     
     return np.array(V)
-
-def dist(p1: np.ndarray, p2: np.ndarray) -> float:
-    """Mierzy dystans w przestrzeni R^3"""
-    x1, y1, z1 = p1
-    x2, y2, z2 = p2
-    return ((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2) ** 0.5  # faster than np.linalg.norm
-
-def random_versor() -> np.ndarray:
-    """Losuje wersor"""
-    x = np.random.uniform(-1, 1)
-    y = np.random.uniform(-1, 1)
-    z = np.random.uniform(-1, 1)
-    d = (x ** 2 + y ** 2 + z ** 2) ** 0.5
-    return np.array([x / d, y / d, z / d])
-
-def self_avoiding_random_walk(n: int, step: float = 1.0, bead_radius: float = 0.5, epsilon: float = 0.001, two_dimensions=False) -> np.ndarray:
-    potential_new_step = [0, 0, 0]
-    while True:
-        points = [np.array([0, 0, 0])]
-        for _ in tqdm(range(n - 1)):
-            step_is_ok = False
-            trials = 0
-            while not step_is_ok and trials < 1000:
-                potential_new_step = points[-1] + step * random_versor()
-                if two_dimensions:
-                    potential_new_step[2] = 0
-                for j in points:
-                    d = dist(j, potential_new_step)
-                    if d < 2 * bead_radius - epsilon:
-                        trials += 1
-                        break
-                else:
-                    step_is_ok = True
-            points.append(potential_new_step)
-        points = np.array(points)
-        return points
-
-def polymer_circle(n: int, z_stretch: float = 1.0, radius: float = 5.0) -> np.ndarray:
-    points = []
-    angle_increment = 360 / float(n)
-    radius = 1 / (2 * np.sin(np.radians(angle_increment) / 2.)) if radius==None else radius
-    z_stretch = z_stretch / n
-    z = 0
-    for i in range(n):
-        x = radius * np.cos(angle_increment * i * np.pi / 180)
-        y = radius * np.sin(angle_increment * i * np.pi / 180)
-        if z_stretch != 0:
-            z += z_stretch
-        points.append((x, y, z))
-    points = np.array(points)
-    return points
 
 def get_coordinates_mm(mm_vec):
     '''

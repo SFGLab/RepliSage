@@ -29,6 +29,9 @@ class MD_MODEL:
         self.platform = platform
         self.rw_l = np.sqrt(self.N_beads)*0.1
         self.run_repli = np.all(rep_frac!=None)
+        self.chain_idx = list()
+        for i in range(N_beads): self.chain_idx.append(0)
+        for i in range(N_beads,2*N_beads): self.chain_idx.append(1)
 
     def compute_rep(self,i):
         if i*self.step<self.t_rep:
@@ -48,7 +51,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=500,reporters=False,mode='MD'):
+    def run_pipeline(self,init_struct='hilbert',tol=1.0, sim_step=1000,reporters=False,mode='MD',integrator_mode='MTS'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -58,12 +61,12 @@ class MD_MODEL:
         write_files (bool): True if the user wants to save the structures that determine the simulation ensemble.
         '''
         # Define initial structure
-        print('Building initial structure...')
+        print('\nBuilding initial structure...')
         points1 = compute_init_struct(self.N_beads,init_struct)
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
         write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
         generate_psf(self.N_beads,self.out_path+'/other/LE_init_struct.psf')
-        print('Done brother ;D\n')
+        print('Initial Structure Created Succesfully <3\n')
         
         platform = mm.Platform.getPlatformByName(self.platform)
 
@@ -73,8 +76,11 @@ class MD_MODEL:
 
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
-        integrator = MTSLangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 100 * mm.unit.femtosecond, [(0,2),(1,2),(0,1)])
-        
+        if integrator_mode=='MTS':
+            integrator = MTSLangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 1 * mm.unit.femtosecond, [(0,2),(1,2),(0,1)])
+        else:
+            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 1 * mm.unit.femtosecond)
+
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
         self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
@@ -86,16 +92,16 @@ class MD_MODEL:
         self.simulation.minimizeEnergy(tolerance=tol)
         self.state = self.simulation.context.getState(getPositions=True)
         if reporters:
-            self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//100, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
+            self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//1000, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
             self.simulation.reporters.append(DCDReporter(self.path+'/other/replisage.dcd', sim_step))
         PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/minimized_model.cif', 'w'))
         end = time.time()
         elapsed = end - start
         print(f'Energy minimization finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
         
-        print('\nCreating ensembles...')
+        print(f'\nCreating ensembles ({mode} mode)...')
         start = time.time()
-        pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
+        if not reporters: pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
         for i in range(self.burnin,self.N_steps):
             # Compute replicated DNA
             rep_per = self.compute_rep(i)
@@ -119,13 +125,14 @@ class MD_MODEL:
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
             
             # Update progress-bar
-            pbar.update(1)
-            pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
-        pbar.close()
+            if not reporters:
+                pbar.update(1)
+                pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
+        if not reporters: pbar.close()
         end = time.time()
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
-        print('Energy minimization done :D')
+        print('Energy minimization done <3')
 
     def change_repliforce(self,i):
         if i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
@@ -147,25 +154,26 @@ class MD_MODEL:
 
     def change_comps(self,i):
         for n in range(self.N_beads):
-            self.comp_force.setParticleParameters(n,[self.Cs[n,i]])
+            self.comp_force.setParticleParameters(n,[self.Cs[n,i],self.chain_idx[n]])
+        if self.run_repli:
+            for n in range(self.N_beads,2*self.N_beads):
+                self.comp_force.setParticleParameters(n,[self.Cs[n%self.N_beads,i],self.chain_idx[n]])
         self.comp_force.updateParametersInContext(self.simulation.context)
 
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
-        self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/r+delta)^3')
+        self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/r+delta)^3*delta(c1-c2)')
         self.ev_force.addGlobalParameter('epsilon', defaultValue=100)
         self.ev_force.addGlobalParameter('r_ev',defaultValue=0.1)
         self.ev_force.addGlobalParameter('delta',defaultValue=0.01)
+        self.ev_force.addPerParticleParameter('c')
         self.ev_force.setCutoffDistance(distance=0.2)
-        self.ev_force.setForceGroup(0)
+        self.ev_force.setForceGroup(1)
         for i in range(self.N_beads):
-            self.ev_force.addParticle()
+            self.ev_force.addParticle([self.chain_idx[i]])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.ev_force.addParticle()
-            for i in range(self.N_beads):
-                for j in range(self.N_beads,2*self.N_beads):
-                    self.ev_force.addExclusion(i,j)
+                self.ev_force.addParticle([self.chain_idx[i]])
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):
@@ -195,8 +203,9 @@ class MD_MODEL:
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
         for n in range(self.N_coh):
-            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.0, 5e4)
-            if self.run_repli: self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.0, 5e4)
+            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e4)
+            if self.run_repli: 
+                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self,i):
@@ -226,41 +235,37 @@ class MD_MODEL:
     def add_blocks(self,i):
         'Block copolymer forcefield for the modelling of compartments.'
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
-        self.comp_force = mm.CustomNonbondedForce('E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1+2)*delta(s2+2)+Ea2*delta(s1+1)*delta(s2+1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1-1)*delta(s2-1)+Eb3*delta(s1-2)*delta(s2-2)')
+        self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1+2)*delta(s2+2)+Ea2*delta(s1+1)*delta(s2+1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1-1)*delta(s2-1)+Eb3*delta(s1-2)*delta(s2-2)')
         self.comp_force.setForceGroup(1)
         self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.4)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.6)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.8)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.0)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.5)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.75)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-1.0)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-1.25)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.5)
         self.comp_force.addPerParticleParameter('s')
+        self.comp_force.addPerParticleParameter('c')
         self.comp_force.setCutoffDistance(distance=4*self.rw_l)
         for i in range(self.N_beads):
-            self.comp_force.addParticle([cs[i]])
+            self.comp_force.addParticle([cs[i],self.chain_idx[i]])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.comp_force.addParticle([cs[i%self.N_beads]])
-            for i in range(self.N_beads):
-                for j in range(self.N_beads,2*self.N_beads):
-                    self.comp_force.addExclusion(i,j)
+                self.comp_force.addParticle([cs[i%self.N_beads],self.chain_idx[i]])
         self.system.addForce(self.comp_force)
 
-    def add_container(self, R=10.0, C=10.0):
-        self.container_force = mm.CustomNonbondedForce('C*(max(0, r-R)^2)')
+    def add_container(self, R=10.0, C=1.0):
+        self.container_force = mm.CustomNonbondedForce('C*(max(0, r-R)^2)*delta(c1-c2)')
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)
         self.container_force.addGlobalParameter('R',defaultValue=R)
         self.container_force.setCutoffDistance(2*self.rw_l)
+        self.container_force.addPerParticleParameter('c')
         for i in range(self.N_beads):
-            self.container_force.addParticle()
+            self.container_force.addParticle([self.chain_idx[i]])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.container_force.addParticle()
-            for i in range(self.N_beads):
-                for j in range(self.N_beads,2*self.N_beads):
-                    self.container_force.addExclusion(i,j)
+                self.container_force.addParticle([self.chain_idx[i]])
         self.system.addForce(self.container_force)
     
     def add_forcefield(self,i,use_container=False):

@@ -80,7 +80,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
+def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.plot(Es_ising, 'orange',label='Ising Energy')
     # plt.plot(E_comps, 'darkcyan',label='Compartmentalization Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
@@ -111,15 +111,6 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
     save_path = path+'/plots/mag.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/mag.svg'
-    plt.savefig(save_path,format='svg',dpi=200)
-    plt.close()
-
-    plt.plot(N_lefs, 'steelblue',label='mags')
-    plt.ylabel('Number of LEFs', fontsize=16)
-    plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/Nlefs.pdf'
-    plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/Nlefs.svg'
     plt.savefig(save_path,format='svg',dpi=200)
     plt.close()
 

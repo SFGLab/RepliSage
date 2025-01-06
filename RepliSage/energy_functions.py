@@ -242,6 +242,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
 
     # Initialization of the time dependent component of the magnetic field
     ht = ht_old = np.zeros(N_beads,dtype=np.float64)
+    mask = (ht_old == 0)
 
     # Choices for MC
     N_rep = np.max(np.sum(l_forks,axis=0))
@@ -257,7 +258,6 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
     mags = np.zeros(N_steps//MC_step, dtype=np.float64)
-    N_lefs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -268,10 +268,10 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
         # Calculate replication time
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
         mag_field = - 2 * (1 - 2 * rt / rep_duration)
-        ht += mag_field * (l_forks[:, rt] + r_forks[:, rt])/N_lef
+        ht += mask * mag_field * (l_forks[:, rt] + r_forks[:, rt])
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
-        for j in range(N_lef):
+        for j in range(N_beads):
             # Propose a move for cohesins (rewiring)
             do_rewiring = rd.random()<p1
             if do_rewiring:
@@ -306,11 +306,11 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                     E_is += dE
                     spins[spin_idx] = s
         ht_old = ht
+        mask = (ht_old == 0)
 
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
-            N_lefs[i//MC_step] = len(ms[ms>=0])
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
             spin_traj[:,i//MC_step] = spins
@@ -318,4 +318,5 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_repli(l_forks,r_forks,ms,ns,rt,rep_norm)
-    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, J, mags, N_lefs
+
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags

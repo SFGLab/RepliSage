@@ -43,7 +43,7 @@ class Replikator:
         Compute the averages and standard deviations across the single cell replication matrix.
         Here we compute both averages over cell circle time and over spartial dimensions.
         '''
-        afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
+        afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0)/8, np.average(self.mat,axis=1), np.std(self.mat,axis=1)/8
         min_avg, avg_std = np.min(afx[afx>0]), np.average(sfx)
         afx[afx<=0], sfx[sfx<=0] = min_avg, avg_std
         self.avg_fx = min_max_normalize(afx)
@@ -62,7 +62,7 @@ class Replikator:
     def compute_peaks(self,prominence=0.01):
         '''
         Here we compute peaks and dips of the replication timing curves.
-        ----------------------------------------------
+        ----------------------------------------------------------------
         Input:
         prominence: it is the prominence parameter from the scipy function: find_peaks().
         '''
@@ -99,7 +99,7 @@ class Replikator:
         self.initiation_rate = np.zeros((self.L,self.T))
         print('Computing initiation rate...')
         mus = self.T*(1-self.avg_fx)
-        stds = self.std_fx*self.T/6
+        stds = self.std_fx*self.T
         for ori in tqdm(range(len(mus))):
             s = np.round(np.random.normal(mus[ori], max(0,stds[ori]), 2000)).astype(int)
             s[s<0] = 0
@@ -240,12 +240,13 @@ def run_loop(N_trials:int,scale=1.0,N_beads=5000,rep_duration=1000):
 def main():
     # Parameters
     chrom =  'chr14'
+    coords = [30835000, 98674700]
     N_beads,rep_duration = 50000,10000
     
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 
     # Run simulation
-    rep = Replikator(rept_path,N_beads,rep_duration,chrom)
+    rep = Replikator(rept_path,N_beads,rep_duration,chrom,coords)
     f, l_forks, r_forks = rep.run()
     magnetic_field, state = rep.calculate_ising_parameters()
