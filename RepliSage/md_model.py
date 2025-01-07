@@ -30,6 +30,7 @@ class MD_MODEL:
         self.rw_l = np.sqrt(self.N_beads)*0.1
         self.run_repli = np.all(rep_frac!=None)
         self.chain_idx = list()
+        print('Average random walk distance:',self.rw_l)
         for i in range(N_beads): self.chain_idx.append(0)
         for i in range(N_beads,2*N_beads): self.chain_idx.append(1)
 
@@ -168,7 +169,7 @@ class MD_MODEL:
         self.ev_force.addGlobalParameter('delta',defaultValue=0.01)
         self.ev_force.addPerParticleParameter('c')
         self.ev_force.setCutoffDistance(distance=0.2)
-        self.ev_force.setForceGroup(1)
+        self.ev_force.setForceGroup(0)
         for i in range(self.N_beads):
             self.ev_force.addParticle([self.chain_idx[i]])
         if self.run_repli:
@@ -203,9 +204,9 @@ class MD_MODEL:
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
         for n in range(self.N_coh):
-            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e4)
+            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.0, 5e4)
             if self.run_repli: 
-                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e4)
+                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.0, 5e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self,i):
@@ -217,7 +218,7 @@ class MD_MODEL:
         
         if i*self.step<self.t_rep:
             for i in range(self.N_beads): 
-                self.repli_force.addBond(i, i + self.N_beads, [0,5e4])
+                self.repli_force.addBond(i, i + self.N_beads, [0.1,5e4])
         elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
@@ -225,7 +226,7 @@ class MD_MODEL:
                 if i in rep_locs:
                     self.repli_force.addBond(i, i + self.N_beads, [self.rw_l,1e2])
                 else:
-                    self.repli_force.addBond(i, i + self.N_beads, [0,5e4])
+                    self.repli_force.addBond(i, i + self.N_beads, [0.1,5e4])
         else:
             for i in range(self.N_beads):
                 self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,100.0])
@@ -237,16 +238,16 @@ class MD_MODEL:
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
         self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1+2)*delta(s2+2)+Ea2*delta(s1+1)*delta(s2+1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1-1)*delta(s2-1)+Eb3*delta(s1-2)*delta(s2-2)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=1.0)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.5)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.75)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-1.0)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-1.25)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.5)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.05)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.1)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.15)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.25)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
-        self.comp_force.setCutoffDistance(distance=4*self.rw_l)
+        # self.comp_force.setCutoffDistance(distance=2*self.rw_l)
         for i in range(self.N_beads):
             self.comp_force.addParticle([cs[i],self.chain_idx[i]])
         if self.run_repli:
@@ -259,7 +260,7 @@ class MD_MODEL:
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)
         self.container_force.addGlobalParameter('R',defaultValue=R)
-        self.container_force.setCutoffDistance(2*self.rw_l)
+        # self.container_force.setCutoffDistance(2*self.rw_l)
         self.container_force.addPerParticleParameter('c')
         for i in range(self.N_beads):
             self.container_force.addParticle([self.chain_idx[i]])
@@ -281,7 +282,7 @@ class MD_MODEL:
         self.add_evforce()
         self.add_bonds()
         self.add_stiffness()
-        if use_container: self.add_container(R = 1.5*self.rw_l)
+        if use_container: self.add_container(R = self.rw_l)
         if np.all(self.Cs!=None): self.add_blocks(i)
         if self.run_repli: self.add_repliforce(i)
         self.add_loops(i)
