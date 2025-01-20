@@ -140,7 +140,7 @@ class MD_MODEL:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1e2])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.2*self.rw_l,1e2])
         elif i*self.step>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
                 self.repli_force.setBondParameters(j,j,j+self.N_beads,[2*self.rw_l,1.0])
@@ -193,10 +193,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -236,15 +236,15 @@ class MD_MODEL:
     def add_blocks(self,i):
         'Block copolymer forcefield for the modelling of compartments.'
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
-        self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1+2)*delta(s2+2)+Ea2*delta(s1+1)*delta(s2+1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1-1)*delta(s2-1)+Eb3*delta(s1-2)*delta(s2-2)')
+        self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1-2)*delta(s2-2)+Ea2*delta(s1-1)*delta(s2-1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1+1)*delta(s2+1)+Eb3*delta(s1+2)*delta(s2+2)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l/2)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.05)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.1)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.15)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.25)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.3)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.5)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
         # self.comp_force.setCutoffDistance(distance=2*self.rw_l)

@@ -9,6 +9,19 @@ from replication_simulator import *
 import mat73
 import time
 from tqdm import tqdm
+from numba import njit, prange
+
+@njit
+def gaussian(x, mu, sig):
+    return np.exp(-(x - mu)*(x - mu) / (sig*sig) / 2)/np.sqrt(2*np.pi*sig)
+
+@njit
+def get_p_vector(T, mu, sig):
+    """Creates a vector of probabilities for a given locus with desired initiation mu and standard deviation sig"""
+    ps = [gaussian(0, mu, sig)]
+    for i in range(1, T):
+        ps.append(gaussian(i, mu, sig)/(1-ps[-1]))
+    return ps
 
 class Replikator:
     def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None):
@@ -29,6 +42,7 @@ class Replikator:
         self.chrom_size = int(np.max(self.gen_windows))
         self.mat = self.data['replication_state_filtered'][chrom_nr][0].T
         self.L, self.T = sim_L, sim_T
+        self.sigma_t = self.T*0.1
     
     def process_matrix(self):
         '''
@@ -43,21 +57,21 @@ class Replikator:
         Compute the averages and standard deviations across the single cell replication matrix.
         Here we compute both averages over cell circle time and over spartial dimensions.
         '''
-        afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0)/8, np.average(self.mat,axis=1), np.std(self.mat,axis=1)/8
+        afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
         min_avg, avg_std = np.min(afx[afx>0]), np.average(sfx)
         afx[afx<=0], sfx[sfx<=0] = min_avg, avg_std
-        self.avg_fx = min_max_normalize(afx)
-        self.std_fx = min_max_normalize(sfx)
-        self.avg_ft = min_max_normalize(aft)
-        self.std_ft = min_max_normalize(sft)
+        self.avg_fx = afx
+        self.std_fx = sfx
+        self.avg_ft = aft
+        self.std_ft = sft
         if self.is_region:
             N = len(self.avg_fx)
             self.avg_fx = self.avg_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
             self.std_fx = self.std_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
-        self.avg_fx = reshape_array(self.avg_fx,self.L)
-        self.std_fx = reshape_array(self.std_fx,self.L)
-        self.avg_ft = reshape_array(self.avg_ft,self.T)
-        self.std_ft = reshape_array(self.std_ft,self.T)
+        self.avg_fx = reshape_array(self.avg_fx, self.L)
+        self.std_fx = reshape_array(self.std_fx, self.L)
+        self.avg_ft = reshape_array(self.avg_ft, self.T)
+        self.std_ft = reshape_array(self.std_ft, self.T)
 
     def compute_peaks(self,prominence=0.01):
         '''
@@ -83,30 +97,28 @@ class Replikator:
             start_idx = extrema_indices_sorted[i]
             end_idx = extrema_indices_sorted[i + 1]
             delta_x = (end_idx - start_idx)
-            segment_slope = (self.avg_fx[end_idx] - self.avg_fx[start_idx]) / delta_x
-            sigma_slope = np.sqrt((self.std_fx[start_idx] / delta_x) ** 2 + (self.std_fx[end_idx] / delta_x) ** 2)
+            segment_slope = delta_x / (self.avg_fx[end_idx] - self.avg_fx[start_idx])
+            sigma_slope = delta_x*np.sqrt(2*(self.sigma_t/self.T)**2)/(self.avg_fx[end_idx] - self.avg_fx[start_idx])**2
             avg_slopes[extr] = np.abs(segment_slope)
             std_slopes[extr] = sigma_slope
-        self.speed_avg = np.average(avg_slopes)
-        self.speed_std = np.average(std_slopes)
+        self.speed_avg = 10*np.average(avg_slopes)
+        self.speed_std = 10*np.average(std_slopes)
         self.speed_ratio = self.speed_std/self.speed_avg
+        print(f'Speed average: {self.speed_avg}, Speed Std: {self.speed_std}')
         print('Done!\n')
 
     def compute_init_rate(self,viz=False):
         '''
         Estimation of the initiation rate function I(x,t).
         '''
-        self.initiation_rate = np.zeros((self.L,self.T))
+        self.initiation_rate = np.zeros((self.L, self.T))
         print('Computing initiation rate...')
         mus = self.T*(1-self.avg_fx)
-        stds = self.std_fx*self.T
+
         for ori in tqdm(range(len(mus))):
-            s = np.round(np.random.normal(mus[ori], max(0,stds[ori]), 2000)).astype(int)
-            s[s<0] = 0
-            s[s>=self.T] = self.T-1
-            unique_locations, counts = np.unique(s, return_counts=True)
-            self.initiation_rate[ori,unique_locations] = counts
-            self.initiation_rate[ori,:] /= np.sum(self.initiation_rate[ori,:])
+            m = int(mus[ori])
+            p_i = get_p_vector(self.T, m, sig=self.sigma_t)
+            self.initiation_rate[ori, :] = p_i
         
         if viz:
             plt.figure(figsize=(15, 8),dpi=200)
@@ -133,12 +145,12 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
 
-    def run(self, scale=10, out_path=None):
+    def run(self, scale=1, out_path=None):
         '''
         This function calls replication simulation.
         '''
         self.prepare_data()
-        repsim = ReplicationSimulator(self.L, self.T, scale*self.initiation_rate, self.speed_ratio)
+        repsim = ReplicationSimulator(self.L, self.T, scale*self.initiation_rate, self.speed_ratio, self.speed_avg)
         self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
         repsim.visualize_simulation(out_path)
         return self.sim_f, l_forks, r_forks
@@ -148,11 +160,11 @@ class Replikator:
         Calculate compartmentalization related data.
         We connect compartmentalization with early and late replication timing sites.
         '''
-        magnetic_field = -2*self.avg_fx+1
+        magnetic_field = 2*self.avg_fx-1
         state =  np.where(min_max_normalize(np.average(self.sim_f,axis=1),-1,1) > 0, 1, -1)
         return np.array(magnetic_field,dtype=np.float64), np.array(state,dtype=np.int32)
 
-def run_loop(N_trials:int,scale=1.0,N_beads=5000,rep_duration=1000):
+def run_loop(N_trials:int, scale=1.0, N_beads=5000, rep_duration=1000):
     '''
     For validation purposes, we can run a number of independent replication timing experiments.
     When we run these experiments, we can average the replication fraction of each one of them.
@@ -240,13 +252,13 @@ def run_loop(N_trials:int,scale=1.0,N_beads=5000,rep_duration=1000):
 def main():
     # Parameters
     chrom =  'chr14'
-    coords = [30835000, 98674700]
-    N_beads,rep_duration = 50000,10000
+    coords = [10835000, 98674700]
+    N_beads,rep_duration = 20000,1000
     
     # Paths
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
 
     # Run simulation
     rep = Replikator(rept_path,N_beads,rep_duration,chrom,coords)
-    f, l_forks, r_forks = rep.run()
+    f, l_forks, r_forks = rep.run(scale=1)
     magnetic_field, state = rep.calculate_ising_parameters()

@@ -43,7 +43,8 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     for i in range(len(df)):
         x, y = min((df[1][i]+df[2][i])//2,N_beads-1), min((df[4][i]+df[5][i])//2,N_beads-1)
         distances.append(distance_point_line(x,y))
-        J[x:y,x:y] = 1
+        J[x,y] = 0
+        J[y,x] = 0
         if has_col_7_8:
             if df[7][i]>=0: L[x] += df[6][i]*(1-df[7][i])
             if df[8][i]>=0: L[y] += df[6][i]*(1-df[8][i])
@@ -54,10 +55,6 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
             L[y] += df[6][i]
             R[x] += df[6][i]
             R[y] += df[6][i]
-
-    for i in range(N_beads-1):
-        J[i,i+1], J[i,i-1] = 1, 1
-        J[i+1,i], J[i-1,i] = 1, 1
     
     # Normalize (if neccesary): it means to convert values to probabilities
     if normalization:

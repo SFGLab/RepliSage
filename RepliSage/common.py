@@ -13,6 +13,35 @@ chrom_sizes = {'chr1':248387328,'chr2':242696752,'chr3':201105948,'chr4':1935749
                'chr17':84276897,'chr18':80542538,'chr19':61707364,'chr20':66210255,
                'chr21':45090682,'chr22':51324926,'chrX':154259566,'chrY':62460029}
 
+def rescale_matrix(matrix: np.array, new_cols: int, fork_mat: bool=False):
+    """
+    Rescales a binary replicated_dna matrix to a new number of columns, preserving
+    the transition point in each row where zeros switch to ones or the matrix preserving
+    the replication forks positions.
+    
+    Parameters:
+        matrix (np.ndarray): Binary input matrix with rows containing
+                             leading zeros followed by ones (replicated_dna).
+        new_cols (int): Desired number of columns in the rescaled matrix.
+        fork_mat (bool): Whether the matrix is describing the fork positions (True) or the replicated_dna (False).
+    
+    Returns:
+        np.ndarray: Rescaled binary matrix.
+    """
+    original_cols = matrix.shape[1]
+    rescaled_matrix = np.zeros((matrix.shape[0], new_cols), dtype=int)
+    
+    for i, row in enumerate(matrix):
+        if not all(row == 0):
+            transition_index = np.argmax(row == 1)
+            new_transition_index = int(round(transition_index * (new_cols - 1) / (original_cols - 1)))
+            if fork_mat:
+                rescaled_matrix[i, new_transition_index] = 1
+            else:
+                rescaled_matrix[i, new_transition_index:] = 1
+    
+    return rescaled_matrix
+
 def sharpen_edges(matrix):
     """
     Sharpens the binary matrix by retaining edge-like features while removing duplicates.

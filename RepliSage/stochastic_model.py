@@ -17,10 +17,12 @@ from Replikator import *
 from common import *
 from plots import *
 from energy_functions import *
+from structure_metrics import *
+from network_analysis import *
 from md_model import *
 
 class StochasticSimulation:
-    def __init__(self,N_beads,chrom,region, bedpe_file, out_path, N_lef=None, N_lef2=0, rept_path=None, t_rep=None, rep_duration=None,scale=10):
+    def __init__(self,N_beads,chrom,region, bedpe_file, out_path, N_lef=None, N_lef2=0, rept_path=None, t_rep=None, rep_duration=None,scale=1):
         '''
         Import simulation parameters and data.
         '''
@@ -34,12 +36,12 @@ class StochasticSimulation:
         # Import replication data
         self.run_replication = rept_path!=None
         if self.run_replication:
-            rep = Replikator(rept_path,self.N_beads,rep_duration,chrom,region)
-            self.rep_frac, self.l_forks, self.r_forks = rep.run(scale=scale,out_path=self.out_path+'/plots')
+            rep = Replikator(rept_path,self.N_beads,1000,chrom,region)
+            rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots')
+            self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
         else:
             self.l_forks, self.r_forks = np.array([[1,0],[1,0]],dtype=np.int32),  np.array([[1,0],[1,0]],dtype=np.int32)
-        del rep.initiation_rate
 
         # Import loop data
         self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
@@ -54,11 +56,10 @@ class StochasticSimulation:
         '''
         # Normalize strengths
         if not self.run_replication: c_rep, c_potts1, c_potts2 = 0.0, 0.0, 0.0
-        N_rep = np.max(np.sum(self.l_forks,axis=0))
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(2*(np.sum(self.L)+np.sum(self.R))), kappa*1e5
-        rep_norm, kr_norm = -self.N_beads*c_rep/N_rep, kr*10
-        potts_norm1, potts_norm2 = -c_potts1, -c_potts2
+        rep_norm = c_rep*1e5
+        potts_norm1, potts_norm2 = -c_potts1, c_potts2
         gamma = 2*g*self.N_lef
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
         
@@ -66,13 +67,12 @@ class StochasticSimulation:
         print('\nRunning RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.mags = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.mags, self.N_lefs = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration,
         mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_CTCF=self.N_CTCF, N_beads=self.N_beads,
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
-        bind_norm=bind_norm, rep_norm=rep_norm, kr_norm=kr_norm, gamma=gamma,
-        l_forks=self.l_forks, r_forks=self.r_forks,
-        potts_norm1=potts_norm1, potts_norm2=potts_norm2,
+        bind_norm=bind_norm, rep_norm=rep_norm, gamma=gamma,
+        f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
         h=self.h, J=self.J, rw=rw)
         end = time.time()
         elapsed = end - start
@@ -91,39 +91,48 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
-        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.N_lefs, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
+        compute_potts_metrics(self.N_beads,self.out_path+'/other',self.out_path+'/plots')
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
+
+    def compute_structure_metrics(self):
+        '''
+        It computes plots with metrics for analysis after simulation.
+        '''
+        compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path+'/plots')
+        
 
     def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='MTS'):
         '''
         Run OpenMM energy minimization.
         '''
-        del self.l_forks, self.r_forks
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
         md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode)
 
 def main():
     # Set parameters
-    N_beads, N_lef, N_lef2 = 20000, 2000, 0
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(2e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
+    N_beads, N_lef, N_lef2 = 2000, 200, 0
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(5e2), int(1e3), 1.6, 1.0, int(2e4), int(4e4)
     f, f2, b, kappa, g  = 1.0, 0.0, 1.0, 1.0, 1.0
     c_rep, kr = 1.0, 1.0
-    c_state_field, c_state_interact = 1.0, 3.0
+    c_state_field, c_state_interact = 1.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
-    scale = 100
+    scale = 5.0
     
     # Define data and coordinates
-    region, chrom =  [10835000, 98674700], 'chr14'
+    # region, chrom =  [82835000, 98674700], 'chr14'
+    region, chrom =  [63835000, 78674700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
-    out_path = '../output'
+    out_path = '../stress_test_region'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kr, g, kappa, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
-    sim.run_openmm('OpenCL',mode='EM')
-
+    # sim.run_openmm('OpenCL',mode='EM')
+    # sim.compute_structure_metrics()
+    
 if __name__=='__main__':
     main()

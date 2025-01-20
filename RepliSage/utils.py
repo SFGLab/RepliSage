@@ -5,6 +5,7 @@
 from matplotlib.pyplot import figure
 import matplotlib.pyplot as plt
 import os
+import glob
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
@@ -381,3 +382,23 @@ def get_stats(ms,ns,N_beads):
     # fv, fv2 = np.var(avgs_list), np.var(avgs_list2)
     
     return f, f_std, F, FC
+
+def get_avg_heatmap(path,N1,N2):
+    file_pattern = path + f'/ensemble_1_*.cif'
+    file_list = glob.glob(file_pattern)
+    V = get_coordinates_cif(file_list[0])
+    N_beads = len(V)//2
+    avg_heat = np.zeros((N_beads,N_beads))
+    for i in tqdm(range(N1,N2)):
+        file_pattern = path + f'/ensemble_{i}_*.cif'
+        file_list = glob.glob(file_pattern)
+        V = get_coordinates_cif(file_list[0])[:N_beads]
+        heat =  distance.cdist(V, V, 'euclidean') # this is the way \--/
+        avg_heat += 1/heat
+
+    avg_heat = avg_heat/(N2-N1)
+
+    figure(figsize=(25, 20))
+    plt.imshow(avg_heat,cmap='gnuplot2_r',vmax=0.2, aspect='auto')
+    plt.colorbar()
+    plt.show()
