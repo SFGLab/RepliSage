@@ -24,7 +24,7 @@ def get_p_vector(T, mu, sig):
     return ps
 
 class Replikator:
-    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None):
+    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None,Tstd_factor=0.1,speed_factor=20):
         '''
         Initialization of the data preprocessing.
         ------------------------------------------
@@ -42,7 +42,8 @@ class Replikator:
         self.chrom_size = int(np.max(self.gen_windows))
         self.mat = self.data['replication_state_filtered'][chrom_nr][0].T
         self.L, self.T = sim_L, sim_T
-        self.sigma_t = self.T*0.1
+        self.sigma_t = self.T*Tstd_factor
+        self.speed_factor = speed_factor
     
     def process_matrix(self):
         '''
@@ -101,8 +102,8 @@ class Replikator:
             sigma_slope = delta_x*np.sqrt(2*(self.sigma_t/self.T)**2)/(self.avg_fx[end_idx] - self.avg_fx[start_idx])**2
             avg_slopes[extr] = np.abs(segment_slope)
             std_slopes[extr] = sigma_slope
-        self.speed_avg = 10*np.average(avg_slopes)
-        self.speed_std = 10*np.average(std_slopes)
+        self.speed_avg = self.speed_factor*np.average(avg_slopes)
+        self.speed_std = self.speed_factor*np.average(std_slopes)
         self.speed_ratio = self.speed_std/self.speed_avg
         print(f'Speed average: {self.speed_avg}, Speed Std: {self.speed_std}')
         print('Done!\n')

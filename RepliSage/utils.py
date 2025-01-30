@@ -399,6 +399,6 @@ def get_avg_heatmap(path,N1,N2):
     avg_heat = avg_heat/(N2-N1)
 
     figure(figsize=(25, 20))
-    plt.imshow(avg_heat,cmap='gnuplot2_r',vmax=0.2, aspect='auto')
+    plt.imshow(avg_heat,cmap='Reds',vmax=0.2, aspect='auto')
     plt.colorbar()
     plt.show()

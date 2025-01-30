@@ -22,7 +22,7 @@ from network_analysis import *
 from md_model import *
 
 class StochasticSimulation:
-    def __init__(self,N_beads,chrom,region, bedpe_file, out_path, N_lef=None, N_lef2=0, rept_path=None, t_rep=None, rep_duration=None,scale=1):
+    def __init__(self,N_beads,chrom,region, bedpe_file, out_path, N_lef=None, N_lef2=0, rept_path=None, t_rep=None, rep_duration=None, Tstd_factor=0.1, speed_scale=20, scale=1):
         '''
         Import simulation parameters and data.
         '''
@@ -36,7 +36,7 @@ class StochasticSimulation:
         # Import replication data
         self.run_replication = rept_path!=None
         if self.run_replication:
-            rep = Replikator(rept_path,self.N_beads,1000,chrom,region)
+            rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale)
             rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots')
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
@@ -59,7 +59,7 @@ class StochasticSimulation:
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(2*(np.sum(self.L)+np.sum(self.R))), kappa*1e5
         rep_norm = c_rep*1e5
-        potts_norm1, potts_norm2 = -c_potts1, c_potts2
+        potts_norm1, potts_norm2 = -c_potts1/2, 2*c_potts2
         gamma = 2*g*self.N_lef
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
         
@@ -113,26 +113,29 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 2000, 200, 0
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(5e2), int(1e3), 1.6, 1.0, int(2e4), int(4e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(2e2), int(1e3), 1.4, 1.0, int(2e4), int(4e4)
     f, f2, b, kappa, g  = 1.0, 0.0, 1.0, 1.0, 1.0
     c_rep, kr = 1.0, 1.0
     c_state_field, c_state_interact = 1.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
-    scale = 5.0
+    Tstd_factor, speed_scale, init_rate_scale = 0.2, 5, 2.0
+
+    # for stress scale=5.0, sigma_t = T*0.2, speed=5*
+    # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
     
     # Define data and coordinates
     # region, chrom =  [82835000, 98674700], 'chr14'
-    region, chrom =  [63835000, 78674700], 'chr14'
+    region, chrom =  [78835000, 97674700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '../stress_test_region'
     
     # Run simulation
-    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, scale)
+    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kr, g, kappa, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
-    # sim.run_openmm('OpenCL',mode='EM')
-    # sim.compute_structure_metrics()
+    sim.run_openmm('OpenCL',mode='EM')
+    sim.compute_structure_metrics()
     
 if __name__=='__main__':
     main()

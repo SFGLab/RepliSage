@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 import glob
 import pandas as pd
 from scipy.stats import entropy
@@ -29,7 +30,7 @@ def plot_probability_distro(Ls, out_path=None):
     hist_matrix = np.array(hist_matrix).T  # Shape: (bins, time points)
     
     # Create the heatmap
-    plt.figure(figsize=(10, 6))
+    figure(figsize=(10, 6), dpi=400)
     plt.imshow(hist_matrix, aspect='auto', cmap='rainbow', origin='lower', interpolation='bicubic', vmax=np.average(Ls)/2,
                extent=[0, Ls.shape[1], bin_edges[0], bin_edges[-1]])
     
@@ -43,7 +44,7 @@ def plot_probability_distro(Ls, out_path=None):
     
     # Optionally save the plot
     if out_path:
-        plt.savefig(out_path + '/probability_distro_heatmap.png', format='png', dpi=200)
+        plt.savefig(out_path + '/probability_distro_heatmap.png', format='png', dpi=400)
     
     # Show the plot
     plt.tight_layout()
@@ -67,7 +68,7 @@ def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):
               ['After Replication'] * len(after_replication))
 
     # Create a violin plot
-    plt.figure(figsize=(8, 6))
+    figure(figsize=(10, 6), dpi=400)
     sns.violinplot(x=labels, y=data, palette='muted', inner="box", linewidth=2, bw=0.5)  # Adjust box width and smoothing
 
     # Add title and labels
@@ -81,7 +82,7 @@ def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):
 
     # Optionally save the plot
     if out_path:
-        plt.savefig(out_path + '/loop_dist.svg', format='svg', dpi=200)
+        plt.savefig(out_path + '/loop_dist.svg', format='svg', dpi=400)
 
 def magnetization(S, q=5, viz=False, out_path=None):
     """
@@ -105,11 +106,12 @@ def magnetization(S, q=5, viz=False, out_path=None):
         M[t] = (q * max_state - N) / (N * (q - 1))
 
     if viz:
-        plt.plot(M,'go-')
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(M,'g-')
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Potts Magnetization',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/potts_model_normalized_magnetization.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/potts_model_normalized_magnetization.svg',format='svg',dpi=400)
         plt.grid()
         plt.close()
     return M
@@ -134,11 +136,12 @@ def cluster_order(S, viz=False, out_path=None):
         C[t] = largest_cluster / N
 
     if viz:
-        plt.plot(C,'ro-')
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(C,'r-')
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Cluster Order',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/cluster_order.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/cluster_order.svg',format='svg',dpi=400)
         plt.grid()
         plt.close()
     return C
@@ -158,11 +161,12 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         U[t] = 1 - m4 / (3 * m2**2)
     
     if viz:
-        plt.plot(U,'bo-')
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(U,'b-')
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Binder cumulant',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/binder_cumulant.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/binder_cumulant.svg',format='svg',dpi=400)
         plt.grid()
         plt.close()
     return U
@@ -188,11 +192,12 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         S_entropy[t] = entropy(probs, base=np.e)
 
     if viz:
-        plt.plot(S_entropy,'mo-')
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(S_entropy,'m-')
         plt.xlabel('MC step')
         plt.ylabel('S entropy')
         if out_path!=None:
-            plt.savefig(out_path+'/entropy.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/entropy.svg',format='svg',dpi=400)
         plt.grid()
         plt.close()
     return S_entropy
@@ -330,12 +335,13 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
         G = create_graph(Ms[:N_beads,i], Ns[:N_beads,i], Cs[:N_beads,i])
         Ss.append(calculate_potts_synchronization(G, 5))
 
-    plt.plot(Ss,'bo-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(Ss,'b-')
     plt.xlabel('MC step',fontsize=16)
     plt.ylabel('Synchronization Metric',fontsize=16)
     plt.grid()
     if out_path!=None:
-        plt.savefig(out_path+'/sync.pdf',dpi=200)
+        plt.savefig(out_path+'/sync.svg',dpi=400)
     plt.close()
 
 def compute_potts_metrics(N_beads,in_path,out_path):
@@ -354,7 +360,7 @@ def compute_potts_metrics(N_beads,in_path,out_path):
     entropy_order(Cs[:,1:]+2, q=5, viz=True, out_path=out_path)
 
 def run():
-    Ms = np.load('/home/skorsak/Projects/mine/RepliSage/stress_test_region/other/Ms.npy')
-    Ns = np.load('/home/skorsak/Projects/mine/RepliSage/stress_test_region/other/Ns.npy')
+    Ms = np.load('/home/skorsak/Downloads/stress_test_region/other/Ms.npy')
+    Ns = np.load('/home/skorsak/Downloads/stress_test_region/other/Ns.npy')
     Ls = Ns-Ms
-    loop_distro(Ls, 60, 100, out_path=None)
+    loop_distro(Ls, 200, 400, out_path=None)

@@ -2,6 +2,8 @@ import numpy as np
 from common import list_files_in_directory
 from sklearn.decomposition import PCA
 from scipy.spatial import ConvexHull
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 from tqdm import tqdm
 from common import *
 from utils import *
@@ -85,58 +87,66 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
         gdfs.append(global_distance_fluctuation(V))
         CNs.append(contact_number(V))
 
-    plt.plot(Rgs,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(Rgs,'r-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Gyration Radius', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/Rg.svg',format='svg',dpi=200)
+        plt.savefig(path+'/Rg.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(mpds,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(mpds,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Mean Pairwise Distance', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/pairwise.svg',format='svg',dpi=200)
+        plt.savefig(path+'/pairwise.svg',format='svg',dpi=400)
     plt.close()
     
-    plt.plot(eeds,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(eeds,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('End to End Distance', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/end2end.svg',format='svg',dpi=200)
+        plt.savefig(path+'/end2end.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(asphs,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(asphs,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Asphericity', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/asphericity.svg',format='svg',dpi=200)
+        plt.savefig(path+'/asphericity.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(fractals,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(fractals,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Fractal Dimension', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/fractal.svg',format='svg',dpi=200)
+        plt.savefig(path+'/fractal.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(convs,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(convs,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Convex Volume', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/convex_vol.svg',format='svg',dpi=200)
+        plt.savefig(path+'/convex_vol.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(gdfs,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(gdfs,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Global Distance Fluctuations', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/global_dist_flucts.svg',format='svg',dpi=200)
+        plt.savefig(path+'/global_dist_flucts.svg',format='svg',dpi=400)
     plt.close()
 
-    plt.plot(CNs,'ko-')
+    figure(figsize=(10, 6), dpi=400)
+    plt.plot(CNs,'k-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Contact Number', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/contact_number.svg',format='svg',dpi=200)
+        plt.savefig(path+'/contact_number.svg',format='svg',dpi=400)
     plt.close()
