@@ -17,6 +17,11 @@ Therefore, the stochastic simulation integrates the sum of these energies $E = E
 For more details of the implementation, we suggest to our users to read the method paper of RepliSage.
 
 ## Installation
+It is needed to have at least python 3.10 and run,
+
+```
+pip install -r requirements.txt
+```
 
 ## How to use?
 The usage is very simple. To run this model you need to specify the parameters and the input data. Then RepliSage can do everything for you. 
