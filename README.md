@@ -25,7 +25,7 @@ Note that to run replisage it is needed to have `GM12878_single_cell_data_hg37.m
 
 * D. J. Massey and A. Koren, “High-throughput analysis of single human cells reveals the complex nature of dna replication timing control,” Nature Communications, vol. 13, no. 1, p. 2402, 2022.
 
-Do not forget to cite them in case you use this software. We have uploaded the input data here: https://drive.google.com/drive/folders/1PLA147eiHenOw_VojznnlC_ZywhLzGWx?usp=sharing.
+Do not forget to cite them in case you use this software. We have uploaded the input data used in the paper here: https://drive.google.com/drive/folders/1PLA147eiHenOw_VojznnlC_ZywhLzGWx?usp=sharing.
 
 ```python
 def main():
