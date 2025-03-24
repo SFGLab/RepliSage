@@ -106,7 +106,7 @@ def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t):
     return potts_norm1 * E1 + potts_norm2 * E2
 
 @njit
-def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, gamma, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0):
+def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0):
     '''
     The total energy.
     '''
@@ -177,7 +177,7 @@ def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,N_lef,potts_norm2=0.0):
     return potts_norm2*dE
 
 @njit
-def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm ,rep_norm, gamma, ms, ns, m_new, n_new, idx,  t, f_rep, spins, J, potts_norm2=0.0):
+def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, f_rep, spins, J, potts_norm2=0.0):
     '''
     Total energy difference.
     '''
@@ -243,7 +243,7 @@ def initialize_J(N_beads,J,ms,ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, gamma, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p1=0.5, p2=0.5):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p1=0.5, p2=0.5):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
@@ -263,7 +263,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     ms, ns, spins = initialize(N_lef+N_lef2, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
     J = initialize_J(N_beads,J,ms,ns)
-    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, gamma, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2)
+    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
     N_lefs = np.zeros(N_steps//MC_step, dtype=np.int64)
@@ -293,7 +293,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                     m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, f_rep, rt, rw)
                     
                 # Cohesin energy difference for rewiring move
-                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, gamma, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2)
+                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     # Change the inetraction matrix
@@ -316,7 +316,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                     spins[spin_idx] = s
         ht_old = ht
         mask = (ht_old == 0)
-
+        
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
