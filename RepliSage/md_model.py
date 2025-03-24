@@ -82,7 +82,7 @@ class MD_MODEL:
             integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
         elif integrator_mode=='brownian':
             integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
-
+        
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
         self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
@@ -111,6 +111,8 @@ class MD_MODEL:
             # Change forces
             self.change_repliforce(i)
             self.change_loop(i)
+            if p_ev>0: self.ps_ev = np.random.rand(self.N_beads)
+            self.change_ev()
             if self.Cs.ndim>1: self.change_comps(i)
 
             # Update steps of simulations
@@ -135,6 +137,12 @@ class MD_MODEL:
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
         print('Energy minimization done <3')
+
+    def change_ev(self):
+        ev_strength = (self.ps_ev>self.p_ev).astype(int)*np.sqrt(self.ev_ff_strength) if self.p_ev>0 else np.sqrt(self.ev_ff_strength)*np.ones(self.N_beads)
+        for n in range(self.N_beads):
+            self.ev_force.setParticleParameters(n,[ev_strength[n],0.05])
+        self.ev_force.updateParametersInContext(self.simulation.context)
 
     def change_repliforce(self,i):
         if i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
@@ -164,21 +172,17 @@ class MD_MODEL:
 
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
-        # self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/(r+delta))^3*delta(c1-c2)')
-        self.ev_force = mm.CustomNonbondedForce('epsilon*(r_ev/(r+delta))^3')
-        self.ev_force.addGlobalParameter('epsilon', defaultValue=100)
-        self.ev_force.addGlobalParameter('r_ev',defaultValue=0.1)
-        self.ev_force.addGlobalParameter('delta',defaultValue=0.05)
-        # self.ev_force.addPerParticleParameter('c')
+        self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^3')
+        self.ev_force.addGlobalParameter('r_small', defaultValue=0.1)
+        self.ev_force.addPerParticleParameter('sigma')
+        self.ev_force.addPerParticleParameter('epsilon')
         self.ev_force.setCutoffDistance(distance=0.2)
         self.ev_force.setForceGroup(1)
         for i in range(self.N_beads):
-            self.ev_force.addParticle()
-            # self.ev_force.addParticle([self.chain_idx[i]])
+            self.ev_force.addParticle([np.sqrt(self.ev_ff_strength),0.05])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.ev_force.addParticle()
-                # self.ev_force.addParticle([self.chain_idx[i]])
+                self.ev_force.addParticle([np.sqrt(self.ev_ff_strength),0.05])
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):

@@ -124,9 +124,9 @@ def main():
     # Define data and coordinates
     # region, chrom =  [82835000, 98674700], 'chr14'
     region, chrom =  [62835000, 97674700], 'chr14'
-    bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
-    out_path = '../stress_test_region_EV_condensins'
+    bedpe_file = '/home/blackpianocat/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/home/blackpianocat/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+    out_path = '/home/blackpianocat/Data/Simulations/stress_test_region_EV_condensins'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)

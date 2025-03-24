@@ -221,13 +221,15 @@ def slide(m_old, n_old, N_beads, f, t, rw=True):
     return int(m_new), int(n_new)
 
 @njit(parallel=True)
-def initialize(N_lef, N_beads):
+def initialize(N_lef, N_lef2, N_beads):
     '''
     Random initial condition of the simulation.
     '''
     ms, ns = np.zeros(N_lef, dtype=np.int64), np.zeros(N_lef, dtype=np.int64)
     for i in range(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads)
+    for i in range(N_lef,N_lef2):
+        ms[i], ns[i] = -2, -1
     state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     return ms, ns, state
 
@@ -257,10 +259,10 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     # Choices for MC
     spin_choices = np.array([-2,-1,0,1,2])
     spin_idx_choices = np.arange(N_beads)
-    lef_idx_choices = np.arange(N_lef+N_lef2)
+    lef_idx_choices = np.arange(N_lef)
     
     # Initialization of matrices
-    ms, ns, spins = initialize(N_lef+N_lef2, N_beads)
+    ms, ns, spins = initialize(N_lef,N_lef2, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
     J = initialize_J(N_beads,J,ms,ns)
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2)
@@ -276,6 +278,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     for i in range(N_steps):
         # Calculate replication time
         rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
+        if rt==(int(rep_duration)-1): lef_idx_choices = np.arange(N_lef+N_lef2)
         mag_field = 2 * (1 - 2 * rt / rep_duration)
         ht += mask * mag_field * f_rep[:, rt]
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
@@ -287,6 +290,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                 lef_idx = np.random.choice(lef_idx_choices)
                 m_old, n_old = ms[lef_idx], ns[lef_idx]
                 r = np.random.choice(np.array([0,1]))
+                if m_old<0 or n_old<0: r=0
                 if r==0:
                     m_new, n_new = unbind_bind(N_beads)
                 elif r==1:
