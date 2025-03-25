@@ -61,7 +61,7 @@ class MD_MODEL:
         sim_step (int): the simulation step of Langevin integrator.
         write_files (bool): True if the user wants to save the structures that determine the simulation ensemble.
         '''
-
+        self.p_ev = p_ev
         # Define initial structure
         print('\nBuilding initial structure...')
         points1 = compute_init_struct(self.N_beads,init_struct)
