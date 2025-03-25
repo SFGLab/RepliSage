@@ -142,6 +142,7 @@ class MD_MODEL:
         ev_strength = (self.ps_ev>self.p_ev).astype(int)*10 if self.p_ev>0 else 10*np.ones(self.N_beads)
         for n in range(self.N_beads):
             self.ev_force.setParticleParameters(n,[ev_strength[n],0.05])
+            self.ev_force.setParticleParameters(n+N_beads,[ev_strength[n],0.05])
         self.ev_force.updateParametersInContext(self.simulation.context)
 
     def change_repliforce(self,i):
