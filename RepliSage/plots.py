@@ -68,6 +68,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     plt.xlabel('Simulation Step', fontsize=28)
     plt.ylabel('Position of Cohesin', fontsize=28)
     plt.gca().invert_yaxis()
+    plt.ylim((0,N_beads))
     # plt.gca().set_ylim(bottom=0) 
     save_path = path+'/plots/LEFs.png'
     plt.savefig(save_path,format='png')

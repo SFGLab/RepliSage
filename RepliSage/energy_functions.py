@@ -225,7 +225,7 @@ def initialize(N_lef, N_lef2, N_beads):
     '''
     Random initial condition of the simulation.
     '''
-    ms, ns = np.zeros(N_lef, dtype=np.int64), np.zeros(N_lef, dtype=np.int64)
+    ms, ns = np.zeros(N_lef+N_lef2, dtype=np.int64), np.zeros(N_lef+N_lef2, dtype=np.int64)
     for i in range(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads)
     for i in range(N_lef,N_lef2):

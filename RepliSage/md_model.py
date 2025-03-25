@@ -139,7 +139,7 @@ class MD_MODEL:
         print('Energy minimization done <3')
 
     def change_ev(self):
-        ev_strength = (self.ps_ev>self.p_ev).astype(int)*np.sqrt(self.ev_ff_strength) if self.p_ev>0 else np.sqrt(self.ev_ff_strength)*np.ones(self.N_beads)
+        ev_strength = (self.ps_ev>self.p_ev).astype(int)*10 if self.p_ev>0 else 10*np.ones(self.N_beads)
         for n in range(self.N_beads):
             self.ev_force.setParticleParameters(n,[ev_strength[n],0.05])
         self.ev_force.updateParametersInContext(self.simulation.context)
@@ -179,10 +179,10 @@ class MD_MODEL:
         self.ev_force.setCutoffDistance(distance=0.2)
         self.ev_force.setForceGroup(1)
         for i in range(self.N_beads):
-            self.ev_force.addParticle([np.sqrt(self.ev_ff_strength),0.05])
+            self.ev_force.addParticle([10,0.05])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.ev_force.addParticle([np.sqrt(self.ev_ff_strength),0.05])
+                self.ev_force.addParticle([10,0.05])
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):

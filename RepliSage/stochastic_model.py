@@ -76,7 +76,7 @@ class StochasticSimulation:
         end = time.time()
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
-
+        
         np.save(f'{self.out_path}/other/Ms.npy', self.Ms)
         np.save(f'{self.out_path}/other/Ns.npy', self.Ns)
         np.save(f'{self.out_path}/other/Es.npy', self.Es)
