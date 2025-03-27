@@ -153,7 +153,7 @@ class MD_MODEL:
                 self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1e3])
         elif i*self.step>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[2*self.rw_l,1e2])
+                self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,1e2])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def change_loop(self,i):
@@ -238,7 +238,7 @@ class MD_MODEL:
                     self.repli_force.addBond(i, i + self.N_beads, [0.1,5e5])
         else:
             for i in range(self.N_beads):
-                self.repli_force.addBond(i, i + self.N_beads, [2*self.rw_l,1e2])
+                self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,1e2])
         
         self.system.addForce(self.repli_force)
     
