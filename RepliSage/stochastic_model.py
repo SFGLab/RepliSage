@@ -59,7 +59,7 @@ class StochasticSimulation:
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e5
         rep_norm = c_rep*1e5
-        potts_norm1, potts_norm2 = -c_potts1, -c_potts2
+        potts_norm1, potts_norm2 = -2*c_potts1, -c_potts2/2
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
         
         # Running the simulation
@@ -112,9 +112,9 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 1000, 100, 20
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
-    c_state_field, c_state_interact, c_rep = 1.0, 1.0, 1.0
+    c_state_field, c_state_interact, c_rep = 2.0, 0.5, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     Tstd_factor, speed_scale, init_rate_scale = 0.1, 20, 1.0
 
@@ -123,10 +123,10 @@ def main():
     
     # Define data and coordinates
     # region, chrom =  [82835000, 98674700], 'chr14'
-    region, chrom =  [82835000, 97674700], 'chr14'
-    bedpe_file = '/home/blackpianocat/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/blackpianocat/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
-    out_path = '/home/blackpianocat/Data/Simulations/stress_test_region_EV_condensins'
+    region, chrom =  [72835000, 97674700], 'chr14'
+    bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+    out_path = '/home/skorsak/Data/Simulations/stress_test_region_EV_condensins'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
