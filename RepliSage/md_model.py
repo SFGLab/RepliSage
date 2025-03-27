@@ -52,7 +52,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert', tol=1.0, sim_step=1000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01):
+    def run_pipeline(self,init_struct='hilbert', tol=1.0, sim_step=1000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.05):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -79,9 +79,9 @@ class MD_MODEL:
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
         if integrator_mode=='langevin':
-            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
+            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 100 * mm.unit.femtosecond)
         elif integrator_mode=='brownian':
-            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
+            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 100 * mm.unit.femtosecond)
         
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
@@ -174,7 +174,7 @@ class MD_MODEL:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^3')
-        self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
+        self.ev_force.addGlobalParameter('r_small', defaultValue=0.1)
         self.ev_force.addPerParticleParameter('sigma')
         self.ev_force.addPerParticleParameter('epsilon')
         self.ev_force.setCutoffDistance(distance=0.2)
