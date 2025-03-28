@@ -117,7 +117,7 @@ def main():
     c_state_field, c_state_interact, c_rep = 2.0, 0.5, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     Tstd_factor, speed_scale, init_rate_scale = 0.1, 20, 1.0
-
+    
     # for stress scale=5.0, sigma_t = T*0.2, speed=5*
     # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
     

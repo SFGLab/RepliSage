@@ -249,11 +249,11 @@ class MD_MODEL:
         self.comp_force.setForceGroup(1)
         self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.3)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.4)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.5)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.5)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-1.0)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-1.5)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-2.0)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-2.5)
         # self.comp_force.setCutoffDistance(distance=self.rw_l)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
@@ -264,7 +264,7 @@ class MD_MODEL:
                 self.comp_force.addParticle([cs[i%self.N_beads],self.chain_idx[i]])
         self.system.addForce(self.comp_force)
     
-    def add_container(self, R=10.0, C=1.0):
+    def add_container(self, R=10.0, C=10.0):
         self.container_force = mm.CustomNonbondedForce('C*(max(0, r-R)^2)*delta(c1-c2)')
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)
