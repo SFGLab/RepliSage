@@ -124,6 +124,8 @@ class MD_MODEL:
                 raise InterruptedError('Mode can be only EM or MD.')
             label, idx = self.add_label(i)
 
+            if i*self.step==self.t_rep+self.rep_duration: self.add_pulling_force()
+
             # Save structure
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
@@ -150,10 +152,10 @@ class MD_MODEL:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1e3])
-        elif i*self.step>=self.t_rep+self.rep_duration:
-            for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,1e3])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,100])
+        # elif i*self.step>=self.t_rep+self.rep_duration:
+        #     for j in range(self.N_beads):
+        #         self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,1e3])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def change_loop(self,i):
@@ -173,8 +175,8 @@ class MD_MODEL:
 
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
-        self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^2')
-        self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
+        self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^3')
+        self.ev_force.addGlobalParameter('r_small', defaultValue=0.05)
         self.ev_force.addPerParticleParameter('sigma')
         self.ev_force.addPerParticleParameter('epsilon')
         self.ev_force.setCutoffDistance(distance=0.2)
@@ -202,10 +204,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -233,14 +235,27 @@ class MD_MODEL:
             rep_locs = np.nonzero(rep_dna)[0]
             for i in range(self.N_beads):
                 if i in rep_locs:
-                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,1e3])
+                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,100])
                 else:
                     self.repli_force.addBond(i, i + self.N_beads, [0.05,5e5])
-        else:
-            for i in range(self.N_beads):
-                self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,1e3])
+        # else:
+        #     for i in range(self.N_beads):
+        #         self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,1e3])
         
         self.system.addForce(self.repli_force)
+
+    def add_pulling_force(self):
+        pull_force = mm.CustomExternalForce("-f * x")
+        pull_force.addPerParticleParameter("f")
+
+        for i in range(self.N_beads):
+            particle_force = 10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer
+            pull_force.addParticle(i, [particle_force])
+
+        for i in range(self.N_beads,2*self.N_beads):
+            particle_force = -10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer
+            pull_force.addParticle(i, [particle_force])
+        self.system.addForce(pull_force)
     
     def add_blocks(self,i):
         'Block copolymer forcefield for the modelling of compartments.'
