@@ -112,9 +112,9 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 1000, 100, 20
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(8e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
-    c_state_field, c_state_interact, c_rep = 2.0, 0.5, 1.0
+    c_state_field, c_state_interact, c_rep = 1.0, 2.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     Tstd_factor, speed_scale, init_rate_scale = 0.1, 20, 1.0
 
@@ -123,10 +123,10 @@ def main():
     
     # Define data and coordinates
     # region, chrom =  [82835000, 98674700], 'chr14'
-    region, chrom =  [72835000, 97674700], 'chr14'
-    bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
-    out_path = '/home/skorsak/Data/Simulations/RepliSage_test'
+    region, chrom =  [82835000, 97674700], 'chr14'
+    bedpe_file = '/home/blackpianocat/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+    rept_path = '/home/blackpianocat/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+    out_path = '/home/blackpianocat/Data/Simulations/RepliSage_test'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)

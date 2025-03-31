@@ -52,7 +52,11 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
+<<<<<<< HEAD
     def run_pipeline(self,init_struct='hilbert', tol=1.0, sim_step=100, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.05):
+=======
+    def run_pipeline(self,init_struct='rw', tol=1.0, sim_step=1000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.2):
+>>>>>>> 50f9e4084a8bb0b39703fa17b47b464c25666867
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -79,9 +83,9 @@ class MD_MODEL:
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
         if integrator_mode=='langevin':
-            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 100 * mm.unit.femtosecond)
+            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
         elif integrator_mode=='brownian':
-            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 100 * mm.unit.femtosecond)
+            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10 * mm.unit.femtosecond)
         
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
@@ -124,6 +128,8 @@ class MD_MODEL:
                 raise InterruptedError('Mode can be only EM or MD.')
             label, idx = self.add_label(i)
 
+            if i*self.step==self.t_rep+self.rep_duration: self.add_pulling_force()
+
             # Save structure
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
@@ -150,10 +156,10 @@ class MD_MODEL:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1e3])
-        elif i*self.step>=self.t_rep+self.rep_duration:
-            for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,1e2])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,100])
+        # elif i*self.step>=self.t_rep+self.rep_duration:
+        #     for j in range(self.N_beads):
+        #         self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,1e3])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def change_loop(self,i):
@@ -174,7 +180,7 @@ class MD_MODEL:
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
         self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^3')
-        self.ev_force.addGlobalParameter('r_small', defaultValue=0.1)
+        self.ev_force.addGlobalParameter('r_small', defaultValue=0.05)
         self.ev_force.addPerParticleParameter('sigma')
         self.ev_force.addPerParticleParameter('epsilon')
         self.ev_force.setCutoffDistance(distance=0.2)
@@ -191,10 +197,10 @@ class MD_MODEL:
         self.bond_force = mm.HarmonicBondForce()
         self.bond_force.setForceGroup(0)
         for i in range(self.N_beads - 1):
-            self.bond_force.addBond(i, i + 1, 0.1, 3e5)
+            self.bond_force.addBond(i, i + 1, 0.1, 5e5)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 1):
-                self.bond_force.addBond(i, i + 1, 0.1, 3e5)
+                self.bond_force.addBond(i, i + 1, 0.1, 5e5)
         self.system.addForce(self.bond_force)
     
     def add_stiffness(self):
@@ -202,10 +208,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 500)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 100)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -213,9 +219,9 @@ class MD_MODEL:
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
         for n in range(self.N_coh):
-            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e3)
+            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e4)
             if self.run_repli: 
-                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e3)
+                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e4)
         self.system.addForce(self.LE_force)
     
     def add_repliforce(self,i):
@@ -227,27 +233,40 @@ class MD_MODEL:
         
         if i*self.step<self.t_rep:
             for i in range(self.N_beads): 
-                self.repli_force.addBond(i, i + self.N_beads, [0.1,5e5])
+                self.repli_force.addBond(i, i + self.N_beads, [0.05,5e5])
         elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for i in range(self.N_beads):
                 if i in rep_locs:
-                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,1e3])
+                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,100])
                 else:
-                    self.repli_force.addBond(i, i + self.N_beads, [0.1,5e5])
-        else:
-            for i in range(self.N_beads):
-                self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,1e2])
+                    self.repli_force.addBond(i, i + self.N_beads, [0.05,5e5])
+        # else:
+        #     for i in range(self.N_beads):
+        #         self.repli_force.addBond(i, i + self.N_beads, [5*self.rw_l,1e3])
         
         self.system.addForce(self.repli_force)
+
+    def add_pulling_force(self):
+        pull_force = mm.CustomExternalForce("-f * x")
+        pull_force.addPerParticleParameter("f")
+
+        for i in range(self.N_beads):
+            particle_force = 10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer
+            pull_force.addParticle(i, [particle_force])
+
+        for i in range(self.N_beads,2*self.N_beads):
+            particle_force = -10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer
+            pull_force.addParticle(i, [particle_force])
+        self.system.addForce(pull_force)
     
     def add_blocks(self,i):
         'Block copolymer forcefield for the modelling of compartments.'
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
         self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1-2)*delta(s2-2)+Ea2*delta(s1-1)*delta(s2-1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1+1)*delta(s2+1)+Eb3*delta(s1+2)*delta(s2+2)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l/2)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
         self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
         self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
@@ -264,7 +283,7 @@ class MD_MODEL:
                 self.comp_force.addParticle([cs[i%self.N_beads],self.chain_idx[i]])
         self.system.addForce(self.comp_force)
     
-    def add_container(self, R=10.0, C=10.0):
+    def add_container(self, R=10.0, C=100.0):
         self.container_force = mm.CustomNonbondedForce('C*(max(0, r-R)^2)*delta(c1-c2)')
         self.container_force.setForceGroup(1)
         self.container_force.addGlobalParameter('C',defaultValue=C)

@@ -36,7 +36,8 @@ def Kappa(mi,ni,mj,nj):
     k=0.0
     if mi<mj and mj<ni and ni<nj and mi>=0: k+=1 # np.abs(ni-mj)+1
     if mj<mi and mi<nj and nj<ni and mj>=0: k+=1 # np.abs(nj-mi)+1
-    if mi==mj and ni==nj and mi>=0: k+=1
+    # if mi==mj and ni==nj and mi>=0: k+=1
+    if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
     return k
 
 @njit
