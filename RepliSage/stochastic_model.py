@@ -112,12 +112,12 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 1000, 100, 20
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(1e5), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 2.0, 0.5, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
     Tstd_factor, speed_scale, init_rate_scale = 0.1, 20, 1.0
-    
+
     # for stress scale=5.0, sigma_t = T*0.2, speed=5*
     # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
     

@@ -52,7 +52,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='hilbert', tol=1.0, sim_step=1000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.05):
+    def run_pipeline(self,init_struct='hilbert', tol=1.0, sim_step=100, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.05):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -249,11 +249,11 @@ class MD_MODEL:
         self.comp_force.setForceGroup(1)
         self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.5)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-1.0)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-1.5)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-2.0)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-2.5)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.3)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.5)
         # self.comp_force.setCutoffDistance(distance=self.rw_l)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
