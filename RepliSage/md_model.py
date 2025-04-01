@@ -95,7 +95,7 @@ class MD_MODEL:
         self.state = self.simulation.context.getState(getPositions=True)
         if reporters:
             self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//1000, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-        self.simulation.reporters.append(DCDReporter(self.path+'/other/replisage.dcd', sim_step))
+        self.simulation.reporters.append(DCDReporter(self.out_path+'/other/replisage.dcd', sim_step))
         PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/minimized_model.cif', 'w'))
         end = time.time()
         elapsed = end - start
