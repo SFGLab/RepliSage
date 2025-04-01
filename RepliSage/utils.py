@@ -129,7 +129,7 @@ def write_mmcif(points1,points2=None,cif_file_name='LE_init_struct.cif'):
     with open(cif_file_name, 'w') as f:
         f.write(cif_file_content)
 
-def generate_psf(n: int, file_name='stochastic_LE.psf', title="No title provided",duplicated=False):
+def generate_psf(n: int, file_name='replisage.psf', title="No title provided",duplicated=False):
     """
     Saves PSF file. Useful for trajectories in DCD file format.
     :param n: number of points
