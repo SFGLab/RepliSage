@@ -52,7 +52,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='rw', tol=1.0, sim_step=1000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01):
+    def run_pipeline(self,init_struct='rw', tol=1.0, sim_step=10000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -79,9 +79,9 @@ class MD_MODEL:
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
         if integrator_mode=='langevin':
-            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 1.0 * mm.unit.femtosecond)
+            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10.0 * mm.unit.femtosecond)
         elif integrator_mode=='brownian':
-            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 1.0 * mm.unit.femtosecond)
+            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10.0 * mm.unit.femtosecond)
         
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
@@ -141,7 +141,7 @@ class MD_MODEL:
         print('Energy minimization done <3')
 
     def change_ev(self):
-        ev_strength = (self.ps_ev>self.p_ev).astype(int)*10 if self.p_ev>0 else 10*np.ones(self.N_beads)
+        ev_strength = (self.ps_ev>self.p_ev).astype(int)*np.sqrt(200) if self.p_ev>0 else np.sqrt(200)*np.ones(self.N_beads)
         for n in range(self.N_beads):
             self.ev_force.setParticleParameters(n,[ev_strength[n],0.05])
             self.ev_force.setParticleParameters(n+self.N_beads,[ev_strength[n],0.05])
@@ -152,7 +152,7 @@ class MD_MODEL:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[self.rw_l,1000])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1000])
         elif i*self.step>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
                 self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,0.0])
@@ -183,17 +183,17 @@ class MD_MODEL:
     
     def add_evforce(self):
         'Leonard-Jones potential for excluded volume'
-        self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^2')
+        self.ev_force = mm.CustomNonbondedForce(f'(epsilon1*epsilon2*(sigma1*sigma2)/(r+r_small))^3')
         self.ev_force.addGlobalParameter('r_small', defaultValue=0.01)
         self.ev_force.addPerParticleParameter('sigma')
         self.ev_force.addPerParticleParameter('epsilon')
         self.ev_force.setCutoffDistance(distance=0.2)
         self.ev_force.setForceGroup(1)
         for i in range(self.N_beads):
-            self.ev_force.addParticle([10,0.05])
+            self.ev_force.addParticle([np.sqrt(200),0.05])
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads):
-                self.ev_force.addParticle([10,0.05])
+                self.ev_force.addParticle([np.sqrt(200),0.05])
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):
@@ -212,10 +212,10 @@ class MD_MODEL:
         self.angle_force = mm.HarmonicAngleForce()
         self.angle_force.setForceGroup(0)
         for i in range(self.N_beads - 2):
-            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 400)
+            self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         if self.run_repli:
             for i in range(self.N_beads,2*self.N_beads - 2):
-                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 400)
+                self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
     def add_loops(self,i):
@@ -243,7 +243,7 @@ class MD_MODEL:
             rep_locs = np.nonzero(rep_dna)[0]
             for i in range(self.N_beads):
                 if i in rep_locs:
-                    self.repli_force.addBond(i, i + self.N_beads, [self.rw_l,1000])
+                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,1000])
                 else:
                     self.repli_force.addBond(i, i + self.N_beads, [0.0,5e4])
         else:
@@ -264,13 +264,13 @@ class MD_MODEL:
         cs = self.Cs[:,i] if self.Cs.ndim>1 else self.Cs
         self.comp_force = mm.CustomNonbondedForce('delta(c1-c2)*E*exp(-(r-r0)^2/(2*sigma^2)); E=Ea1*delta(s1-2)*delta(s2-2)+Ea2*delta(s1-1)*delta(s2-1)+Eb1*delta(s1)*delta(s2)+Eb2*delta(s1+1)*delta(s2+1)+Eb3*delta(s1+2)*delta(s2+2)')
         self.comp_force.setForceGroup(1)
-        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l)
+        self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l/2)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.5)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.6)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.7)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.8)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.0)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.3)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.5)
         # self.comp_force.setCutoffDistance(distance=self.rw_l)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
