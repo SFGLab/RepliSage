@@ -111,13 +111,8 @@ class StochasticSimulation:
 
 def main():
     # Set parameters
-<<<<<<< HEAD
-    N_beads, N_lef, N_lef2 = 1000, 100, 20
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(8e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
-=======
     N_beads, N_lef, N_lef2 = 2000, 200, 40
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(8e4), int(4e2), int(1e3), 1.5, 1.0, int(2e4), int(4e4)
->>>>>>> c626258afc4eedcc4520f569e622fdbebc7cfb21
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(4e2), int(1e3), 1.5, 1.0, int(1e4), int(2e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 1.0, 2.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True

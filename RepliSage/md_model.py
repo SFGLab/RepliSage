@@ -97,7 +97,7 @@ class MD_MODEL:
         self.state = self.simulation.context.getState(getPositions=True)
         if reporters:
             self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//1000, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-        self.simulation.reporters.append(DCDReporter(self.out_path+'/other/replisage.dcd', sim_step))
+            self.simulation.reporters.append(DCDReporter(self.out_path+'/other/replisage.dcd', sim_step))
         PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/minimized_model.cif', 'w'))
         end = time.time()
         elapsed = end - start
@@ -154,7 +154,7 @@ class MD_MODEL:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[0.5*self.rw_l,1000])
+                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[self.rw_l/4,1000])
         elif i*self.step>=self.t_rep+self.rep_duration:
             for j in range(self.N_beads):
                 self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,0.0])
@@ -177,10 +177,10 @@ class MD_MODEL:
 
     def change_pull_force(self):
         for n in range(self.N_beads):
-            self.pull_force.setParticleParameters(n,n, [10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
+            self.pull_force.setParticleParameters(n,n, [1000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
         if self.run_repli:
             for n in range(self.N_beads,2*self.N_beads):
-                self.pull_force.setParticleParameters(n,n, [-10000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
+                self.pull_force.setParticleParameters(n,n, [-1000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
         self.pull_force.updateParametersInContext(self.simulation.context)
     
     def add_evforce(self):
@@ -245,7 +245,7 @@ class MD_MODEL:
             rep_locs = np.nonzero(rep_dna)[0]
             for i in range(self.N_beads):
                 if i in rep_locs:
-                    self.repli_force.addBond(i, i + self.N_beads, [0.5*self.rw_l,1000])
+                    self.repli_force.addBond(i, i + self.N_beads, [self.rw_l/4,1000])
                 else:
                     self.repli_force.addBond(i, i + self.N_beads, [0.0,5e4])
         else:
@@ -268,11 +268,11 @@ class MD_MODEL:
         self.comp_force.setForceGroup(1)
         self.comp_force.addGlobalParameter('sigma',defaultValue=self.rw_l/2)
         self.comp_force.addGlobalParameter('r0',defaultValue=0.2)
-        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.1)
-        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.2)
-        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.3)
-        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.4)
-        self.comp_force.addGlobalParameter('Eb3',defaultValue=-0.5)
+        self.comp_force.addGlobalParameter('Ea1',defaultValue=-0.2)
+        self.comp_force.addGlobalParameter('Ea2',defaultValue=-0.4)
+        self.comp_force.addGlobalParameter('Eb1',defaultValue=-0.6)
+        self.comp_force.addGlobalParameter('Eb2',defaultValue=-0.8)
+        self.comp_force.addGlobalParameter('Eb3',defaultValue=-1.0)
         # self.comp_force.setCutoffDistance(distance=self.rw_l)
         self.comp_force.addPerParticleParameter('s')
         self.comp_force.addPerParticleParameter('c')
