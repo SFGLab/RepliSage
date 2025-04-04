@@ -66,7 +66,7 @@ class StochasticSimulation:
         print('\nRunning RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.mags, self.N_lefs = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.spin_traj, self.mags = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration,
         mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_CTCF=self.N_CTCF, N_beads=self.N_beads,
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
@@ -84,22 +84,25 @@ class StochasticSimulation:
         np.save(f'{self.out_path}/other/Bs.npy', self.Bs)
         np.save(f'{self.out_path}/other/Rs.npy', self.Rs)
         np.save(f'{self.out_path}/other/J.npy', self.J)
+        np.save(f'{self.out_path}/other/mags.npy',self.mags)
         np.save(f'{self.out_path}/other/spin_traj.npy', self.spin_traj)
     
     def show_plots(self):
         '''
         Draw plots.
         '''
-        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.N_lefs, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.mags, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
-        compute_potts_metrics(self.N_beads,self.out_path+'/other',self.out_path+'/plots')
+        compute_potts_metrics(self.N_beads,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
 
     def compute_structure_metrics(self):
         '''
         It computes plots with metrics for analysis after simulation.
         '''
-        compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path+'/plots')
+        plot_probability_distro(self.Ns-self.Ms, self.out_path)
+        loop_distro(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
+        compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path)
         
 
     def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin'):
@@ -111,8 +114,8 @@ class StochasticSimulation:
 
 def main():
     # Set parameters
-    N_beads, N_lef, N_lef2 = 2000, 200, 40
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(4e2), int(1e3), 1.5, 1.0, int(1e4), int(2e4)
+    N_beads, N_lef, N_lef2 = 1000, 100, 20
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(2e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 1.0, 2.0, 1.0
     mode, rw, random_spins = 'Metropolis', True, True
@@ -126,6 +129,7 @@ def main():
     region, chrom =  [80835000, 97674700], 'chr14'
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+    # out_path = '/home/skorsak/Data/Simulations/RepliSage_whole_chromosome_14'
     out_path = '/home/skorsak/Data/Simulations/RepliSage_test'
     
     # Run simulation

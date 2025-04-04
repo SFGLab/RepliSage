@@ -269,7 +269,6 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
-    N_lefs = np.zeros(N_steps//MC_step, dtype=np.int64)
     mags = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -325,7 +324,6 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
-            N_lefs[i//MC_step] = np.sum(ms>=0)
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
             spin_traj[:,i//MC_step] = spins
@@ -334,4 +332,4 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_rep(f_rep,ms,ns,rt,rep_norm)
 
-    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags, N_lefs
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags

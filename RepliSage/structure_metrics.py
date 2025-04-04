@@ -86,13 +86,22 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
         convs.append(convex_hull_volume(V))
         gdfs.append(global_distance_fluctuation(V))
         CNs.append(contact_number(V))
+    np.save(path+'/other/Rgs.npy',np.array(Rgs))
+    np.save(path+'/other/mpds.npy',np.array(mpds))
+    np.save(path+'/other/eeds.npy',np.array(eeds))
+    np.save(path+'/other/asphs.npy',np.array(asphs))
+    np.save(path+'/other/fractal_dims.npy',np.array(fractals))
+    np.save(path+'/other/convex_hull_volume.npy',np.array(convs))
+    np.save(path+'/other/gdfs.npy',np.array(gdfs))
+    np.save(path+'/other/CNs.npy',np.array(CNs))
+
 
     figure(figsize=(10, 6), dpi=400)
     plt.plot(Rgs,'r-')
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Gyration Radius', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/Rg.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/Rg.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -100,7 +109,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Mean Pairwise Distance', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/pairwise.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/pairwise.svg',format='svg',dpi=400)
     plt.close()
     
     figure(figsize=(10, 6), dpi=400)
@@ -108,7 +117,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('End to End Distance', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/end2end.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/end2end.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -116,7 +125,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Asphericity', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/asphericity.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/asphericity.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -124,7 +133,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Fractal Dimension', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/fractal.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/fractal.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -132,7 +141,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Convex Volume', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/convex_vol.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/convex_vol.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -140,7 +149,7 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Global Distance Fluctuations', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/global_dist_flucts.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/global_dist_flucts.svg',format='svg',dpi=400)
     plt.close()
 
     figure(figsize=(10, 6), dpi=400)
@@ -148,5 +157,5 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
     plt.xlabel('sample number', fontsize=16)
     plt.ylabel('Contact Number', fontsize=16)
     if path!=None:
-        plt.savefig(path+'/contact_number.svg',format='svg',dpi=400)
+        plt.savefig(path+'/plots/contact_number.svg',format='svg',dpi=400)
     plt.close()
