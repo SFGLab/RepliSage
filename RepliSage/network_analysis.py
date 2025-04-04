@@ -359,7 +359,8 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
     plt.ylabel('Synchronization Metric',fontsize=16)
     plt.grid()
     if out_path!=None:
-        plt.savefig(out_path+'/sync.svg',dpi=400)
+        plt.savefig(out_path+'/plots/sync.svg',format='svg',dpi=200)
+        plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
     plt.close()
 
 def compute_potts_metrics(N_beads,path):
