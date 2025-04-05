@@ -10,11 +10,11 @@ from openmm.unit import Quantity
 
 # Dynamically set the default path to the XML file in the package
 try:
-    with importlib.resources.path('loopsage.forcefields', 'classic_sm_ff.xml') as default_xml_path:
+    with importlib.resources.path('RepliSage.forcefields', 'classic_sm_ff.xml') as default_xml_path:
         default_xml_path = str(default_xml_path)
 except FileNotFoundError:
     # If running in a development setup without the resource installed, fallback to a relative path
-    default_xml_path = 'loopsage/forcefields/classic_sm_ff.xml'
+    default_xml_path = 'RepliSage/forcefields/classic_sm_ff.xml'
 
 @dataclass
 class Arg(object):
@@ -95,7 +95,7 @@ class ListOfArgs(list):
 
     def get_complete_config(self) -> str:
         w = "####################\n"
-        w += "#   LoopSage Model   #\n"
+        w += "#   RepliSage Model   #\n"
         w += "####################\n\n"
         w += "# This is automatically generated config file.\n"
         w += f"# Generated at: {datetime.datetime.now().isoformat()}\n\n"
@@ -144,12 +144,18 @@ args = ListOfArgs([
     Arg('REGION_END', help="Ending region coordinate.", type=int, default='', val=''),
     Arg('CHROM', help="Chromosome that corresponds the the modelling region of interest (in case that you do not want to model the whole genome).", type=str, default='', val=''),
     
+    # Replikator
+    Arg('REP_T_STD_FACTOR', help="The factor with which you would like to multiply the standard deviation of replication timing curve.", type=float, default='0.1', val='0.1'),
+    Arg('REP_SPEED_SCALE', help="A scale that quantifies the speed of the replication forks.", type=float, default='20', val='20'),
+    Arg('REP_INIT_RATE_SCALE', help="A number with which you multiply all values of the experimentally estimated initiation rate.", type=float, default='1.0', val='1.0'),
+    
     # Stochastic Simulation parameters
     Arg('LEF_RW', help="True in case that you would like to make cohesins slide as random walk, instead of sliding only in one direction.", type=bool, default='True', val='True'),
+    Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
     Arg('LEF_DRIFT', help="True in case that LEFs are pushed back when they encounter other LEFs.", type=bool, default='False', val='False'),
-    Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='', val=''),
-    Arg('REP_TIME_DURATION', help="Duration of replication.", type=int, default='', val=''),
-    Arg('N_STEPS', help="Number of Monte Carlo steps.", type=int, default='40000', val='40000'),
+    Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='50000', val='50000'),
+    Arg('REP_TIME_DURATION', help="Duration of replication.", type=int, default='50000', val='50000'),
+    Arg('N_STEPS', help="Number of Monte Carlo steps.", type=int, default='200000', val='200000'),
     Arg('N_LEF', help="Number of loop extrusion factors (condensins and cohesins). If you leave it empty it would add for LEFs twice the number of CTCFs.", type=int, default='', val=''),
     Arg('N_LEF2', help="Number of second family loop extrusion factors, in case that you would like to simulate a second group with different speed.", type=int, default='0', val='0'),
     Arg('MC_STEP', help="Monte Carlo frequency. It should be hundreds of steps so as to avoid autocorrelated ensembles.", type=int, default='200', val='200'),
@@ -159,8 +165,10 @@ args = ListOfArgs([
     Arg('METHOD', help="Stochastic modelling method. It can be Metropolis or Simulated Annealing.", type=str, default='Annealing', val='Annealing'),
     Arg('FOLDING_COEFF', help="Folding coefficient.", type=float, default='1.0', val='1.0'),
     Arg('FOLDING_COEFF2', help="Folding coefficient for the second family of LEFs.", type=float, default='0.0', val='0.0'),
+    Arg('REP_COEFF', help="Replication penalty coefficient.", type=float, default='1.0', val='1.0'),
+    Arg('POTTS_INTERACT_COEFF', help="Interaction coefficient of the Potts model.", type=float, default='1.0', val='1.0'),
+    Arg('POTTS_FIELD_COEFF', help="Average magnetic field coefficient of the Potts model.", type=float, default='1.0', val='1.0'),
     Arg('CROSS_COEFF', help="LEF crossing coefficient.", type=float, default='1.0', val='1.0'),
-    Arg('CROSS_LOOP', help="It true if the penalty is applied for situations mi<mj<ni<nj and mi=nj, and false if it is applied only for mi=nj.", type=bool, default='True', val='True'),
     Arg('BIND_COEFF', help="CTCF binding coefficient.", type=float, default='1.0', val='1.0'),
     Arg('SAVE_PLOTS', help="It should be true in case that you would like to save diagnostic plots. In case that you use small MC_STEP or large N_STEPS is better to mark it as False.", type=bool, default='True', val='True'),
     Arg('SAVE_MDT', help="In case that you would like to save metadata of the stochastic simulation.", type=bool, default='True', val='True'),
@@ -168,17 +176,12 @@ args = ListOfArgs([
     # Molecular Dynamic Properties
     Arg('INITIAL_STRUCTURE_TYPE', help="you can choose between: rw, confined_rw, self_avoiding_rw, helix, circle, spiral, sphere.", type=str, default='rw', val='rw'),
     Arg('SIMULATION_TYPE', help="It can be either EM (multiple energy minimizations) or MD (one energy minimization and then run molecular dynamics).", type=str, default='', val=''),
-    Arg('INTEGRATOR_STEP', help="The step of the integrator.", type=Quantity, default='100 femtosecond', val='100 femtosecond'),
+    Arg('INTGRATOR_TYPE', help="Type of interator: langevin or brownian (default: langevin)", type=str, default='langevin', val='langevin'),
+    Arg('INTEGRATOR_STEP', help="The step of the integrator.", type=Quantity, default='10 femtosecond', val='10 femtosecond'),
     Arg('FORCEFIELD_PATH', help="Path to XML file with forcefield.", type=str, default=default_xml_path, val=default_xml_path),
-    Arg('ANGLE_FF_STRENGTH', help="Angle force strength.", type=float, default='200.0', val='200.0'),
-    Arg('LE_FF_LENGTH', help="Equillibrium distance of loop forces.", type=float, default='0.1', val='0.1'),
-    Arg('LE_FF_STRENGTH', help="Interaction Strength of loop forces.", type=float, default='50000.0', val='50000.0'),
-    Arg('EV_P', help="Probability that randomly excluded volume may be disabled.", type=float, default='0.0', val='0.0'),
-    Arg('EV_FF_STRENGTH', help="Excluded-volume strength.", type=float, default='100.0', val='100.0'),
-    Arg('EV_FF_POWER', help="Excluded-volume power.", type=float, default='3.0', val='3.0'),
-    Arg('FRICTION',help='Friction coefficient of the Langevin integrator.',type=float, default='0.1', val='0.1'),
-    Arg('TOLERANCE', help="Tolerance that works as stopping condition for energy minimization.", type=float, default='0.001', val='0.001'),
+    Arg('EV_P', help="Probability that randomly excluded volume may be disabled.", type=float, default='0.01', val='0.01'),
+    Arg('TOLERANCE', help="Tolerance that works as stopping condition for energy minimization.", type=float, default='1.0', val='1.0'),
     Arg('VIZ_HEATS', help="Visualize the output average heatmap.", type=bool, default='True', val='True'),
     Arg('SIM_TEMP', help="The temperature of the 3D simulation (EM or MD).", type=Quantity, default='310 kelvin', val='310 kelvin'),
-    Arg('SIM_STEP', help="This is the amount of simulation steps that are perform each time that we change the loop forces. If this number is too high, the simulation is slow, if is too low it may not have enough time to adapt the structure to the new constraints.", type=int, default='1000', val='1000'),
+    Arg('SIM_STEP', help="This is the amount of simulation steps that are perform each time that we change the loop forces. If this number is too high, the simulation is slow, if is too low it may not have enough time to adapt the structure to the new constraints.", type=int, default='10000', val='10000'),
 ])

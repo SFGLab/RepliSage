@@ -13,13 +13,13 @@ import time
 warnings.filterwarnings('ignore')
 
 # My own libraries
-from Replikator import *
-from common import *
-from plots import *
-from energy_functions import *
-from structure_metrics import *
-from network_analysis import *
-from md_model import *
+from .Replikator import *
+from .common import *
+from .plots import *
+from .energy_functions import *
+from .structure_metrics import *
+from .network_analysis import *
+from .md_model import *
 
 class StochasticSimulation:
     def __init__(self, N_beads, chrom, region, bedpe_file, out_path, N_lef=None, N_lef2=0, rept_path=None, t_rep=None, rep_duration=None, Tstd_factor=0.1, speed_scale=20, scale=1):
@@ -105,12 +105,12 @@ class StochasticSimulation:
         compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path)
         
 
-    def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin'):
+    def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin',tol=1.0,sim_step=10000,p_ev=0.01,reporters=False, md_temperature=310*mm.unit.kelvin):
         '''
         Run OpenMM energy minimization.
         '''
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
-        md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode)
+        md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature)
 
 def main():
     # Set parameters
@@ -125,8 +125,10 @@ def main():
     # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
     
     # Define data and coordinates
-    # region, chrom =  [82835000, 98674700], 'chr14'
-    region, chrom =  [10835000, 97674700], 'chr14'
+    region, chrom =  [80835000, 98674700], 'chr14'
+    # region, chrom =  [10835000, 97674700], 'chr14'
+    
+    # Data
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '/home/skorsak/Data/Simulations/RepliSage_whole_chromosome_14'
@@ -138,6 +140,40 @@ def main():
     sim.show_plots()
     sim.run_openmm('OpenCL',mode='MD')
     sim.compute_structure_metrics()
+
+    # Save Parameters
+    params = {
+        'N_beads': N_beads,
+        'N_lef': N_lef,
+        'N_lef2': N_lef2,
+        'N_steps': N_steps,
+        'MC_step': MC_step,
+        'burnin': burnin,
+        'T': T,
+        'T_min': T_min,
+        't_rep': t_rep,
+        'rep_duration': rep_duration,
+        'f': f,
+        'f2': f2,
+        'b': b,
+        'kappa': kappa,
+        'c_state_field': c_state_field,
+        'c_state_interact': c_state_interact,
+        'c_rep': c_rep,
+        'mode': mode,
+        'rw': rw,
+        'random_spins': random_spins,
+        'Tstd_factor': Tstd_factor,
+        'speed_scale': speed_scale,
+        'init_rate_scale': init_rate_scale,
+        'region': region,
+        'chrom': chrom,
+        'bedpe_file': bedpe_file,
+        'rept_path': rept_path,
+        'out_path': out_path
+    }
+    save_parameters(out_path+'/other/params.txt',params)
+
     
 if __name__=='__main__':
     main()

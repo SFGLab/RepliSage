@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-from common import *
+from .common import *
 from numba import njit, prange
 
 

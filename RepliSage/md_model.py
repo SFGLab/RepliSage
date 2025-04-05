@@ -8,8 +8,8 @@ import openmm as mm
 from tqdm import tqdm
 from openmm.mtsintegrator import MTSLangevinIntegrator
 from openmm.app import PDBxFile, ForceField, Simulation, DCDReporter, StateDataReporter
-from initial_structures import *
-from utils import *
+from .initial_structures import *
+from .utils import *
 
 class MD_MODEL:
     def __init__(self,M,N,N_beads,burnin,MC_step,out_path,platform,rep_frac=None,t_rep=None,Cs=None):
@@ -54,7 +54,7 @@ class MD_MODEL:
 
 
 
-    def run_pipeline(self,init_struct='rw', tol=1.0, sim_step=10000, reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01):
+    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=10000,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin,integrator_step=10.0 * mm.unit.femtosecond):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -81,9 +81,9 @@ class MD_MODEL:
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
         if integrator_mode=='langevin':
-            integrator = mm.LangevinIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10.0 * mm.unit.femtosecond)
+            integrator = mm.LangevinIntegrator(md_temperature, 0.1/mm.unit.femtosecond, integrator_step)
         elif integrator_mode=='brownian':
-            integrator = mm.BrownianIntegrator(310*mm.unit.kelvin, 0.1/mm.unit.femtosecond, 10.0 * mm.unit.femtosecond)
+            integrator = mm.BrownianIntegrator(md_temperature, 0.1/mm.unit.femtosecond, integrator_step)
         
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
