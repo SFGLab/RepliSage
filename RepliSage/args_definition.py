@@ -144,8 +144,14 @@ args = ListOfArgs([
     Arg('REGION_END', help="Ending region coordinate.", type=int, default='', val=''),
     Arg('CHROM', help="Chromosome that corresponds the the modelling region of interest (in case that you do not want to model the whole genome).", type=str, default='', val=''),
     
+    # Replikator
+    Arg('REP_T_STD_FACTOR', help="The factor with which you would like to multiply the standard deviation of replication timing curve.", type=float, default='0.1', val='0.1'),
+    Arg('REP_SPEED_SCALE', help="A scale that quantifies the speed of the replication forks.", type=float, default='20', val='20'),
+    Arg('REP_INIT_RATE_SCALE', help="A number with which you multiply all values of the experimentally estimated initiation rate.", type=float, default='1.0', val='1.0'),
+    
     # Stochastic Simulation parameters
     Arg('LEF_RW', help="True in case that you would like to make cohesins slide as random walk, instead of sliding only in one direction.", type=bool, default='True', val='True'),
+    Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
     Arg('LEF_DRIFT', help="True in case that LEFs are pushed back when they encounter other LEFs.", type=bool, default='False', val='False'),
     Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='', val=''),
     Arg('REP_TIME_DURATION', help="Duration of replication.", type=int, default='', val=''),
@@ -159,8 +165,10 @@ args = ListOfArgs([
     Arg('METHOD', help="Stochastic modelling method. It can be Metropolis or Simulated Annealing.", type=str, default='Annealing', val='Annealing'),
     Arg('FOLDING_COEFF', help="Folding coefficient.", type=float, default='1.0', val='1.0'),
     Arg('FOLDING_COEFF2', help="Folding coefficient for the second family of LEFs.", type=float, default='0.0', val='0.0'),
+    Arg('REP_COEFF', help="Replication penalty coefficient.", type=float, default='1.0', val='1.0'),
+    Arg('POTTS_INTERACT_COEFF', help="Interaction coefficient of the Potts model.", type=float, default='1.0', val='1.0'),
+    Arg('POTTS_FIELD_COEFF', help="Average magnetic field coefficient of the Potts model.", type=float, default='1.0', val='1.0'),
     Arg('CROSS_COEFF', help="LEF crossing coefficient.", type=float, default='1.0', val='1.0'),
-    Arg('CROSS_LOOP', help="It true if the penalty is applied for situations mi<mj<ni<nj and mi=nj, and false if it is applied only for mi=nj.", type=bool, default='True', val='True'),
     Arg('BIND_COEFF', help="CTCF binding coefficient.", type=float, default='1.0', val='1.0'),
     Arg('SAVE_PLOTS', help="It should be true in case that you would like to save diagnostic plots. In case that you use small MC_STEP or large N_STEPS is better to mark it as False.", type=bool, default='True', val='True'),
     Arg('SAVE_MDT', help="In case that you would like to save metadata of the stochastic simulation.", type=bool, default='True', val='True'),
