@@ -1,7 +1,7 @@
 from numba import njit, prange
 import numpy as np
 import random as rd
-from preproc import *
+from .preproc import *
 from tqdm import tqdm
 
 def preprocessing(bedpe_file:str, region:list, chrom:str, N_beads:int):

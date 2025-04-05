@@ -8,8 +8,8 @@ import openmm as mm
 from tqdm import tqdm
 from openmm.mtsintegrator import MTSLangevinIntegrator
 from openmm.app import PDBxFile, ForceField, Simulation
-from initial_structures import *
-from utils import *
+from .initial_structures import *
+from .utils import *
 
 class EM_LE:
     def __init__(self,M,N,N_beads,burnin,MC_step,out_path,platform,rep_frac=None,t_rep=None,Cs=None):

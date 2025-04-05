@@ -1,12 +1,12 @@
 import numpy as np
-from common import list_files_in_directory
+from .common import list_files_in_directory
 from sklearn.decomposition import PCA
 from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from tqdm import tqdm
-from common import *
-from utils import *
+from .common import *
+from .utils import *
 
 def radius_of_gyration(V):
     center_of_mass = np.mean(V, axis=0)

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.signal import find_peaks
 from sklearn import preprocessing
-from common import *
-from replication_simulator import *
+from .common import *
+from .replication_simulator import *
 import mat73
 import time
 from tqdm import tqdm
