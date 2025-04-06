@@ -59,7 +59,7 @@ class StochasticSimulation:
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e5
         rep_norm = c_rep*1e5
-        potts_norm1, potts_norm2 = -2*c_potts1, -c_potts2/2
+        potts_norm1, potts_norm2 = -c_potts1, -c_potts2
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
         
         # Running the simulation
@@ -117,7 +117,7 @@ def main():
     N_beads, N_lef, N_lef2 = 10000, 1000, 200
     N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e5), int(2e2), int(1e3), 1.8, 1.0, int(5e4), int(5e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
-    c_state_field, c_state_interact, c_rep = 1.0, 2.0, 1.0
+    c_state_field, c_state_interact, c_rep = 2.0, 1.0, 1.0
     mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
 

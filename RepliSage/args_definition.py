@@ -94,9 +94,9 @@ class ListOfArgs(list):
                 raise ValueError(f"Can't parse: {i.name} = {i.val}")
 
     def get_complete_config(self) -> str:
-        w = "####################\n"
+        w = "#######################\n"
         w += "#   RepliSage Model   #\n"
-        w += "####################\n\n"
+        w += "#######################\n\n"
         w += "# This is automatically generated config file.\n"
         w += f"# Generated at: {datetime.datetime.now().isoformat()}\n\n"
         w += "# Notes:\n"
@@ -107,6 +107,7 @@ class ListOfArgs(list):
         w += "# In such cases the unit is fixed (and noted in comment), so please convert complex units manually if needed.\n"
         w += "# <float> and <int> types does not require any unit. Quantity require unit.\n\n"
         w += "# Default values does not mean valid value. In many places it's only a empty field that need to be filled.\n\n"
+        w += "###########################################################################################################\n\n"
 
         w += '[Main]'
         for i in self:
@@ -154,7 +155,7 @@ args = ListOfArgs([
     Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
     Arg('LEF_DRIFT', help="True in case that LEFs are pushed back when they encounter other LEFs.", type=bool, default='False', val='False'),
     Arg('P_REW',help="Probability that the Monte Carlo algorithm will propose a rewiring move (move a LEF), instead of epigenetic node state change move.", type=float, default='0.5', val='0.5'),
-    Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="If true, it modles replication forks as epienetic organizers.", type=bool, default='True', val='True'),
+    Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="If true, it models replication forks as epienetic organizers.", type=bool, default='True', val='True'),
     Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='50000', val='50000'),
     Arg('REP_TIME_DURATION', help="Duration of replication.", type=int, default='50000', val='50000'),
     Arg('N_STEPS', help="Number of Monte Carlo steps.", type=int, default='200000', val='200000'),
@@ -178,7 +179,7 @@ args = ListOfArgs([
     # Molecular Dynamic Properties
     Arg('INITIAL_STRUCTURE_TYPE', help="you can choose between: rw, confined_rw, self_avoiding_rw, helix, circle, spiral, sphere.", type=str, default='rw', val='rw'),
     Arg('SIMULATION_TYPE', help="It can be either EM (multiple energy minimizations) or MD (one energy minimization and then run molecular dynamics).", type=str, default='', val=''),
-    Arg('INTEGRATOR_TYPE', help="Type of interator: langevin or brownian (default: langevin)", type=str, default='langevin', val='langevin'),
+    Arg('INTEGRATOR_TYPE', help="Type of interator: langevin or brownian.", type=str, default='langevin', val='langevin'),
     Arg('INTEGRATOR_STEP', help="The step of the integrator.", type=Quantity, default='10 femtosecond', val='10 femtosecond'),
     Arg('FORCEFIELD_PATH', help="Path to XML file with forcefield.", type=str, default=default_xml_path, val=default_xml_path),
     Arg('EV_P', help="Probability that randomly excluded volume may be disabled.", type=float, default='0.01', val='0.01'),
