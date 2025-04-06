@@ -75,7 +75,7 @@ def main():
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw)
     sim.show_plots()
-    sim.run_openmm(args.PLATFORM,mode=args.SIMULATION_TYPE,init_struct=args.INITIAL_STRUCTURE_TYPE,integrator_mode=self.INTEGRATOR_STEP,p_ev=args.EV_P,tol=args.TOLERANCE,md_temperature=args.SIM_TEMP)
+    sim.run_openmm(args.PLATFORM,mode=args.SIMULATION_TYPE,init_struct=args.INITIAL_STRUCTURE_TYPE,integrator_mode=args.INTEGRATOR_TYPE,integrator_step=args.INTEGRATOR_STEP,p_ev=args.EV_P,sim_step=args.SIM_STEP,tol=args.TOLERANCE,md_temperature=args.SIM_TEMP,ff_path=args.FORCEFIELD_PATH)
     sim.compute_structure_metrics()
 
     # Save Parameters

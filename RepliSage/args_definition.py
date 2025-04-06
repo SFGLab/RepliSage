@@ -176,7 +176,7 @@ args = ListOfArgs([
     # Molecular Dynamic Properties
     Arg('INITIAL_STRUCTURE_TYPE', help="you can choose between: rw, confined_rw, self_avoiding_rw, helix, circle, spiral, sphere.", type=str, default='rw', val='rw'),
     Arg('SIMULATION_TYPE', help="It can be either EM (multiple energy minimizations) or MD (one energy minimization and then run molecular dynamics).", type=str, default='', val=''),
-    Arg('INTGRATOR_TYPE', help="Type of interator: langevin or brownian (default: langevin)", type=str, default='langevin', val='langevin'),
+    Arg('INTEGRATOR_TYPE', help="Type of interator: langevin or brownian (default: langevin)", type=str, default='langevin', val='langevin'),
     Arg('INTEGRATOR_STEP', help="The step of the integrator.", type=Quantity, default='10 femtosecond', val='10 femtosecond'),
     Arg('FORCEFIELD_PATH', help="Path to XML file with forcefield.", type=str, default=default_xml_path, val=default_xml_path),
     Arg('EV_P', help="Probability that randomly excluded volume may be disabled.", type=float, default='0.01', val='0.01'),

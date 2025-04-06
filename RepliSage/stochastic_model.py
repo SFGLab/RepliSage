@@ -105,12 +105,12 @@ class StochasticSimulation:
         compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path)
         
 
-    def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin',tol=1.0,sim_step=10000,p_ev=0.01,reporters=False, md_temperature=310*mm.unit.kelvin):
+    def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin',integrator_step=10.0 * mm.unit.femtosecond,tol=1.0,sim_step=10000,p_ev=0.01,reporters=False, md_temperature=310*mm.unit.kelvin, ff_path='forcefields/classic_sm_ff.xml'):
         '''
         Run OpenMM energy minimization.
         '''
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
-        md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature)
+        md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature,ff_path=ff_path)
 
 def main():
     # Set parameters

@@ -52,9 +52,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-
-
-    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=10000,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin,integrator_step=10.0 * mm.unit.femtosecond):
+    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=10000,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin, integrator_step=10.0 * mm.unit.femtosecond, ff_path='forcefields/classic_sm_ff.xml'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -76,7 +74,7 @@ class MD_MODEL:
 
         # Set up simulation
         pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
-        forcefield = ForceField('forcefields/classic_sm_ff.xml')
+        forcefield = ForceField(ff_path)
 
         # Define the system
         self.system = forcefield.createSystem(pdb.topology, nonbondedCutoff=2*self.rw_l)
