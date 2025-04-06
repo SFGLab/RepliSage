@@ -50,7 +50,7 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True, p_rew=0.5):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True, p_rew=0.5, rep_fork_organizers=True):
         '''
         Energy minimization script.
         '''
@@ -72,7 +72,7 @@ class StochasticSimulation:
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
         bind_norm=bind_norm, rep_norm=rep_norm,
         f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
-        h=self.h, J=self.J, rw=rw)
+        h=self.h, J=self.J, rw=rw, rep_fork_organizers=rep_fork_organizers)
         end = time.time()
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
@@ -118,7 +118,7 @@ def main():
     N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e5), int(2e2), int(1e3), 1.8, 1.0, int(5e4), int(5e4)
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 1.0, 2.0, 1.0
-    mode, rw, random_spins = 'Metropolis', True, True
+    mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
 
     # for stress scale=5.0, sigma_t = T*0.2, speed=5*
@@ -136,7 +136,7 @@ def main():
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew)
+    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
     sim.show_plots()
     sim.run_openmm('OpenCL',mode='MD')
     sim.compute_structure_metrics()
