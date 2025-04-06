@@ -142,38 +142,8 @@ def main():
     sim.compute_structure_metrics()
 
     # Save Parameters
-    params = {
-        'N_beads': N_beads,
-        'N_lef': N_lef,
-        'N_lef2': N_lef2,
-        'N_steps': N_steps,
-        'MC_step': MC_step,
-        'burnin': burnin,
-        'T': T,
-        'T_min': T_min,
-        't_rep': t_rep,
-        'rep_duration': rep_duration,
-        'f': f,
-        'f2': f2,
-        'b': b,
-        'kappa': kappa,
-        'c_state_field': c_state_field,
-        'c_state_interact': c_state_interact,
-        'c_rep': c_rep,
-        'mode': mode,
-        'rw': rw,
-        'random_spins': random_spins,
-        'Tstd_factor': Tstd_factor,
-        'speed_scale': speed_scale,
-        'init_rate_scale': init_rate_scale,
-        'region': region,
-        'chrom': chrom,
-        'bedpe_file': bedpe_file,
-        'rept_path': rept_path,
-        'out_path': out_path
-    }
-    save_parameters(out_path+'/other/params.txt',params)
-
+    params = {k: v for k, v in locals().items() if k not in ['args','sim']}
+    save_parameters(out_path+'/other/params.txt',**params)
     
 if __name__=='__main__':
     main()
