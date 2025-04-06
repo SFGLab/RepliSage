@@ -54,3 +54,4 @@ config_*.ini
 # Simulation Results
 tmp/
 *result*/
+*output*/
