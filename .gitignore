@@ -47,3 +47,10 @@ htmlcov/
 .coverage
 .cache/
 .pytest_cache/
+
+# Additional config files
+config_*.ini
+
+# Simulation Results
+tmp/
+*result*/
