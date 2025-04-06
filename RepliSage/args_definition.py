@@ -153,6 +153,8 @@ args = ListOfArgs([
     Arg('LEF_RW', help="True in case that you would like to make cohesins slide as random walk, instead of sliding only in one direction.", type=bool, default='True', val='True'),
     Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
     Arg('LEF_DRIFT', help="True in case that LEFs are pushed back when they encounter other LEFs.", type=bool, default='False', val='False'),
+    Args('P_REW',help="Probability that the Monte Carlo algorithm will propose a rewiring move (move a LEF), instead of epigenetic node state change move.", type=float, default='0.5', val='0.5'),
+    Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="If true, it modles replication forks as epienetic organizers.", type=bool, default='True', val='True'),
     Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='50000', val='50000'),
     Arg('REP_TIME_DURATION', help="Duration of replication.", type=int, default='50000', val='50000'),
     Arg('N_STEPS', help="Number of Monte Carlo steps.", type=int, default='200000', val='200000'),
