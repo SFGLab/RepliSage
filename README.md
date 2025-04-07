@@ -61,25 +61,41 @@ Note that to run replisage it is needed to have `GM12878_single_cell_data_hg37.m
 
 ### Python API
 ```python
-def main():
-    # Set parameters
-    N_beads = None
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(4e4), int(5e2), int(1e3), 2.0, 0.0, int(1e4), int(2e4)
-    f, b, kappa, c_rep = 1.0, 0.5, 1.0, 2.0
-    c_ising1, c_ising2 = 1.0, 4.0
-    mode, rw, random_spin_state = 'Metropolis', True, True
+from RepliSage.stochastic_model import *
 
-    # Define data and coordinates
-    region, chrom =  [178421513, 182421513], 'chr1'
-    bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
-    rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
-    out_path = '../output'
-    
-    # Run simulation
-    sim = StochasticSimulation(N_beads,chrom,region, bedpe_file, out_path, None, rept_path, t_rep, rep_duration)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, b, kappa, c_rep, c_ising1, c_ising2, mode, rw, random_spin_state)
-    sim.show_plots()
-    sim.run_openmm('OpenCL')
+# Set parameters
+N_beads, N_lef, N_lef2 = 1000, 100, 20
+N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(8e4), int(4e2), int(1e3), 1.6, 1.0, int(1e4), int(2e4)
+
+f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
+c_state_field, c_state_interact, c_rep = 2.0, 1.0, 1.0
+mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
+Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
+save_MDT, save_plots = True, True
+
+# for stress scale=5.0, sigma_t = T*0.2, speed=5*
+# for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
+
+# Define data and coordinates
+region, chrom =  [80835000, 98674700], 'chr14'
+# region, chrom =  [10835000, 97674700], 'chr14'
+
+# Data
+bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
+rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
+out_path = '/home/skorsak/Data/Simulations/RepliSage_whole_chromosome_14'
+
+# Run simulation
+sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
+sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT)
+if show_plots: sim.show_plots()
+sim.run_openmm('OpenCL',mode='MD')
+if show_plots: sim.compute_structure_metrics()
+
+# Save Parameters
+if save_MDT:
+    params = {k: v for k, v in locals().items() if k not in ['args','sim']}
+    save_parameters(out_path+'/other/params.txt',**params)
 ```
 
 ### Bash command

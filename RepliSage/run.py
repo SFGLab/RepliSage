@@ -77,7 +77,7 @@ def main():
         sim.show_plots()
         sim.compute_structure_metrics()
         print('Done!')
-
+    
     # Save Parameters
     if save_MDT:
         print('\nCreating metadata...')
