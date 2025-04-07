@@ -60,12 +60,9 @@ def main():
     c_state_field, c_state_interact, c_rep = args.POTTS_FIELD_COEFF, args.POTTS_INTERACT_COEFF, args.REP_COEFF
     mode, rw, random_spins, p_rew, rep_fork_organizers = args.METHOD, args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
     Tstd_factor, speed_scale, init_rate_scale, p_rew = args.REP_T_STD_FACTOR, args.REP_SPEED_SCALE, args.REP_INIT_RATE_SCALE, args.P_REW
-    
-    # for stress scale=5.0, sigma_t = T*0.2, speed=5*
-    # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
+    save_MDT, save_plots, viz_heats = args.SAVE_MDT, args.SAVE_PLOTS, args.VIZ_HEATS
     
     # Define data and coordinates
-    # region, chrom =  [82835000, 98674700], 'chr14'
     region, chrom =  [args.REGION_START, args.REGION_END], args.CHROM
     bedpe_file = args.BEDPE_PATH
     rept_path = args.REPT_PATH
@@ -74,13 +71,32 @@ def main():
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
-    sim.show_plots()
     sim.run_openmm(args.PLATFORM,mode=args.SIMULATION_TYPE,init_struct=args.INITIAL_STRUCTURE_TYPE,integrator_mode=args.INTEGRATOR_TYPE,integrator_step=args.INTEGRATOR_STEP,p_ev=args.EV_P,sim_step=args.SIM_STEP,tol=args.TOLERANCE,md_temperature=args.SIM_TEMP,ff_path=args.FORCEFIELD_PATH)
-    sim.compute_structure_metrics()
+    if save_plots:
+        print('\nPloting stuff...') 
+        sim.show_plots()
+        sim.compute_structure_metrics()
+        print('Done!')
 
     # Save Parameters
-    params = {k: v for k, v in locals().items() if k not in ['args','sim']} 
-    save_parameters(out_path+'/other/params.txt',**params)
+    if save_MDT:
+        print('\nCreating metadata...')
+        params = {k: v for k, v in locals().items() if k not in ['args','sim']} 
+        save_parameters(out_path+'/other/params.txt',**params)
+        print('Done')
+
+    # Heatmap Visualization
+    if args.VIZ_HEATS:
+        print('\nMaking averaged heatmap plots...')
+        print('Before replication...')
+        get_avg_heatmap(args.OUT_PATH,1,(args.REP_START_TIME-args.BURNIN)//args.MC_STEP+1)
+        print('During replication...')
+        get_avg_heatmap(args.OUT_PATH,(args.REP_START_TIME-args.BURNIN)//args.MC_STEP+1,(args.REP_START_TIME+args.REP_TIME_DURATION-args.BURNIN)//args.MC_STEP+1)
+        print('After replication...')
+        get_avg_heatmap(args.OUT_PATH,(args.REP_START_TIME+args.REP_TIME_DURATION-args.BURNIN)//args.MC_STEP+1,(args.N_STEPS-args.BURNIN)//args.MC_STEP+1)
+        print('And all of them together...')
+        get_avg_heatmap(args.OUT_PATH,1,(args.N_STEPS-args.BURNIN)//args.MC_STEP+1)
+        print('Done!')
 
 if __name__=='__main__':
     main()

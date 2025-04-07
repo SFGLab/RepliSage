@@ -50,7 +50,7 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True, p_rew=0.5, rep_fork_organizers=True):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True):
         '''
         Energy minimization script.
         '''
@@ -77,15 +77,16 @@ class StochasticSimulation:
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-        np.save(f'{self.out_path}/other/Ms.npy', self.Ms)
-        np.save(f'{self.out_path}/other/Ns.npy', self.Ns)
-        np.save(f'{self.out_path}/other/Es.npy', self.Es)
-        np.save(f'{self.out_path}/other/Fs.npy', self.Fs)
-        np.save(f'{self.out_path}/other/Bs.npy', self.Bs)
-        np.save(f'{self.out_path}/other/Rs.npy', self.Rs)
-        np.save(f'{self.out_path}/other/J.npy', self.J)
-        np.save(f'{self.out_path}/other/mags.npy',self.mags)
-        np.save(f'{self.out_path}/other/spin_traj.npy', self.spin_traj)
+        if save_MDT:
+            np.save(f'{self.out_path}/other/Ms.npy', self.Ms)
+            np.save(f'{self.out_path}/other/Ns.npy', self.Ns)
+            np.save(f'{self.out_path}/other/Es.npy', self.Es)
+            np.save(f'{self.out_path}/other/Fs.npy', self.Fs)
+            np.save(f'{self.out_path}/other/Bs.npy', self.Bs)
+            np.save(f'{self.out_path}/other/Rs.npy', self.Rs)
+            np.save(f'{self.out_path}/other/J.npy', self.J)
+            np.save(f'{self.out_path}/other/mags.npy',self.mags)
+            np.save(f'{self.out_path}/other/spin_traj.npy', self.spin_traj)
     
     def show_plots(self):
         '''
@@ -121,6 +122,7 @@ def main():
     c_state_field, c_state_interact, c_rep = 2.0, 1.0, 1.0
     mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
+    save_MDT, save_plots = True, True
 
     # for stress scale=5.0, sigma_t = T*0.2, speed=5*
     # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
@@ -133,18 +135,18 @@ def main():
     bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
     rept_path = '/home/skorsak/Data/Replication/sc_timing/GM12878_single_cell_data_hg37.mat'
     out_path = '/home/skorsak/Data/Simulations/RepliSage_whole_chromosome_14'
-    # out_path = '/home/skorsak/Data/Simulations/RepliSage_test'
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
-    sim.show_plots()
+    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT)
+    if show_plots: sim.show_plots()
     sim.run_openmm('OpenCL',mode='MD')
-    sim.compute_structure_metrics()
+    if show_plots: sim.compute_structure_metrics()
 
     # Save Parameters
-    params = {k: v for k, v in locals().items() if k not in ['args','sim']}
-    save_parameters(out_path+'/other/params.txt',**params)
+    if save_MDT:
+        params = {k: v for k, v in locals().items() if k not in ['args','sim']}
+        save_parameters(out_path+'/other/params.txt',**params)
     
 if __name__=='__main__':
     main()

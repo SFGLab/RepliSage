@@ -107,7 +107,7 @@ class ListOfArgs(list):
         w += "# In such cases the unit is fixed (and noted in comment), so please convert complex units manually if needed.\n"
         w += "# <float> and <int> types does not require any unit. Quantity require unit.\n\n"
         w += "# Default values does not mean valid value. In many places it's only a empty field that need to be filled.\n\n"
-        w += "###########################################################################################################\n\n"
+        w += "#############################################################################################################\n\n"
 
         w += '[Main]'
         for i in self:
@@ -153,7 +153,6 @@ args = ListOfArgs([
     # Stochastic Simulation parameters
     Arg('LEF_RW', help="True in case that you would like to make cohesins slide as random walk, instead of sliding only in one direction.", type=bool, default='True', val='True'),
     Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
-    Arg('LEF_DRIFT', help="True in case that LEFs are pushed back when they encounter other LEFs.", type=bool, default='False', val='False'),
     Arg('P_REW',help="Probability that the Monte Carlo algorithm will propose a rewiring move (move a LEF), instead of epigenetic node state change move.", type=float, default='0.5', val='0.5'),
     Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="If true, it models replication forks as epienetic organizers.", type=bool, default='True', val='True'),
     Arg('REP_START_TIME', help="Time step when the replication starts.", type=int, default='50000', val='50000'),

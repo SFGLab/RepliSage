@@ -68,7 +68,7 @@ class MD_MODEL:
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
         write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
         generate_psf(self.N_beads,self.out_path+'/other/replisage.psf',duplicated=True)
-        print('Initial Structure Created Succesfully <3\n')
+        print('Initial Structure Created Succesfully <3')
         
         platform = mm.Platform.getPlatformByName(self.platform)
 

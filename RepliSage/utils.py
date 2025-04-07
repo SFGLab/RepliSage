@@ -315,8 +315,6 @@ def binned_distance_matrix(idx,folder_name,input=None,th=23):
 
     figure(figsize=(25, 20))
     plt.imshow(mat,cmap=LinearSegmentedColormap.from_list("bright_red",[(1,0,0),(1,1,1)]), vmin=0, vmax=th)
-    # plt.colorbar();
-    # plt.title('Binned Distance heatmap',fontsize=16)
     plt.savefig(folder_name+f'/heatmaps/SM_bindist_heatmap_idx{idx}.png',format='png',dpi=500)
     plt.close()
 
@@ -341,8 +339,6 @@ def average_binned_distance_matrix(folder_name,N_steps,step,burnin,th1=0,th2=23)
     
     figure(figsize=(25, 20))
     plt.imshow(avg_mat,cmap=LinearSegmentedColormap.from_list("bright_red",[(1,0,0),(1,1,1)]), vmin=th1, vmax=th2)
-    # plt.colorbar();
-    # plt.title('Average Binned Distance heatmap',fontsize=16)
     plt.savefig(folder_name+f'/plots/SM_avg_bindist_heatmap.png',format='png',dpi=500)
     plt.show(block=False)
     np.save(folder_name+'/plots/average_binned_dist_matrix.npy',avg_mat)
@@ -372,34 +368,27 @@ def get_stats(ms,ns,N_beads):
     F = np.mean(chromatin2)
     f_std = np.std(chromatin)
     FC = 1/(1-f+0.001)
-
-    # # Computing Folding Variability metrics
-    # avgs_list, avgs_list2 = list(), list()
-    # step = len(chromatin)//500
-    # size = 2*step
-    # for i in range(0,len(chromatin)-size,step):
-    #     avgs_list.append(np.average(chromatin[i:(i+size)]))
-    #     avgs_list2.append(np.average(chromatin2[i:(i+size)]))
-    # fv, fv2 = np.var(avgs_list), np.var(avgs_list2)
     
     return f, f_std, F, FC
 
 def get_avg_heatmap(path,N1,N2):
-    file_pattern = path + f'/ensemble_1_*.cif'
+    file_pattern = path + f'/ensemble/ensemble_1_*.cif'
     file_list = glob.glob(file_pattern)
     V = get_coordinates_cif(file_list[0])
     N_beads = len(V)//2
     avg_heat = np.zeros((N_beads,N_beads))
     for i in tqdm(range(N1,N2)):
-        file_pattern = path + f'/ensemble_{i}_*.cif'
+        file_pattern = path + f'/ensemble/ensemble_{i}_*.cif'
         file_list = glob.glob(file_pattern)
         V = get_coordinates_cif(file_list[0])[:N_beads]
         heat =  distance.cdist(V, V, 'euclidean') # this is the way \--/
         avg_heat += 1/heat
 
     avg_heat = avg_heat/(N2-N1)
+    np.save(path+'/other/heatmap_{N1}_{N2}.npy', avg_heat)
 
-    figure(figsize=(25, 20))
+    figure(figsize=(20, 20))
     plt.imshow(avg_heat,cmap='Reds',vmax=0.2, aspect='auto')
-    plt.colorbar()
-    plt.show()
+    plt.savefig(path+f'/plots/heatmap_{N1}_{N2}.png',format='png',dpi=200)
+    plt.savefig(path+f'/plots/heatmap_{N1}_{N2}.svg',format='svg',dpi=200)
+    plt.close()
