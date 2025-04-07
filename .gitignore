@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Virtual environments
+.python-version
 .venv/
 venv/
 env/
@@ -46,3 +47,11 @@ htmlcov/
 .coverage
 .cache/
 .pytest_cache/
+
+# Additional config files
+config_*.ini
+
+# Simulation Results
+tmp/
+*result*/
+*output*/

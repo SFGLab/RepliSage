@@ -13,6 +13,11 @@ chrom_sizes = {'chr1':248387328,'chr2':242696752,'chr3':201105948,'chr4':1935749
                'chr17':84276897,'chr18':80542538,'chr19':61707364,'chr20':66210255,
                'chr21':45090682,'chr22':51324926,'chrX':154259566,'chrY':62460029}
 
+def save_parameters(filepath, **params):
+    with open(filepath, 'w') as f:
+        for key, value in params.items():
+            f.write(f"{key}: {value}\n")
+
 def rescale_matrix(matrix: np.array, new_cols: int, fork_mat: bool=False):
     """
     Rescales a binary replicated_dna matrix to a new number of columns, preserving

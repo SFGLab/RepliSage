@@ -1,7 +1,7 @@
 from numba import njit, prange
 import numpy as np
 import random as rd
-from preproc import *
+from .preproc import *
 from tqdm import tqdm
 
 def preprocessing(bedpe_file:str, region:list, chrom:str, N_beads:int):
@@ -95,10 +95,10 @@ def E_fold(ms, ns, fold_norm):
     return fold_norm * folding
 
 @njit(parallel=True)
-def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t):
+def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers):
     N_beads = len(J)
-    E1 = np.sum(h*spins)/2
-    if t>0: E1 += np.sum(ht*spins)/2
+    E1 = np.sum(h*spins)/2 + np.sum(h*spins)/2*(1-int(rep_fork_organizers))
+    if t>0: E1 += np.sum(ht*spins)/2*int(rep_fork_organizers)
     
     E2 = 0.0
     for i in range(N_beads):
@@ -107,7 +107,7 @@ def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t):
     return potts_norm1 * E1 + potts_norm2 * E2
 
 @njit
-def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0):
+def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0, rep_fork_organizers=True):
     '''
     The total energy.
     '''
@@ -115,7 +115,7 @@ def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_nor
     if fold_norm2!=0: energy += E_fold(ms[N_lef:N_lef+N_lef2],ns[N_lef:N_lef+N_lef2],fold_norm2)
     if rep_norm!=0.0:
         energy += E_rep(f_rep, ms, ns, t, rep_norm)
-    if (potts_norm1!=0.0 or potts_norm2!=0.0): energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t)
+    if (potts_norm1!=0.0 or potts_norm2!=0.0): energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)
     return energy
 
 @njit
@@ -157,10 +157,10 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     return k_norm * (K2 - K1)
 
 @njit
-def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,ms,ns,potts_norm1,potts_norm2,t):
+def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,ms,ns,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
     # In case that we change node state
-    dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2
-    if t>0: dE1 += (np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2
+    dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2+h[spin_idx]*(spin_val-spins[spin_idx])/2*(1-int(rep_fork_organizers))
+    if t>0: dE1 += ((np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2)*int(rep_fork_organizers)
     dE2 = np.sum(J[spin_idx, :] * (np.abs(spin_val - spins) - np.abs(spins[spin_idx] - spins)))
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
@@ -246,7 +246,7 @@ def initialize_J(N_beads,J,ms,ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p1=0.5, p2=0.5):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
@@ -266,10 +266,9 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     ms, ns, spins = initialize(N_lef,N_lef2, N_beads)
     spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
     J = initialize_J(N_beads,J,ms,ns)
-    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2)
+    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
-    N_lefs = np.zeros(N_steps//MC_step, dtype=np.int64)
     mags = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -286,7 +285,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
         
         for j in range(N_beads):
             # Propose a move for cohesins (rewiring)
-            do_rewiring = rd.random()<p1
+            do_rewiring = rd.random()<p_rew
             if do_rewiring:
                 lef_idx = np.random.choice(lef_idx_choices)
                 m_old, n_old = ms[lef_idx], ns[lef_idx]
@@ -315,7 +314,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
                 s = np.random.choice(spin_choices[spin_choices!=spins[spin_idx]])
 
                 # Compute the energy that corresponds only to the node change
-                dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,ms,ns,potts_norm1,potts_norm2,rt)
+                dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,ms,ns,potts_norm1,potts_norm2,rt,rep_fork_organizers)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     spins[spin_idx] = s
@@ -325,13 +324,12 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
-            N_lefs[i//MC_step] = np.sum(ms>=0)
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
             spin_traj[:,i//MC_step] = spins
-            Es_potts[i//MC_step] = E_potts(spins, J, h, ht, potts_norm1, potts_norm2, rt)
+            Es_potts[i//MC_step] = E_potts(spins, J, h, ht, potts_norm1, potts_norm2, rt, rep_fork_organizers)
             Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_rep(f_rep,ms,ns,rt,rep_norm)
 
-    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags, N_lefs
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags

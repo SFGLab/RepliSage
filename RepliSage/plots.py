@@ -79,10 +79,10 @@ def coh_traj_plot(ms,ns,N_beads,path):
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
-    figure(figsize=(10, 6), dpi=400)
+def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(Es, 'black',label='Total Energy')
-    plt.plot(Es_ising, 'orange',label='Ising Energy')
+    plt.plot(Es_ising, 'orange',label='Potts Energy')
     # plt.plot(E_comps, 'darkcyan',label='Compartmentalization Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
     plt.plot(Bs, 'r',label='Binding Energy')
@@ -92,69 +92,71 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
     plt.yscale('symlog')
     plt.legend()
     save_path = path+'/plots/energies.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/energies.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/energies.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(Es, 'k',label='Total Energy')
     plt.ylabel('Total Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/total_energy.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/total_energy.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/total_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(N_lefs, 'green',label='Number of LEFs')
-    plt.ylabel('Number of LEFs', fontsize=16)
-    plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/lefs.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
-    save_path = path+'/plots/lefs.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
-    plt.close()
-
-    figure(figsize=(10, 6), dpi=400)
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(mags, 'purple',label='mags')
     plt.ylabel('Magnetization', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/mag.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/mag.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/mag.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(Fs, 'b')
     plt.ylabel('Folding Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/fold_energy.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/fold_energy.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/fold_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(Es_ising, 'orange')
     plt.ylabel('Energy of the Potts Model', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/potts_energy.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/potts_energy.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/potts_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
+    figure(figsize=(10, 6), dpi=200)
     plt.plot(Rs, 'g')
     plt.ylabel('Replication Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/repli_energy.pdf'
-    plt.savefig(save_path,format='pdf',dpi=400)
+    plt.savefig(save_path,format='pdf',dpi=200)
     save_path = path+'/plots/repli_energy.svg'
-    plt.savefig(save_path,format='svg',dpi=400)
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/repli_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
     plt.close()
     
     # Step 1: Fit regression model
@@ -175,9 +177,11 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, N_lefs, burnin, path=None):
         save_path = path+'/plots/autoc.png'
         plt.savefig(save_path,dpi=400)
         save_path = path+'/plots/autoc.svg'
-        plt.savefig(save_path,format='svg',dpi=400)
+        plt.savefig(save_path,format='svg',dpi=200)
         save_path = path+'/plots/autoc.pdf'
-        plt.savefig(save_path,format='pdf',dpi=400)
+        plt.savefig(save_path,format='pdf',dpi=200)
+        save_path = path+'/plots/autoc.png'
+        plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
 def ising_traj_plot(traj,save_path):

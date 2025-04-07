@@ -17,7 +17,6 @@ def plot_probability_distro(Ls, out_path=None):
         out_path (str, optional): Path to save the heatmap. If None, it will only display the plot.
     """
     # Normalize Ls along rows to get probabilities
-    Ls = np.log(Ls)
     min_val, max_val = np.min(Ls), np.max(Ls)
     bin_edges = np.linspace(min_val, max_val, 20)  # Adjust number of bins for desired resolution
     
@@ -40,21 +39,30 @@ def plot_probability_distro(Ls, out_path=None):
     # Labels and title
     plt.title("Probability Distribution Over Time", fontsize=18)
     plt.xlabel("Time (Columns of Ls)", fontsize=16)
-    plt.ylabel("Logarithm of Loop Length", fontsize=16)
+    plt.ylabel("Loop Length", fontsize=16)
     
     # Optionally save the plot
     if out_path:
-        plt.savefig(out_path + '/probability_distro_heatmap.png', format='png', dpi=400)
+        plt.savefig(out_path + '/plots/probability_distro_heatmap.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/probability_distro_heatmap.svg', format='svg', dpi=200)
     
     # Show the plot
     plt.tight_layout()
-    plt.show()
+    plt.close()
 
-def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):    
+def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):
+    # Separate Phases
+    L_br = Ls[:, :rep_start_t].flatten()
+    #L_br = L_br[L_br>0]
+    L_r = Ls[:, rep_start_t:rep_end_t].flatten()
+    #L_r = L_r[L_r>0]
+    L_ar = Ls[:, rep_end_t:].flatten()
+    #L_ar = L_ar[L_ar>0]
+
     # Prepare data for violin plots
-    before_replication = np.log(Ls[:, :rep_start_t].flatten())
-    during_replication = np.log(Ls[:, rep_start_t:rep_end_t].flatten())
-    after_replication = np.log(Ls[:, rep_end_t:].flatten())
+    before_replication = L_br
+    during_replication = L_r
+    after_replication = L_ar
 
     # # Remove outliers
     # before_replication = before_replication[before_replication < 50]
@@ -78,11 +86,12 @@ def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):
 
     # Show the plot
     plt.tight_layout()
-    plt.show()
 
     # Optionally save the plot
     if out_path:
-        plt.savefig(out_path + '/loop_dist.svg', format='svg', dpi=400)
+        plt.savefig(out_path + '/plots/loop_dist.svg', format='svg', dpi=200)
+        plt.savefig(out_path + '/plots/loop_dist.png', format='png', dpi=200)
+    plt.close()
 
 def magnetization(S, q=5, viz=False, out_path=None):
     """
@@ -104,6 +113,7 @@ def magnetization(S, q=5, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         max_state = np.max(state_counts)
         M[t] = (q * max_state - N) / (N * (q - 1))
+    np.save(out_path+'/other/Mag_potts.npy',M)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -111,7 +121,8 @@ def magnetization(S, q=5, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Potts Magnetization',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/potts_model_normalized_magnetization.svg',format='svg',dpi=400)
+            plt.savefig(out_path+'/plots/potts_model_normalized_magnetization.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/potts_model_normalized_magnetization.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return M
@@ -134,6 +145,7 @@ def cluster_order(S, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t])
         largest_cluster = np.max(state_counts)
         C[t] = largest_cluster / N
+    np.save(out_path+'/other/cluster_order.npy',C)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -141,7 +153,8 @@ def cluster_order(S, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Cluster Order',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/cluster_order.svg',format='svg',dpi=400)
+            plt.savefig(out_path+'/plots/cluster_order.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/cluster_order.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return C
@@ -159,6 +172,7 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         m2 = np.sum(probs**2)
         m4 = np.sum(probs**4)
         U[t] = 1 - m4 / (3 * m2**2)
+    np.save(out_path+'/other/binder_cumulant.npy',U)
     
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -166,7 +180,8 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Binder cumulant',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/binder_cumulant.svg',format='svg',dpi=400)
+            plt.savefig(out_path+'/plots/binder_cumulant.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/binder_cumulant.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return U
@@ -190,6 +205,7 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         probs = state_counts / N
         S_entropy[t] = entropy(probs, base=np.e)
+    np.save(out_path+'/other/entropy.npy',S_entropy)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -197,7 +213,8 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         plt.xlabel('MC step')
         plt.ylabel('S entropy')
         if out_path!=None:
-            plt.savefig(out_path+'/entropy.svg',format='svg',dpi=400)
+            plt.savefig(out_path+'/plots/entropy.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/entropy.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return S_entropy
@@ -211,6 +228,7 @@ def overlap_order(S1, S2):
     Q = np.zeros(T)
     for t in range(T):
         Q[t] = np.mean(S1[:, t] == S2[:, t])
+    np.save(out_path+'/other/configuration_overlap.npy',Q)
     return Q
 
 def visualize_potts_graph(G):
@@ -341,23 +359,23 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
     plt.ylabel('Synchronization Metric',fontsize=16)
     plt.grid()
     if out_path!=None:
-        plt.savefig(out_path+'/sync.svg',dpi=400)
+        plt.savefig(out_path+'/plots/sync.svg',format='svg',dpi=200)
+        plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
     plt.close()
 
-def compute_potts_metrics(N_beads,in_path,out_path):
+def compute_potts_metrics(N_beads,path):
     # Import data
-    Cs = np.load(in_path+'/spin_traj.npy')
-    Ms = np.load(in_path+'/Ms.npy')
-    Ns = np.load(in_path+'/Ns.npy')
+    Cs = np.load(path+'/other/spin_traj.npy')
+    Ms = np.load(path+'/other/Ms.npy')
+    Ns = np.load(path+'/other/Ns.npy')
 
     # Potts metrics computation
     G = create_graph(Ms[:N_beads,0], Ns[:N_beads,0], Cs[:N_beads,0])
-    # visualize_potts_graph(G)
-    get_synch_ensemble(Ms,Ns,Cs,out_path)
-    magnetization(Cs[:,1:]+2, q=5, viz=True, out_path=out_path)
-    cluster_order(Cs[:,1:]+2, viz=True, out_path=out_path)
-    binder_cumulant(Cs[:,1:]+2, q=5, viz=True, out_path=out_path)
-    entropy_order(Cs[:,1:]+2, q=5, viz=True, out_path=out_path)
+    get_synch_ensemble(Ms,Ns,Cs,path)
+    magnetization(Cs[:,1:]+2, q=5, viz=True, out_path=path)
+    cluster_order(Cs[:,1:]+2, viz=True, out_path=path)
+    binder_cumulant(Cs[:,1:]+2, q=5, viz=True, out_path=path)
+    entropy_order(Cs[:,1:]+2, q=5, viz=True, out_path=path)
 
 def run():
     Ms = np.load('/home/skorsak/Downloads/stress_test_region/other/Ms.npy')
