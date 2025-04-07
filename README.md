@@ -73,12 +73,8 @@ mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
 Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
 save_MDT, save_plots = True, True
 
-# for stress scale=5.0, sigma_t = T*0.2, speed=5*
-# for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
-
 # Define data and coordinates
 region, chrom =  [80835000, 98674700], 'chr14'
-# region, chrom =  [10835000, 97674700], 'chr14'
 
 # Data
 bedpe_file = '/home/skorsak/Data/method_paper_data/ENCSR184YZV_CTCF_ChIAPET/LHG0052H_loops_cleaned_th10_2.bedpe'
