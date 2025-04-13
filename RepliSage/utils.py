@@ -385,7 +385,7 @@ def get_avg_heatmap(path,N1,N2):
         avg_heat += 1/heat
 
     avg_heat = avg_heat/(N2-N1)
-    np.save(path+'/other/heatmap_{N1}_{N2}.npy', avg_heat)
+    np.save(path+f'/other/heatmap_{N1}_{N2}.npy', avg_heat)
 
     figure(figsize=(20, 20))
     plt.imshow(avg_heat,cmap='Reds',vmax=0.2, aspect='auto')
