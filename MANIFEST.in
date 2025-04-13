@@ -1,0 +1,2 @@
+exclude jupies/*
+prune jupies

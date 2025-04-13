@@ -71,19 +71,19 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
 
     return L, R, J
 
-def get_rnap_energy(path,region,chrom,N_beads,normalization):
-    '''
-    For the RNApII potential.
+# def get_rnap_energy(path,region,chrom,N_beads,normalization):
+#     '''
+#     For the RNApII potential.
 
-    Input:
-    path (str): path with bw file that determines RNApII binding.
-    region (list): a list with two integers [start,end], which represent the start and end point of the region of interest.
-    chrom (str): chromosome of interest.
-    normalization (bool): in case that it is needed to normalize to numpy arrays that represent RNApII binding potential.
-    '''
-    signal = load_track(path,region,chrom,N_beads)
-    if normalization: signal = signal/np.sum(signal)
-    return signal
+#     Input:
+#     path (str): path with bw file that determines RNApII binding.
+#     region (list): a list with two integers [start,end], which represent the start and end point of the region of interest.
+#     chrom (str): chromosome of interest.
+#     normalization (bool): in case that it is needed to normalize to numpy arrays that represent RNApII binding potential.
+#     '''
+#     signal = load_track(path,region,chrom,N_beads)
+#     if normalization: signal = signal/np.sum(signal)
+#     return signal
 
 def distance_point_line(x0,y0,a=1,b=-1,c=0):
     return np.abs(a*x0+b*y0+c)/np.sqrt(a**2+b**2)

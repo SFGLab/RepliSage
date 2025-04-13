@@ -5,53 +5,140 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
-from sklearn.tree import DecisionTreeRegressor
 from tqdm import tqdm
 import time
 
-def make_loop_hist(Ms,Ns,path=None):
-    Ls = np.abs(Ns-Ms).flatten()
-    Ls_df = pd.DataFrame(Ls)
-    figure(figsize=(10, 7), dpi=400)
-    sns.histplot(data=Ls_df, bins=30,  kde=True,stat='density')
-    plt.grid()
+def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
+    """
+    Computes the proportion of links where connected nodes are:
+    - in the same sign state (both positive or both negative)
+    - in different sign states
+    as a function of time.
+
+    Args:
+        Ms: (array) Source node indices [i, t]
+        Ns: (array) Target node indices [i, t]
+        Cs: (array) Node states [n, t]
+    
+    Returns:
+        same_sign_fraction: array of proportion of same-sign links at each time
+        diff_sign_fraction: array of proportion of different-sign links at each time
+    """
+    num_times = Ms.shape[1]
+    same_sign_fraction = np.zeros(num_times)
+    diff_sign_fraction = np.zeros(num_times)
+
+    for t in range(num_times):
+        m_nodes = Ms[:, t]
+        n_nodes = Ns[:, t]
+        
+        valid = (m_nodes >= 0) & (n_nodes >= 0)
+
+        if np.sum(valid) == 0:
+            continue
+        
+        m_states = Cs[m_nodes[valid], t]
+        n_states = Cs[n_nodes[valid], t]
+        
+        # Check if one is positive and the other negative
+        different_sign = (m_states > 0) & (n_states < 0) | (m_states < 0) & (n_states > 0)
+        
+        same_sign = ~different_sign  # complement
+        
+        same_sign_fraction[t] = np.sum(same_sign) / np.sum(valid)
+        diff_sign_fraction[t] = np.sum(different_sign) / np.sum(valid)
+
+    plt.figure(figsize=(10, 6),dpi=200)
+    times = np.arange(len(same_sign_fraction))
+
+    plt.plot(times, same_sign_fraction, label='Same State Links',color='red')
+    plt.plot(times, diff_sign_fraction, label='Different State Links',color='blue')
+    plt.xlabel('MC step',fontsize=16)
+    plt.ylabel('Proportion',fontsize=16)
     plt.legend()
-    plt.ylabel('Probability',fontsize=16)
-    plt.xlabel('Loop Length',fontsize=16)
-    if path!=None:
-        save_path = path+'/plots/loop_length.png'
-        plt.savefig(save_path,format='png',dpi=400)
-        save_path = path+'/plots/loop_length.svg'
-        plt.savefig(save_path,format='svg',dpi=400)
+
+    # Vertical line at x = 123
+    plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
+
+    # Annotate G1 phase
+    plt.annotate('G1 phase', 
+                xy=(S_time-50, 0.38),  # Position of the annotation (centered)
+                xytext=(S_time-50, 0.38),  # Text position
+                fontsize=14)
+
+    # Vertical line at x = 123
+    plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
+
+    # Annotate G1 phase
+    plt.annotate('S phase', 
+                xy=(S_time+50, 0.38),  # Position of the annotation (centered)
+                xytext=(S_time+50, 0.38),  # Text position
+                fontsize=14)
+
+    # Annotate G1 phase
+    plt.annotate('G2/M phase', 
+                xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
+                xytext=(G2_time+50, 0.5),  # Text position
+                fontsize=14)
+
+    # plt.ylim((0,1))
+    # plt.title('Proportion of Same-State and Different-State Links Over Time')
+    plt.savefig(out_path+'/plots/same_diff_sign.png',format='png',dpi=200)
+    plt.savefig(out_path+'/plots/same_diff_sign.svg',format='svg',dpi=200)
+    plt.grid(True)
     plt.close()
 
-    Is, Js = Ms.flatten(), Ns.flatten()
-    IJ_df = pd.DataFrame()
-    IJ_df['mi'] = Is
-    IJ_df['nj'] = Js
-    figure(figsize=(8, 8), dpi=400)
-    sns.jointplot(IJ_df, x="mi", y="nj",kind='hex',color='Red')
-    if path!=None:
-        save_path = path+'/plots/ij_prob.png'
-        plt.savefig(save_path,format='png',dpi=400)
-        save_path = path+'/plots/ij_prob.svg'
-        plt.savefig(save_path,format='svg',dpi=400)
-    plt.close()
+    return same_sign_fraction, diff_sign_fraction
 
-def make_moveplots(unbinds, slides, path=None):
-    figure(figsize=(10, 8), dpi=400)
-    plt.plot(unbinds, 'blue')
-    plt.plot(slides, 'red')
-    plt.ylabel('Number of moves', fontsize=16)
-    plt.xlabel('Monte Carlo Step', fontsize=16)
-    # plt.yscale('symlog')
-    plt.legend(['Rebinding', 'Sliding'], fontsize=16)
-    plt.grid()
-    if path!=None:
-        save_path = path+'/plots/moveplot.png'
-        plt.savefig(save_path,dpi=400)
-        save_path = path+'/plots/moveplot.pdf'
-        plt.savefig(save_path,dpi=400)
+def plot_loop_length(Ls, S_time, G2_time, out_path=None):
+    """
+    Plots how the probability distribution changes over columns of matrix Ls using plt.imshow.
+    
+    Parameters:
+        Ls (np.ndarray): 2D array where rows represent samples, and columns represent time points.
+        out_path (str, optional): Path to save the heatmap. If None, it will only display the plot.
+    """
+    avg_Ls = np.average(Ls,axis=0)
+    std_Ls = np.std(Ls,axis=0)
+    sem_Ls = std_Ls / np.sqrt(Ls.shape[0])  # SEM = std / sqrt(N)
+    ci95 = 1.96 * sem_Ls
+
+    # Plot
+    plt.figure(figsize=(10, 6),dpi=200)
+    x = np.arange(len(avg_Ls))
+    plt.plot(x, avg_Ls, label='Average Ls')
+    plt.fill_between(x, avg_Ls - ci95, avg_Ls + ci95, alpha=0.2, label='Confidence Interval (95%)')
+    plt.xlabel('MC step',fontsize=16)
+    plt.ylabel('Average Loop Length',fontsize=16)
+    plt.legend()
+    # Vertical line at x = 123
+    plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
+
+    # Annotate G1 phase
+    plt.annotate('G1 phase', 
+                xy=(S_time-50, 0.38),  # Position of the annotation (centered)
+                xytext=(S_time-50, 0.38),  # Text position
+                fontsize=14)
+
+    # Vertical line at x = 123
+    plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
+
+    # Annotate G1 phase
+    plt.annotate('S phase', 
+                xy=(S_time+50, 0.38),  # Position of the annotation (centered)
+                xytext=(S_time+50, 0.38),  # Text position
+                fontsize=14)
+
+    # Annotate G1 phase
+    plt.annotate('G2/M phase', 
+                xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
+                xytext=(G2_time+50, 0.5),  # Text position
+                fontsize=14)
+
+    # plt.title('Average Ls with 95% Confidence Interval',fontsize=16)
+    plt.savefig(out_path+'/plots/loop_length.png',format='svg',dpi=200)
+    plt.savefig(out_path+'/plots/loop_length.svg',format='svg',dpi=200)
+    plt.grid(True)
     plt.close()
 
 def coh_traj_plot(ms,ns,N_beads,path):
@@ -83,13 +170,12 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     figure(figsize=(10, 6), dpi=200)
     plt.plot(Es, 'black',label='Total Energy')
     plt.plot(Es_ising, 'orange',label='Potts Energy')
-    # plt.plot(E_comps, 'darkcyan',label='Compartmentalization Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
     plt.plot(Bs, 'r',label='Binding Energy')
     # plt.plot(Rs, 'g',label='Replication Energy')
     plt.ylabel('Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    plt.yscale('symlog')
+    # plt.yscale('symlog')
     plt.legend()
     save_path = path+'/plots/energies.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)

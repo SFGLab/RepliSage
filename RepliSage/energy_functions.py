@@ -36,8 +36,8 @@ def Kappa(mi,ni,mj,nj):
     k=0.0
     if mi<mj and mj<ni and ni<nj and mi>=0: k+=1 # np.abs(ni-mj)+1
     if mj<mi and mi<nj and nj<ni and mj>=0: k+=1 # np.abs(nj-mi)+1
-    # if mi==mj and ni==nj and mi>=0: k+=1
-    if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
+    if mi==mj and ni==nj and mi>=0: k+=1
+    # if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
     return k
 
 @njit
@@ -91,7 +91,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns - ms))
+    folding = np.sum(np.log(np.maximum(ns - ms, 1)))
     return fold_norm * folding
 
 @njit(parallel=True)
@@ -132,7 +132,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm*(np.log(n_new-m_new)-np.log(ns[idx]-ms[idx]))
+    return fold_norm*(np.log(np.maximum(n_new-m_new,1))-np.log(np.maximum(ns[idx]-ms[idx],1)))
 
 @njit
 def get_dE_rep(f_rep,rep_norm, ms,ns,m_new,n_new,t,idx):
@@ -246,7 +246,7 @@ def initialize_J(N_beads,J,ms,ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
@@ -268,6 +268,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
     J = initialize_J(N_beads,J,ms,ns)
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
     Es = np.zeros(N_steps//MC_step, dtype=np.float64)
+    Ks = np.zeros(N_steps//MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
     mags = np.zeros(N_steps//MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
@@ -324,6 +325,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
             Es[i//MC_step] = E
+            Ks[i//MC_step] = E_cross(ms, ns, k_norm)
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
             spin_traj[:,i//MC_step] = spins
@@ -332,4 +334,4 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_CTCF, N_beads, MC_step, T,
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_rep(f_rep,ms,ns,rt,rep_norm)
 
-    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, spin_traj, mags
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, Ks, spin_traj, mags

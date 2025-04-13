@@ -8,91 +8,6 @@ from scipy.stats import entropy
 from tqdm import tqdm
 import seaborn as sns
 
-def plot_probability_distro(Ls, out_path=None):
-    """
-    Plots how the probability distribution changes over columns of matrix Ls using plt.imshow.
-    
-    Parameters:
-        Ls (np.ndarray): 2D array where rows represent samples, and columns represent time points.
-        out_path (str, optional): Path to save the heatmap. If None, it will only display the plot.
-    """
-    # Normalize Ls along rows to get probabilities
-    min_val, max_val = np.min(Ls), np.max(Ls)
-    bin_edges = np.linspace(min_val, max_val, 20)  # Adjust number of bins for desired resolution
-    
-    # Compute histogram for each column
-    hist_matrix = []
-    for col in Ls.T:
-        hist, _ = np.histogram(col, bins=bin_edges, density=True)
-        hist_matrix.append(hist)
-    
-    hist_matrix = np.array(hist_matrix).T  # Shape: (bins, time points)
-    
-    # Create the heatmap
-    figure(figsize=(10, 6), dpi=400)
-    plt.imshow(hist_matrix, aspect='auto', cmap='rainbow', origin='lower', interpolation='bicubic', vmax=np.average(Ls)/2,
-               extent=[0, Ls.shape[1], bin_edges[0], bin_edges[-1]])
-    
-    # Add colorbar
-    plt.colorbar(label="Probability Density")
-    
-    # Labels and title
-    plt.title("Probability Distribution Over Time", fontsize=18)
-    plt.xlabel("Time (Columns of Ls)", fontsize=16)
-    plt.ylabel("Loop Length", fontsize=16)
-    
-    # Optionally save the plot
-    if out_path:
-        plt.savefig(out_path + '/plots/probability_distro_heatmap.png', format='png', dpi=200)
-        plt.savefig(out_path + '/plots/probability_distro_heatmap.svg', format='svg', dpi=200)
-    
-    # Show the plot
-    plt.tight_layout()
-    plt.close()
-
-def loop_distro(Ls, rep_start_t, rep_end_t, out_path=None):
-    # Separate Phases
-    L_br = Ls[:, :rep_start_t].flatten()
-    #L_br = L_br[L_br>0]
-    L_r = Ls[:, rep_start_t:rep_end_t].flatten()
-    #L_r = L_r[L_r>0]
-    L_ar = Ls[:, rep_end_t:].flatten()
-    #L_ar = L_ar[L_ar>0]
-
-    # Prepare data for violin plots
-    before_replication = L_br
-    during_replication = L_r
-    after_replication = L_ar
-
-    # # Remove outliers
-    # before_replication = before_replication[before_replication < 50]
-    # during_replication = during_replication[during_replication < 50]
-    # after_replication = after_replication[after_replication < 50]
-
-    # Combine data into a single structure for seaborn
-    data = np.concatenate([before_replication, during_replication, after_replication])
-    labels = (['Before Replication'] * len(before_replication) +
-              ['During Replication'] * len(during_replication) +
-              ['After Replication'] * len(after_replication))
-
-    # Create a violin plot
-    figure(figsize=(10, 6), dpi=400)
-    sns.violinplot(x=labels, y=data, palette='muted', inner="box", linewidth=2, bw=0.5)  # Adjust box width and smoothing
-
-    # Add title and labels
-    plt.title('Regular DNA Replication', fontsize=18)
-    plt.ylabel('Log Loop Length', fontsize=16)
-    plt.xlabel('Replication Stage', fontsize=16)
-
-    # Show the plot
-    plt.tight_layout()
-
-    # Optionally save the plot
-    if out_path:
-        plt.savefig(out_path + '/plots/loop_dist.svg', format='svg', dpi=200)
-        plt.savefig(out_path + '/plots/loop_dist.png', format='png', dpi=200)
-    plt.close()
-
 def magnetization(S, q=5, viz=False, out_path=None):
     """
     Computes the magnetization over time.
@@ -219,7 +134,7 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         plt.close()
     return S_entropy
 
-def overlap_order(S1, S2):
+def overlap_order(S1, S2, out_path=None):
     """
     Computes the overlap between two configurations S1 and S2 over time.
     Formula: Q = (1/N) * sum(delta(s_i^1, s_i^2))
@@ -363,12 +278,7 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
         plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
     plt.close()
 
-def compute_potts_metrics(N_beads,path):
-    # Import data
-    Cs = np.load(path+'/other/spin_traj.npy')
-    Ms = np.load(path+'/other/Ms.npy')
-    Ns = np.load(path+'/other/Ns.npy')
-
+def compute_potts_metrics(Ms, Ns, Cs, N_beads,path):
     # Potts metrics computation
     G = create_graph(Ms[:N_beads,0], Ns[:N_beads,0], Cs[:N_beads,0])
     get_synch_ensemble(Ms,Ns,Cs,path)
@@ -376,9 +286,3 @@ def compute_potts_metrics(N_beads,path):
     cluster_order(Cs[:,1:]+2, viz=True, out_path=path)
     binder_cumulant(Cs[:,1:]+2, q=5, viz=True, out_path=path)
     entropy_order(Cs[:,1:]+2, q=5, viz=True, out_path=path)
-
-def run():
-    Ms = np.load('/home/skorsak/Downloads/stress_test_region/other/Ms.npy')
-    Ns = np.load('/home/skorsak/Downloads/stress_test_region/other/Ns.npy')
-    Ls = Ns-Ms
-    loop_distro(Ls, 200, 400, out_path=None)
