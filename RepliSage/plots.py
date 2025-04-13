@@ -60,26 +60,26 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
     # Vertical line at x = 123
     plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
 
-    # Annotate G1 phase
-    plt.annotate('G1 phase', 
-                xy=(S_time-50, 0.38),  # Position of the annotation (centered)
-                xytext=(S_time-50, 0.38),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('G1 phase', 
+    #             xy=(S_time-50, 0.38),  # Position of the annotation (centered)
+    #             xytext=(S_time-50, 0.38),  # Text position
+    #             fontsize=14)
 
     # Vertical line at x = 123
     plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
 
-    # Annotate G1 phase
-    plt.annotate('S phase', 
-                xy=(S_time+50, 0.38),  # Position of the annotation (centered)
-                xytext=(S_time+50, 0.38),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('S phase', 
+    #             xy=(S_time+50, 0.38),  # Position of the annotation (centered)
+    #             xytext=(S_time+50, 0.38),  # Text position
+    #             fontsize=14)
 
-    # Annotate G1 phase
-    plt.annotate('G2/M phase', 
-                xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
-                xytext=(G2_time+50, 0.5),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('G2/M phase', 
+    #             xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
+    #             xytext=(G2_time+50, 0.5),  # Text position
+    #             fontsize=14)
 
     # plt.ylim((0,1))
     # plt.title('Proportion of Same-State and Different-State Links Over Time')
@@ -114,26 +114,26 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     # Vertical line at x = 123
     plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
 
-    # Annotate G1 phase
-    plt.annotate('G1 phase', 
-                xy=(S_time-50, 0.38),  # Position of the annotation (centered)
-                xytext=(S_time-50, 0.38),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('G1 phase', 
+    #             xy=(S_time-50, 0.38),  # Position of the annotation (centered)
+    #             xytext=(S_time-50, 0.38),  # Text position
+    #             fontsize=14)
 
     # Vertical line at x = 123
     plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
 
-    # Annotate G1 phase
-    plt.annotate('S phase', 
-                xy=(S_time+50, 0.38),  # Position of the annotation (centered)
-                xytext=(S_time+50, 0.38),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('S phase', 
+    #             xy=(S_time+50, 0.38),  # Position of the annotation (centered)
+    #             xytext=(S_time+50, 0.38),  # Text position
+    #             fontsize=14)
 
-    # Annotate G1 phase
-    plt.annotate('G2/M phase', 
-                xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
-                xytext=(G2_time+50, 0.5),  # Text position
-                fontsize=14)
+    # # Annotate G1 phase
+    # plt.annotate('G2/M phase', 
+    #             xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
+    #             xytext=(G2_time+50, 0.5),  # Text position
+    #             fontsize=14)
 
     # plt.title('Average Ls with 95% Confidence Interval',fontsize=16)
     plt.savefig(out_path+'/plots/loop_length.png',format='svg',dpi=200)

@@ -36,8 +36,8 @@ def Kappa(mi,ni,mj,nj):
     k=0.0
     if mi<mj and mj<ni and ni<nj and mi>=0: k+=1 # np.abs(ni-mj)+1
     if mj<mi and mi<nj and nj<ni and mj>=0: k+=1 # np.abs(nj-mi)+1
-    if mi==mj and ni==nj and mi>=0: k+=1
-    # if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
+    # if mi==mj and ni==nj and mi>=0: k+=1
+    if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
     return k
 
 @njit
@@ -324,7 +324,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
         
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
-            Es[i//MC_step] = E
+            Es[i//MC_step] = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, i//MC_step, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
             Ks[i//MC_step] = E_cross(ms, ns, k_norm)
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
