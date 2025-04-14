@@ -300,6 +300,6 @@ def ising_traj_plot(traj, save_path):
     plt.imshow(traj, cmap='coolwarm', aspect='auto')
     plt.xlabel('Computational Time', fontsize=28)
     plt.ylabel('Region', fontsize=28)
-    plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=400)
-    plt.savefig(save_path + '/plots/potts_traj.svg', format='svg', dpi=400)
+    plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=200)
+    plt.savefig(save_path + '/plots/potts_traj.svg', format='svg', dpi=200)
     plt.close()
