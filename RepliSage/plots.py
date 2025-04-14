@@ -295,19 +295,9 @@ def make_timeplots(Es, Es_potts, Fs, Bs, Rs, Ks, mags, burnin, path=None):
         plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-def ising_traj_plot(traj, save_path):
-
-    # Define a discrete pastel color palette
-    pastel_colors = ListedColormap([
-        "#FFB3BA",  # Pastel Red
-        "#FFDFBA",  # Pastel Orange
-        "#FFFFBA",  # Pastel Yellow
-        "#BAE1FF",  # Pastel Blue
-        "#D5BAFF"   # Pastel Purple
-    ])
-    
+def ising_traj_plot(traj, save_path):    
     figure(figsize=(20, 20), dpi=500)
-    plt.imshow(traj, cmap=pastel_colors, aspect='auto')
+    plt.imshow(traj, cmap='coolwarm', aspect='auto')
     plt.xlabel('Computational Time', fontsize=28)
     plt.ylabel('Region', fontsize=28)
     plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=400)
