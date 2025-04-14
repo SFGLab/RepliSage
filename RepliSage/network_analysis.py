@@ -198,9 +198,9 @@ def create_graph(ms, ns, cs):
     # Add nodes with states
     for i, state in enumerate(cs):
         G.add_node(i, state=state)
-
+    
     # Add edges
-    edges = zip(ms, ns)
+    edges = zip(ms[ms>=0], ns[ns>=0])
     G.add_edges_from(edges)
 
     # Connect consecutive nodes by their index
@@ -236,11 +236,11 @@ def calculate_ising_synchronization(G):
 
 def calculate_potts_synchronization(G, q):
     """
-    Calculate the synchronization metric for a Potts model with q states.
+    Calculate the synchronization metric for a Potts model, considering q states.
 
     Parameters:
-    G (networkx.Graph): A graph where each node has a 'state' attribute (1 to q).
-    q (int): The number of states in the Potts model.
+    G (networkx.Graph): A graph where each node has a 'state' attribute.
+    q (int): Number of possible states in the Potts model.
 
     Returns:
     float: Synchronization metric (0 to 1).
@@ -254,7 +254,7 @@ def calculate_potts_synchronization(G, q):
     for u, v in G.edges:
         s_u = G.nodes[u]['state']
         s_v = G.nodes[v]['state']
-        total_sync += int(s_u == s_v)  # Add 1 if states are the same, 0 metadatawise
+        total_sync += (1 if s_u == s_v else 0) / (q - 1)  # Normalize by q-1 for Potts model
 
     # Normalize by the number of edges
     synchronization = total_sync / num_edges if num_edges > 0 else 0
@@ -264,11 +264,11 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
     T = len(Ms[0,:])
     N_beads  = len(Cs)
     Ss = list()
-
+    
     for i in tqdm(range(1,T)):
-        G = create_graph(Ms[:N_beads,i], Ns[:N_beads,i], Cs[:N_beads,i])
+        G = create_graph(Ms[:,i], Ns[:,i], Cs[:,i])
         Ss.append(calculate_potts_synchronization(G, 5))
-
+    
     figure(figsize=(10, 6), dpi=400)
     plt.plot(Ss,'b-')
     plt.xlabel('MC step',fontsize=16)
@@ -279,11 +279,10 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
         plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
     plt.close()
 
-def compute_potts_metrics(Ms, Ns, Cs, N_beads,path):
+def compute_potts_metrics(Ms, Ns, Cs, path):
     # Potts metrics computation
-    G = create_graph(Ms[:N_beads,0], Ns[:N_beads,0], Cs[:N_beads,0])
     get_synch_ensemble(Ms,Ns,Cs,path)
-    magnetization(Cs[:,1:]+2, q=5, viz=True, out_path=path)
-    cluster_order(Cs[:,1:]+2, viz=True, out_path=path)
-    binder_cumulant(Cs[:,1:]+2, q=5, viz=True, out_path=path)
-    entropy_order(Cs[:,1:]+2, q=5, viz=True, out_path=path)
+    magnetization(Cs+2, q=5, viz=True, out_path=path)
+    cluster_order(Cs+2, viz=True, out_path=path)
+    binder_cumulant(Cs+2, q=5, viz=True, out_path=path)
+    entropy_order(Cs+2, q=5, viz=True, out_path=path)

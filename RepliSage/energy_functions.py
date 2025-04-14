@@ -153,7 +153,7 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     return k_norm*(K2 - K1)
 
 @njit
-def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,ms,ns,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
+def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
     # In case that we change node state
     dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2+h[spin_idx]*(spin_val-spins[spin_idx])/2*(1-int(rep_fork_organizers))
     if t>0: dE1 += ((np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2)*int(rep_fork_organizers)
@@ -195,8 +195,8 @@ def unbind_bind(N_beads):
     '''
     Rebinding Monte-Carlo step.
     '''
-    m_new = rd.randint(0, N_beads - 4)
-    n_new = m_new + rd.randint(1, 4)  # Ensure n_new - m_new >= 1
+    m_new = rd.randint(0, N_beads - 5)
+    n_new = m_new + rd.randint(2, 4)  # Ensure n_new - m_new >= 1
     return int(m_new), int(n_new)
 
 @njit
@@ -239,16 +239,15 @@ def initialize(N_lef, N_lef2, N_beads):
     Random initial condition of the simulation.
     '''
     ms, ns = np.zeros(N_lef+N_lef2, dtype=np.int64), np.zeros(N_lef+N_lef2, dtype=np.int64)
-    for i in range(N_lef):
-        ms[i], ns[i] = unbind_bind(N_beads)
-    for i in range(N_lef, N_lef+N_lef2):
-        ms[i], ns[i] = -2, -1
+    for j in range(N_lef):
+        ms[j], ns[j] = unbind_bind(N_beads)
+    for j in range(N_lef, N_lef+N_lef2):
+        ms[j], ns[j] = -5, -4
     state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     return ms, ns, state
 
 @njit
 def initialize_J(N_beads, J, ms, ns):
-    N_lef = len(ms)
     for i in range(N_beads-1):
         J[i, i+1] += 1
         J[i+1, i] += 1
@@ -287,7 +286,8 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
     Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
     Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Ms, Ns = np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int32), np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int32)
+    Ms, Ns = np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int64), np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int64)
+    Ms[:,0], Ns[:,0] = ms, ns
 
     for i in range(N_steps):
         # Calculate replication time
@@ -304,7 +304,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
                 lef_idx = np.random.choice(lef_idx_choices)
                 m_old, n_old = ms[lef_idx], ns[lef_idx]
                 r = np.random.choice(np.array([0,1]))
-                if m_old<0 or n_old<0: r=0
+                if m_old<=0 or n_old<=0: r=0
                 if r==0:
                     m_new, n_new = unbind_bind(N_beads)
                 elif r==1:
@@ -328,7 +328,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
                 s = np.random.choice(spin_choices[spin_choices!=spins[spin_idx]])
 
                 # Compute the energy that corresponds only to the node change
-                dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,ms,ns,potts_norm1,potts_norm2,rt,rep_fork_organizers)
+                dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,potts_norm1,potts_norm2,rt,rep_fork_organizers)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     spins[spin_idx] = s

@@ -302,7 +302,6 @@ def ising_traj_plot(traj, save_path):
         "#FFB3BA",  # Pastel Red
         "#FFDFBA",  # Pastel Orange
         "#FFFFBA",  # Pastel Yellow
-        "#BAFFC9",  # Pastel Green
         "#BAE1FF",  # Pastel Blue
         "#D5BAFF"   # Pastel Purple
     ])
