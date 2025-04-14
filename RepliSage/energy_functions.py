@@ -87,7 +87,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(np.maximum(ns - ms, 1)))
+    folding = np.sum(np.log(ns-ms))
     return fold_norm * folding
 
 @njit(parallel=True)
@@ -120,7 +120,7 @@ def get_dE_bind(L,R,bind_norm,ms,ns,m_new,n_new,idx):
     Energy difference for binding energy.
     '''
     B_new = L[m_new]+R[n_new] if m_new>=0 and n_new>=0 else 0
-    B_old = L[ms[idx]]+R[ns[idx]] if ms[idx]>=0 and ns[idx]>=0 else 0
+    B_old = L[ms[idx]]+R[ns[idx]] if ms[idx]>=0 and ms[idx]>=0 else 0
     return bind_norm*(B_new-B_old)
 
 @njit
@@ -128,7 +128,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm*(np.log(np.maximum(n_new-m_new,1))-np.log(np.maximum(ns[idx]-ms[idx],1)))
+    return fold_norm*(np.log(n_new-m_new)-np.log(ns[idx]-ms[idx]))
 
 @njit
 def get_dE_rep(f_rep,rep_norm, ms,ns,m_new,n_new,t,idx):
@@ -196,7 +196,7 @@ def unbind_bind(N_beads):
     Rebinding Monte-Carlo step.
     '''
     m_new = rd.randint(0, N_beads - 4)
-    n_new = m_new + 3
+    n_new = m_new + rd.randint(1, 4)  # Ensure n_new - m_new >= 1
     return int(m_new), int(n_new)
 
 @njit
@@ -207,14 +207,24 @@ def slide(m_old, n_old, N_beads, f, t, rw=True):
     choices = np.array([-1, 1], dtype=np.int64)
     r1 = np.random.choice(choices) if rw else -1
     r2 = np.random.choice(choices) if rw else 1
-
-    m_new = m_old + r1 if m_old + r1>=0 else 0
-    if f[m_new,t]!=f[m_old,max(t-1,0)] and np.any(f[:,t]==0):
-        m_new = closest_opposite(f[:,t], m_new)
     
-    n_new = n_old + r2 if n_old + r2 < N_beads else N_beads-1
-    if f[n_new,t]!=f[n_old,max(t-1,0)] and np.any(f[:,t]==0):
-        n_new = closest_opposite(f[:,t], n_new)
+    m_new = m_old + r1 if m_old + r1 >= 0 else 0
+    if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+        m_new = closest_opposite(f[:, t], m_new)
+    
+    n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
+    if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+        n_new = closest_opposite(f[:, t], n_new)
+    
+    # Ensure n_new - m_new is always positive and at least 1
+    if n_new - m_new <= 0:
+        if m_new > 0:
+            m_new -= 1
+        elif n_new < N_beads - 1:
+            n_new += 1
+    if n_new - m_new < 1:
+        n_new = m_new + 1 if m_new + 1 < N_beads else N_beads - 1
+    
     return int(m_new), int(n_new)
 
 @njit(parallel=True)
@@ -225,20 +235,21 @@ def initialize(N_lef, N_lef2, N_beads):
     ms, ns = np.zeros(N_lef+N_lef2, dtype=np.int64), np.zeros(N_lef+N_lef2, dtype=np.int64)
     for i in range(N_lef):
         ms[i], ns[i] = unbind_bind(N_beads)
-    for i in range(N_lef,N_lef2):
+    for i in range(N_lef, N_lef+N_lef2):
         ms[i], ns[i] = -2, -1
     state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     return ms, ns, state
 
 @njit
-def initialize_J(N_beads,J,ms,ns):
+def initialize_J(N_beads, J, ms, ns):
     N_lef = len(ms)
     for i in range(N_beads-1):
-        J[i,i+1] += 1
-        J[i+1,i] += 1
-    for m, n in zip(ms,ns):
-        J[m,n] += 1
-        J[n,m] += 1
+        J[i, i+1] += 1
+        J[i+1, i] += 1
+    for m, n in zip(ms, ns):
+        if m >= 0 and n >= 0:  # Ensure valid indices
+            J[m, n] += 1
+            J[n, m] += 1
     return J
 
 @njit
@@ -330,4 +341,4 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
             Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
             if rep_norm!=0.0: Rs[i//MC_step] = E_rep(f_rep,ms,ns,rt,rep_norm)
 
-    return Ms, Ns, Es, Es_potts, Fs, Bs, Rs, Ks, spin_traj, mags
+    return Ms, Ns, Es, Es_potts, Fs, Bs, Ks, Rs, spin_traj, mags

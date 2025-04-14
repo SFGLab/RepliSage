@@ -167,7 +167,7 @@ def coh_traj_plot(ms,ns,N_beads,path):
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_potts, Fs, Bs, Rs, mags, burnin, path=None):
+def make_timeplots(Es, Es_potts, Fs, Bs, Rs, Ks, mags, burnin, path=None):
     figure(figsize=(10, 6), dpi=200)
     # plt.plot(Es, 'black',label='Total Energy')
     plt.plot(Es_potts, 'orange',label='Potts Energy')
@@ -255,6 +255,18 @@ def make_timeplots(Es, Es_potts, Fs, Bs, Rs, mags, burnin, path=None):
     save_path = path+'/plots/repli_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
     save_path = path+'/plots/repli_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
+    plt.close()
+
+    plt.figure(figsize=(10, 6),dpi=200)
+    plt.plot(Ks, 'g')
+    plt.ylabel('Crossing Energy', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    save_path = path+'/plots/cross_energy.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/cross_energy.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/cross_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
     
