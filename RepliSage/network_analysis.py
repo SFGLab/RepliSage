@@ -29,7 +29,7 @@ def magnetization(S, q=5, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         max_state = np.max(state_counts)
         M[t] = (q * max_state - N) / (N * (q - 1))
-    np.save(out_path+'/metadata/Mag_potts.npy',M)
+    np.save(out_path+'/other/Mag_potts.npy',M)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -61,7 +61,7 @@ def cluster_order(S, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t])
         largest_cluster = np.max(state_counts)
         C[t] = largest_cluster / N
-    np.save(out_path+'/metadata/cluster_order.npy',C)
+    np.save(out_path+'/other/cluster_order.npy',C)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -88,7 +88,7 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         m2 = np.sum(probs**2)
         m4 = np.sum(probs**4)
         U[t] = 1 - m4 / (3 * m2**2)
-    np.save(out_path+'/metadata/binder_cumulant.npy',U)
+    np.save(out_path+'/other/binder_cumulant.npy',U)
     
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -121,7 +121,7 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         probs = state_counts / N
         S_entropy[t] = entropy(probs, base=np.e)
-    np.save(out_path+'/metadata/entropy.npy',S_entropy)
+    np.save(out_path+'/other/entropy.npy',S_entropy)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -144,7 +144,7 @@ def overlap_order(S1, S2, out_path=None):
     Q = np.zeros(T)
     for t in range(T):
         Q[t] = np.mean(S1[:, t] == S2[:, t])
-    np.save(out_path+'/metadata/configuration_overlap.npy',Q)
+    np.save(out_path+'/other/configuration_overlap.npy',Q)
     return Q
 
 def visualize_potts_graph(G):
@@ -199,6 +199,11 @@ def create_graph(ms, ns, cs):
     for i, state in enumerate(cs):
         G.add_node(i, state=state)
 
+    # Ensure all nodes have a default 'state' attribute if missing
+    for node in G.nodes:
+        if 'state' not in G.nodes[node]:
+            G.nodes[node]['state'] = 0  # Default state
+
     # Add edges
     edges = zip(ms, ns)
     G.add_edges_from(edges)
@@ -229,7 +234,31 @@ def calculate_ising_synchronization(G):
         s_u = G.nodes[u]['state']
         s_v = G.nodes[v]['state']
         total_sync += (1 + s_u * s_v) / 2
+def calculate_potts_synchronization(G, q):
+    """
+    Calculate the synchronization metric for a Potts model with q states.
 
+    Parameters:
+    G (networkx.Graph): A graph where each node has a 'state' attribute (1 to q).
+    q (int): The number of states in the Potts model.
+
+    Returns:
+    float: Synchronization metric (0 to 1).
+    """
+    if not nx.get_node_attributes(G, 'state'):
+        raise ValueError("Graph nodes must have a 'state' attribute assigned.")
+
+    total_sync = 0
+    num_edges = G.number_of_edges()
+
+    for u, v in G.edges:
+        s_u = G.nodes[u].get('state', 0)  # Default to 0 if 'state' is missing
+        s_v = G.nodes[v].get('state', 0)  # Default to 0 if 'state' is missing
+        total_sync += int(s_u == s_v)  # Add 1 if states are the same, 0 otherwise
+    
+    # Normalize by the number of edges
+    synchronization = total_sync / num_edges if num_edges > 0 else 0
+    return synchronization
     # Normalize by the number of edges
     synchronization = total_sync / num_edges if num_edges > 0 else 0
     return synchronization
@@ -279,7 +308,7 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
         plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
     plt.close()
 
-def compute_potts_metrics(Ms, Ns, Cs, N_beads,path):
+def compute_potts_metrics(Ms, Ns, Cs, N_beads, path):
     # Potts metrics computation
     G = create_graph(Ms[:N_beads,0], Ns[:N_beads,0], Cs[:N_beads,0])
     get_synch_ensemble(Ms,Ns,Cs,path)

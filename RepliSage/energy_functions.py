@@ -87,7 +87,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns-ms))
+    folding = np.sum(np.log(ns-ms+1e-5))
     return fold_norm * folding
 
 @njit(parallel=True)
@@ -128,7 +128,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm*(np.log(n_new-m_new)-np.log(ns[idx]-ms[idx]))
+    return fold_norm*(np.log(n_new-m_new+1e-5)-np.log(ns[idx]-ms[idx]+1e-5))
 
 @njit
 def get_dE_rep(f_rep,rep_norm, ms,ns,m_new,n_new,t,idx):
@@ -204,27 +204,33 @@ def slide(m_old, n_old, N_beads, f, t, rw=True):
     '''
     Sliding Monte-Carlo step.
     '''
+    # Choose random step for sliding
     choices = np.array([-1, 1], dtype=np.int64)
     r1 = np.random.choice(choices) if rw else -1
     r2 = np.random.choice(choices) if rw else 1
     
     m_new = m_old + r1 if m_old + r1 >= 0 else 0
-    if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-        m_new = closest_opposite(f[:, t], m_new)
-    
     n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
-    if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-        n_new = closest_opposite(f[:, t], n_new)
-    
+
     # Ensure n_new - m_new is always positive and at least 1
-    if n_new - m_new <= 0:
+    if n_new - m_new <= 2:
         if m_new > 0:
             m_new -= 1
         elif n_new < N_beads - 1:
             n_new += 1
-    if n_new - m_new < 1:
-        n_new = m_new + 1 if m_new + 1 < N_beads else N_beads - 1
+
+    # Pushing or replication forks
+    if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+        m_new = closest_opposite(f[:, t], m_new)
+    if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+        n_new = closest_opposite(f[:, t], n_new)    
     
+    # They cannot go further than chromosome boundaries
+    if n_new>=N_beads: n_new = N_beads - 1
+    if m_new>=N_beads: m_new = N_beads - 1
+    if m_new<0: m_new = 0
+    if n_new<0: n_new = 0
+
     return int(m_new), int(n_new)
 
 @njit(parallel=True)
