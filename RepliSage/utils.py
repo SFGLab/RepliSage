@@ -15,13 +15,11 @@ from scipy.stats.stats import pearsonr, spearmanr, kendalltau
 from tqdm import tqdm
 
 def make_folder(folder_name):
-    try:
-        os.mkdir(folder_name)
-        os.mkdir(folder_name+'/plots')
-        os.mkdir(folder_name+'/other')
-        os.mkdir(folder_name+'/ensemble')
-    except OSError as error:
-        print(f'Directory with name "{folder_name}" already exists! Directory will be overwritten.')
+    subfolders = ['plots', 'metadata', 'ensemble']
+    for subfolder in subfolders:
+        path = os.path.join(folder_name, subfolder)
+        os.makedirs(path, exist_ok=True)
+    print(f'All necessary folders have been created or already exist in "{folder_name}".')
     return folder_name
 
 ############# Creation of mmcif and psf files #############
@@ -385,7 +383,7 @@ def get_avg_heatmap(path,N1,N2):
         avg_heat += 1/heat
 
     avg_heat = avg_heat/(N2-N1)
-    np.save(path+f'/other/heatmap_{N1}_{N2}.npy', avg_heat)
+    np.save(path+f'/metadata/heatmap_{N1}_{N2}.npy', avg_heat)
 
     figure(figsize=(20, 20))
     plt.imshow(avg_heat,cmap='Reds',vmax=0.2, aspect='auto')

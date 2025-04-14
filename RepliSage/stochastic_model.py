@@ -78,17 +78,17 @@ class StochasticSimulation:
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
         if save_MDT:
-            np.save(f'{self.out_path}/other/Ms.npy', self.Ms)
-            np.save(f'{self.out_path}/other/Ns.npy', self.Ns)
-            np.save(f'{self.out_path}/other/Es.npy', self.Es)
-            np.save(f'{self.out_path}/other/Fs.npy', self.Fs)
-            np.save(f'{self.out_path}/other/Bs.npy', self.Bs)
-            np.save(f'{self.out_path}/other/Rs.npy', self.Rs)
-            np.save(f'{self.out_path}/other/Ks.npy', self.Ks)
-            np.save(f'{self.out_path}/other/loop_lengths.npy', self.Ns-self.Ms)
-            np.save(f'{self.out_path}/other/Es_potts.npy', self.Es_potts)
-            np.save(f'{self.out_path}/other/mags.npy',self.mags)
-            np.save(f'{self.out_path}/other/spins.npy', self.spin_traj)
+            np.save(f'{self.out_path}/metadata/Ms.npy', self.Ms)
+            np.save(f'{self.out_path}/metadata/Ns.npy', self.Ns)
+            np.save(f'{self.out_path}/metadata/Es.npy', self.Es)
+            np.save(f'{self.out_path}/metadata/Fs.npy', self.Fs)
+            np.save(f'{self.out_path}/metadata/Bs.npy', self.Bs)
+            np.save(f'{self.out_path}/metadata/Rs.npy', self.Rs)
+            np.save(f'{self.out_path}/metadata/Ks.npy', self.Ks)
+            np.save(f'{self.out_path}/metadata/loop_lengths.npy', self.Ns-self.Ms)
+            np.save(f'{self.out_path}/metadata/Es_potts.npy', self.Es_potts)
+            np.save(f'{self.out_path}/metadata/mags.npy',self.mags)
+            np.save(f'{self.out_path}/metadata/spins.npy', self.spin_traj)
     
     def show_plots(self):
         '''
@@ -147,7 +147,7 @@ def main():
     # Save Parameters
     if save_MDT:
         params = {k: v for k, v in locals().items() if k not in ['args','sim']}
-        save_parameters(out_path+'/other/params.txt',**params)
+        save_parameters(out_path+'/metadata/params.txt',**params)
     
 if __name__=='__main__':
     main()
