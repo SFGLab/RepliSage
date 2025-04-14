@@ -7,6 +7,7 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from tqdm import tqdm
 import time
+from matplotlib.colors import ListedColormap
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -166,10 +167,10 @@ def coh_traj_plot(ms,ns,N_beads,path):
     elapsed = end - start
     print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
+def make_timeplots(Es, Es_potts, Fs, Bs, Rs, mags, burnin, path=None):
     figure(figsize=(10, 6), dpi=200)
-    plt.plot(Es, 'black',label='Total Energy')
-    plt.plot(Es_ising, 'orange',label='Potts Energy')
+    # plt.plot(Es, 'black',label='Total Energy')
+    plt.plot(Es_potts, 'orange',label='Potts Energy')
     plt.plot(Fs, 'b',label='Folding Energy')
     plt.plot(Bs, 'r',label='Binding Energy')
     # plt.plot(Rs, 'g',label='Replication Energy')
@@ -185,7 +186,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=200)
+    plt.figure(figsize=(10, 6),dpi=200)
     plt.plot(Es, 'k',label='Total Energy')
     plt.ylabel('Total Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
@@ -197,7 +198,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=200)
+    plt.figure(figsize=(10, 6),dpi=200)
     plt.plot(mags, 'purple',label='mags')
     plt.ylabel('Magnetization', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
@@ -209,7 +210,7 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=200)
+    plt.figure(figsize=(10, 6),dpi=200)
     plt.plot(Fs, 'b')
     plt.ylabel('Folding Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
@@ -221,8 +222,8 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=200)
-    plt.plot(Es_ising, 'orange')
+    plt.figure(figsize=(10, 6),dpi=200)
+    plt.plot(Es_potts, 'orange')
     plt.ylabel('Energy of the Potts Model', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
     save_path = path+'/plots/potts_energy.pdf'
@@ -233,7 +234,19 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-    figure(figsize=(10, 6), dpi=200)
+    plt.figure(figsize=(10, 6),dpi=200)
+    plt.plot(Bs, 'g')
+    plt.ylabel('Binding Energy', fontsize=16)
+    plt.xlabel('Monte Carlo Step', fontsize=16)
+    save_path = path+'/plots/bind_energy.pdf'
+    plt.savefig(save_path,format='pdf',dpi=200)
+    save_path = path+'/plots/bind_energy.svg'
+    plt.savefig(save_path,format='svg',dpi=200)
+    save_path = path+'/plots/bind_energy.png'
+    plt.savefig(save_path,format='png',dpi=200)
+    plt.close()
+
+    plt.figure(figsize=(10, 6),dpi=200)
     plt.plot(Rs, 'g')
     plt.ylabel('Replication Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
@@ -270,11 +283,22 @@ def make_timeplots(Es, Es_ising, Fs, Bs, Rs, mags, burnin, path=None):
         plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-def ising_traj_plot(traj,save_path):
-    figure(figsize=(20, 20),dpi=500)
-    plt.imshow(traj,cmap='rainbow',aspect='auto')
-    plt.xlabel('Computational Time',fontsize=28)
+def ising_traj_plot(traj, save_path):
+
+    # Define a discrete pastel color palette
+    pastel_colors = ListedColormap([
+        "#FFB3BA",  # Pastel Red
+        "#FFDFBA",  # Pastel Orange
+        "#FFFFBA",  # Pastel Yellow
+        "#BAFFC9",  # Pastel Green
+        "#BAE1FF",  # Pastel Blue
+        "#D5BAFF"   # Pastel Purple
+    ])
+    
+    figure(figsize=(20, 20), dpi=500)
+    plt.imshow(traj, cmap=pastel_colors, aspect='auto')
+    plt.xlabel('Computational Time', fontsize=28)
     plt.ylabel('Region', fontsize=28)
-    plt.savefig(save_path+'/plots/potts_traj.png',format='png',dpi=400)
-    plt.savefig(save_path+'/plots/potts_traj.svg',format='svg',dpi=400)
+    plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=400)
+    plt.savefig(save_path + '/plots/potts_traj.svg', format='svg', dpi=400)
     plt.close()

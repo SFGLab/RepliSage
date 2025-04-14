@@ -34,10 +34,10 @@ def Kappa(mi,ni,mj,nj):
     Computes the crossing function of LoopSage.
     '''
     k=0.0
-    if mi<mj and mj<ni and ni<nj and mi>=0: k+=1 # np.abs(ni-mj)+1
-    if mj<mi and mi<nj and nj<ni and mj>=0: k+=1 # np.abs(nj-mi)+1
-    # if mi==mj and ni==nj and mi>=0: k+=1
-    if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
+    if mi>=0 and mi>=0 and ni>=0 and nj>=0:
+        if mi<mj and mj<ni and ni<nj: k+=1
+        if mj<mi and mi<nj and nj<ni: k+=1
+        if mj==ni or mi==nj or ni==nj or mi==mj: k+=1
     return k
 
 @njit
@@ -45,14 +45,10 @@ def Rep_Penalty(m, n, f):
     r = 0.0
     
     # The case that cohesin crosses a replication fork: for sure penalized
-    if f[m] != f[n] and m>=0: 
-        r += 1.0
-
-    if (f[m] == 1 and f[n]==1) and np.any(f[m:n]==0) and m>=0:
-        r += 1.0
+    if m>=0 and n>=0:
+        if f[m] != f[n]: r += 1.0
+        if (f[m] == 1 and f[n]==1) and np.any(f[m:n]==0): r += 1.0
     
-    # if (f[m] == 0 and f[n]==0):
-    #     r += 1/max(n-m,1)*np.sum(f[m+1:n]!=f[m])
     return r
 
 @njit
@@ -65,13 +61,13 @@ def E_bind(L, R, ms, ns, bind_norm):
     return E_b
 
 @njit
-def E_rep(f_rep,ms,ns,t,rep_norm):
+def E_rep(f_rep, ms, ns, t, rep_norm):
     '''
     Penalty of the replication energy.
     '''
     E_penalty = 0
     for i in range(len(ms)):
-        E_penalty += Rep_Penalty(ms[i], ns[i], f_rep[:,t])
+        E_penalty += Rep_Penalty(ms[i], ns[i], f_rep[:, t])
     return rep_norm * E_penalty
 
 @njit(parallel=True)
@@ -123,8 +119,8 @@ def get_dE_bind(L,R,bind_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for binding energy.
     '''
-    B_new = L[m_new]+R[n_new] if m_new>=0 else 0
-    B_old = L[ms[idx]]+R[ns[idx]] if ms[idx]>=0 else 0
+    B_new = L[m_new]+R[n_new] if m_new>=0 and n_new>=0 else 0
+    B_old = L[ms[idx]]+R[ns[idx]] if ms[idx]>=0 and ns[idx]>=0 else 0
     return bind_norm*(B_new-B_old)
 
 @njit
@@ -154,7 +150,7 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
         if i != idx:
             K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
             K2 += Kappa(m_new, n_new, ms[i], ns[i])
-    return k_norm * (K2 - K1)
+    return k_norm*(K2 - K1)
 
 @njit
 def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,ms,ns,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
@@ -324,7 +320,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
         
         # Keep track on energies and trajectories of LEFs and spins
         if i % MC_step == 0:
-            Es[i//MC_step] = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, i//MC_step, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
+            Es[i//MC_step] = E
             Ks[i//MC_step] = E_cross(ms, ns, k_norm)
             mags[i//MC_step] = np.average(spins)
             Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
