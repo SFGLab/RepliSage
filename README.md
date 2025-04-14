@@ -140,14 +140,14 @@ You can define these parameters based on the table of simulation parameters.
 | Parameter Name         | Type      | Default Value   |
 |-------------------------|-----------|-----------------|
 | PLATFORM                | str       | CPU             |
-| DEVICE                  | str       | ''              |
-| N_BEADS                 | int       | ''              |
-| BEDPE_PATH              | str       | ''              |
-| REPT_PATH               | str       | ''              |
+| DEVICE                  | str       | None              |
+| N_BEADS                 | int       | None              |
+| BEDPE_PATH              | str       | None              |
+| REPT_PATH               | str       | None              |
 | OUT_PATH                | str       | ../results      |
-| REGION_START            | int       | ''              |
-| REGION_END              | int       | ''              |
-| CHROM                   | str       | ''              |
+| REGION_START            | int       | None              |
+| REGION_END              | int       | None              |
+| CHROM                   | str       | None              |
 | REP_T_STD_FACTOR        | float     | 0.1             |
 | REP_SPEED_SCALE         | float     | 20              |
 | REP_INIT_RATE_SCALE     | float     | 1.0             |
@@ -157,7 +157,7 @@ You can define these parameters based on the table of simulation parameters.
 | REP_START_TIME          | int       | 50000           |
 | REP_TIME_DURATION       | int       | 50000           |
 | N_STEPS                 | int       | 200000          |
-| N_LEF                   | int       | ''              |
+| N_LEF                   | int       | None              |
 | N_LEF2                  | int       | 0               |
 | MC_STEP                 | int       | 200             |
 | BURNIN                  | int       | 1000            |
@@ -174,7 +174,7 @@ You can define these parameters based on the table of simulation parameters.
 | SAVE_PLOTS              | bool      | True            |
 | SAVE_MDT                | bool      | True            |
 | INITIAL_STRUCTURE_TYPE  | str       | rw              |
-| SIMULATION_TYPE         | str       | ''              |
+| SIMULATION_TYPE         | str       | None              |
 | INTGRATOR_TYPE          | str       | langevin        |
 | INTEGRATOR_STEP         | Quantity  | 10 femtosecond  |
 | FORCEFIELD_PATH         | str       | default_xml_path|

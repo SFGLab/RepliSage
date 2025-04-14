@@ -94,7 +94,7 @@ def main():
     if save_MDT:
         print('\nCreating metadata...')
         params = {k: v for k, v in locals().items() if k not in ['args','sim']} 
-        save_parameters(out_path+'/other/params.txt',**params)
+        save_parameters(out_path+'/metadata/params.txt',**params)
         print('Done')
 
     # Heatmap Visualization

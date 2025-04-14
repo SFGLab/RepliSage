@@ -43,7 +43,7 @@ class EM_LE:
         points1 = compute_init_struct(self.N_beads,init_struct)
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
         write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
-        generate_psf(self.N_beads,self.out_path+'/other/LE_init_struct.psf')
+        generate_psf(self.N_beads,self.out_path+'/metadata/LE_init_struct.psf')
         print('Done brother ;D\n')
         
         # Define System
