@@ -200,6 +200,7 @@ The output is organized in the following folders,
 .
 ├── ensemble
 │   ├── ensemble_100_BR.cif
+...
 ├── LE_init_struct.cif
 ├── metadata
 │   ├── asphs.npy
@@ -215,22 +216,7 @@ The output is organized in the following folders,
 │   ├── fractal_dims.npy
 │   ├── Fs.npy
 │   ├── gdfs.npy
-│   ├── heatmap_1_123.npy
-│   ├── heatmap_123_248.npy
-│   ├── heatmap_1_498.npy
-│   ├── heatmap_248_498.npy
-│   ├── Ks.npy
-│   ├── loop_lengths.npy
-│   ├── Mag_potts.npy
-│   ├── mags.npy
-│   ├── mpds.npy
-│   ├── Ms.npy
-│   ├── Ns.npy
-│   ├── params.txt
-│   ├── replisage.psf
-│   ├── Rgs.npy
-│   ├── Rs.npy
-│   └── spins.npy
+...
 ├── minimized_model.cif
 └── plots
     ├── asphericity.svg
@@ -241,25 +227,6 @@ The output is organized in the following folders,
     ├── bind_energy.png
     ├── bind_energy.svg
     ├── binder_cumulant.png
-    ├── binder_cumulant.svg
-    ├── cluster_order.png
-    ├── cluster_order.svg
-    ├── contact_number.svg
-    ├── convex_vol.svg
-    ├── cross_energy.pdf
-    ├── cross_energy.png
-    ├── cross_energy.svg
-    ├── LEFs.png
-    ├── LEFs.svg
-    ├── loop_length.png
-    ├── loop_length.svg
-    ├── mag.pdf
-    ├── mag.png
-    ├── mag.svg
-    ├── pairwise.svg
-    ├── potts_energy.pdf
-    ├── potts_energy.png
-    ├── potts_energy.svg
 ...
 ```
 
