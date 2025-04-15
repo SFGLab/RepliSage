@@ -41,6 +41,14 @@ This parts takes as input the states produced by the stochastic simulation and o
 
 For more details of the implementation, we suggest to our users to read the method paper of RepliSage.
 
+## Requirements
+
+RepliSage is a computationally and biophysically demanding project. It requires significant computing resources, both CPU and GPU. We recommend running RepliSage on high-performance workstations or HPC clusters equipped with a strong CPU and a GPU supporting CUDA (preferred) or at least OpenCL.
+
+RepliSage is tested and supported on Debian-based Linux distributions.
+
+Please note that even on powerful hardware, simulating a full cell cycle for a single chromosome with a polymer of 10,000 beads can take several hours to over a day. While the installation process is straightforward and thoroughly documented in our manual, running simulations will require patience and proper resources.
+
 ## Installation
 It is needed to have at least python 3.10 and run,
 
@@ -183,6 +191,82 @@ You can define these parameters based on the table of simulation parameters.
 | VIZ_HEATS               | bool      | True            |
 | SIM_TEMP                | Quantity  | 310 kelvin      |
 | SIM_STEP                | int       | 10000           |
+
+## Output and results
+
+The output is organized in the following folders,
+
+```
+.
+├── ensemble
+│   ├── ensemble_100_BR.cif
+├── LE_init_struct.cif
+├── metadata
+│   ├── asphs.npy
+│   ├── binder_cumulant.npy
+│   ├── Bs.npy
+│   ├── cluster_order.npy
+│   ├── CNs.npy
+│   ├── convex_hull_volume.npy
+│   ├── eeds.npy
+│   ├── entropy.npy
+│   ├── Es.npy
+│   ├── Es_potts.npy
+│   ├── fractal_dims.npy
+│   ├── Fs.npy
+│   ├── gdfs.npy
+│   ├── heatmap_1_123.npy
+│   ├── heatmap_123_248.npy
+│   ├── heatmap_1_498.npy
+│   ├── heatmap_248_498.npy
+│   ├── Ks.npy
+│   ├── loop_lengths.npy
+│   ├── Mag_potts.npy
+│   ├── mags.npy
+│   ├── mpds.npy
+│   ├── Ms.npy
+│   ├── Ns.npy
+│   ├── params.txt
+│   ├── replisage.psf
+│   ├── Rgs.npy
+│   ├── Rs.npy
+│   └── spins.npy
+├── minimized_model.cif
+└── plots
+    ├── asphericity.svg
+    ├── autoc.pdf
+    ├── autoc.png
+    ├── autoc.svg
+    ├── bind_energy.pdf
+    ├── bind_energy.png
+    ├── bind_energy.svg
+    ├── binder_cumulant.png
+    ├── binder_cumulant.svg
+    ├── cluster_order.png
+    ├── cluster_order.svg
+    ├── contact_number.svg
+    ├── convex_vol.svg
+    ├── cross_energy.pdf
+    ├── cross_energy.png
+    ├── cross_energy.svg
+    ├── LEFs.png
+    ├── LEFs.svg
+    ├── loop_length.png
+    ├── loop_length.svg
+    ├── mag.pdf
+    ├── mag.png
+    ├── mag.svg
+    ├── pairwise.svg
+    ├── potts_energy.pdf
+    ├── potts_energy.png
+    ├── potts_energy.svg
+...
+```
+
+Therefore:
+* In the first directory `ensemble` you can find ensembles of 3D structures produced by RepliSage. The index indicates pseudo-time and the tag `BR`, `R` or `AR` it has to do about the phase of cell cycle. `BR` means before replication (G1 phase), `R` during replication (S phase), and `AR` after replication (G2/M phase).
+* In the `metadata` you can find a lot of arrays that are produced during simulation. There are all the energy factors, and the metrics of the 3D structure of polymer, as a functions of time. Moreover, there are saved the parameters that were used for input and the some files that are appropriate for visualization in UCSF chimera (for example `psf` and `dcd`).
+* In `plots` there are output plots. Some of the most important ones are: the digram of the trajectories of LEFs, the diagram of potts states, the average length during time. It is also important to track the autocorrelations of the MCMC algorithm. Heatmaps are produced as well for comparisons with experimental data.
 
 
 ## Citation
