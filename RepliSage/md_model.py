@@ -218,16 +218,31 @@ class MD_MODEL:
                 self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
-    def add_loops(self,i):
-        'LE force that connects cohesin restraints'
+
+    def add_loops(self, i):
+        'LE force that connects cohesin restraints or adds dummy loops if undefined'
         self.LE_force = mm.HarmonicBondForce()
         self.LE_force.setForceGroup(0)
+
         for n in range(self.N_coh):
-            self.LE_force.addBond(self.M[n,i], self.N[n,i], 0.1, 5e4)
-            if self.run_repli: 
-                self.LE_force.addBond(self.N_beads+self.M[n,i], self.N_beads+self.N[n,i], 0.1, 5e4)
+            m_val = self.M[n, i]
+            n_val = self.N[n, i]
+
+            if m_val >= 0 and n_val >= 0:
+                # Add real loop
+                self.LE_force.addBond(m_val, n_val, 0.1, 5e4)
+                if self.run_repli:
+                    self.LE_force.addBond(self.N_beads + m_val, self.N_beads + n_val, 0.1, 5e4)
+            else:
+                # Add dummy loop with zero strength between random monomers
+                r1 = np.random.randint(0, self.N_beads)
+                r2 = np.random.randint(0, self.N_beads)
+                self.LE_force.addBond(r1, r2, 0.1, 0.0)
+                if self.run_repli:
+                    self.LE_force.addBond(self.N_beads + r1, self.N_beads + r2, 0.1, 0.0)
+
         self.system.addForce(self.LE_force)
-    
+        
     def add_repliforce(self,i):
         'Replication force to bring together the two polymers'
         self.repli_force = mm.CustomBondForce('D * (r-r0)^2')
