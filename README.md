@@ -145,52 +145,73 @@ You can define these parameters based on the table of simulation parameters.
 
 ## Parameter table
 
-| Parameter Name         | Type      | Default Value   |
-|-------------------------|-----------|-----------------|
-| PLATFORM                | str       | CPU             |
-| DEVICE                  | str       | None              |
-| N_BEADS                 | int       | None              |
-| BEDPE_PATH              | str       | None              |
-| REPT_PATH               | str       | None              |
-| OUT_PATH                | str       | ../results      |
-| REGION_START            | int       | None              |
-| REGION_END              | int       | None              |
-| CHROM                   | str       | None              |
-| REP_T_STD_FACTOR        | float     | 0.1             |
-| REP_SPEED_SCALE         | float     | 20              |
-| REP_INIT_RATE_SCALE     | float     | 1.0             |
-| LEF_RW                  | bool      | True            |
-| RANDOM_INIT_SPINS       | bool      | True            |
-| LEF_DRIFT               | bool      | False           |
-| REP_START_TIME          | int       | 50000           |
-| REP_TIME_DURATION       | int       | 50000           |
-| N_STEPS                 | int       | 200000          |
-| N_LEF                   | int       | None              |
-| N_LEF2                  | int       | 0               |
-| MC_STEP                 | int       | 200             |
-| BURNIN                  | int       | 1000            |
-| T_INIT                  | float     | 2.0             |
-| T_FINAL                 | float     | 1.0             |
-| METHOD                  | str       | Annealing       |
-| FOLDING_COEFF           | float     | 1.0             |
-| FOLDING_COEFF2          | float     | 0.0             |
-| REP_COEFF               | float     | 1.0             |
-| POTTS_INTERACT_COEFF    | float     | 1.0             |
-| POTTS_FIELD_COEFF       | float     | 1.0             |
-| CROSS_COEFF             | float     | 1.0             |
-| BIND_COEFF              | float     | 1.0             |
-| SAVE_PLOTS              | bool      | True            |
-| SAVE_MDT                | bool      | True            |
-| INITIAL_STRUCTURE_TYPE  | str       | rw              |
-| SIMULATION_TYPE         | str       | None              |
-| INTGRATOR_TYPE          | str       | langevin        |
-| INTEGRATOR_STEP         | Quantity  | 10 femtosecond  |
-| FORCEFIELD_PATH         | str       | default_xml_path|
-| EV_P                    | float     | 0.01            |
-| TOLERANCE               | float     | 1.0             |
-| VIZ_HEATS               | bool      | True            |
-| SIM_TEMP                | Quantity  | 310 kelvin      |
-| SIM_STEP                | int       | 10000           |
+### General Settings
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| PLATFORM                | str       | CPU             | Specifies the computational platform to use (e.g., CPU, CUDA).             |
+| DEVICE                  | str       | None            | Defines the specific device to run the simulation (e.g., GPU ID).          |
+| OUT_PATH                | str       | ../results      | Directory where simulation results will be saved.                          |
+| SAVE_PLOTS              | bool      | True            | Enables saving of simulation plots.                                        |
+| SAVE_MDT                | bool      | True            | Enables saving of molecular dynamics trajectories.                         |
+| VIZ_HEATS               | bool      | True            | Enables visualization of heatmaps.                                         |
+
+### Input Data
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
+| REPT_PATH               | str       | None            | Path to the replication timing data file.                                  |
+| REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
+| REGION_END              | int       | None            | End position of the genomic region to simulate.                            |
+| CHROM                   | str       | None            | Chromosome identifier for the simulation.                                  |
+
+### Simulation Parameters
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| N_BEADS                 | int       | None            | Number of beads in the polymer chain.                                      |
+| N_LEF                   | int       | None            | Number of loop extrusion factors (LEFs).                                   |
+| N_LEF2                  | int       | 0               | Number of secondary loop extrusion factors.                                |
+| LEF_RW                  | bool      | True            | Enables random walk for loop extrusion factors (LEFs).                     |
+| LEF_DRIFT               | bool      | False           | Enables drift for loop extrusion factors.                                  |
+| RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial Potts model spin states.                                |
+| REP_START_TIME          | int       | 50000           | Start time for replication in simulation steps.                            |
+| REP_TIME_DURATION       | int       | 50000           | Duration of the replication process in simulation steps.                   |
+| REP_T_STD_FACTOR        | float     | 0.1             | Standard deviation factor for replication timing.                          |
+| REP_SPEED_SCALE         | float     | 20              | Scaling factor for replication fork speed.                                 |
+| REP_INIT_RATE_SCALE     | float     | 1.0             | Scaling factor for replication initiation rate.                            |
+| N_STEPS                 | int       | 200000          | Total number of simulation steps.                                          |
+| MC_STEP                 | int       | 200             | Number of steps per Monte Carlo iteration.                                 |
+| BURNIN                  | int       | 1000            | Number of burn-in steps before data collection.                            |
+| METHOD                  | str       | Annealing       | Simulation method (e.g., Metropolis, Annealing).                           |
+
+### Stochastic Energy Coefficients
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| FOLDING_COEFF           | float     | 1.0             | Coefficient controlling chromatin folding.                                 |
+| FOLDING_COEFF2          | float     | 0.0             | Secondary coefficient for chromatin folding.                               |
+| REP_COEFF               | float     | 1.0             | Coefficient for replication-related energy terms.                          |
+| POTTS_INTERACT_COEFF    | float     | 1.0             | Coefficient for Potts model interaction energy.                            |
+| POTTS_FIELD_COEFF       | float     | 1.0             | Coefficient for Potts model field energy.                                  |
+| CROSS_COEFF             | float     | 1.0             | Coefficient penalizing LEF crossing.                                       |
+| BIND_COEFF              | float     | 1.0             | Coefficient for LEF binding energy.                                        |
+
+### Annealing Parameters
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| T_INIT                  | float     | 2.0             | Initial temperature for annealing.                                         |
+| T_FINAL                 | float     | 1.0             | Final temperature for annealing.                                           |
+
+### Molecular Dynamics
+| Parameter Name         | Type      | Default Value   | Description                                                                 |
+|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+| INITIAL_STRUCTURE_TYPE  | str       | rw              | Type of initial structure (e.g., rw for random walk).                      |
+| SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM).                                |
+| INTGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
+| INTEGRATOR_STEP         | Quantity  | 10 femtosecond  | Time step for the molecular dynamics integrator.                           |
+| FORCEFIELD_PATH         | str       | default_xml_path| Path to the force field XML file.                                          |
+| EV_P                    | float     | 0.01            | Excluded volume parameter for molecular dynamics.                          |
+| TOLERANCE               | float     | 1.0             | Tolerance for energy minimization.                                         |
+| SIM_TEMP                | Quantity  | 310 kelvin      | Temperature for molecular dynamics simulation.                             |
+| SIM_STEP                | int       | 10000           | Number of steps for molecular dynamics simulation.                         |
 
 ## Output and results
 
