@@ -256,6 +256,41 @@ Therefore:
 * In the `metadata` you can find a lot of arrays that are produced during simulation. There are all the energy factors, and the metrics of the 3D structure of polymer, as a functions of time. Moreover, there are saved the parameters that were used for input and the some files that are appropriate for visualization in UCSF chimera (for example `psf` and `dcd`).
 * In `plots` there are output plots. Some of the most important ones are: the digram of the trajectories of LEFs, the diagram of potts states, the average length during time. It is also important to track the autocorrelations of the MCMC algorithm. Heatmaps are produced as well for comparisons with experimental data.
 
+### Expected Results
+#### Averaged loop diagram
+RepliSage aims to model a very biophysically complex process: the cell-cycle. Because of that the results are very sensitive in the input parameters. Therefore, it is important to be able to understand the diagnostic plots, so as to be able to distinguish if the model's result have a biophysical meaning or not.
+
+One of the most important diagnostic plots is the diagram of average loop length as a function of time (with decision intervals),
+
+![image](https://github.com/user-attachments/assets/bae3d68c-50b7-4a7e-9a9e-31ea51b6c031)
+
+This plot shows us a very clear biophysical behavior:
+- The simulation initially reaches the equillibrium in G1 phase.
+- In S phase the average loop length is getting smaller because of the barrier activity of replication forks. This is a result which is also expected experimentally, as it is observed that during replication there is tendency that loops are getting shorter.
+- After replication, in G2/M phase, condensins come into the game and they extrude loops faster. This means during this phase we excpect a different average loop length in equillibrium.
+
+This is a very good plot, because we can see if there is equilibrium. In the previous example, we can see that the simulation reaches the equilibrium in G2/M phase. However, during G1 phase, maybe we should make more Monte Carlo steps so as to have more ensembles in equilibrium. S phase should always be out of equillibrium, but it is important to have enough steps for this phase as well, because replication forks are considered to be much slower than LEFs. 
+
+#### State Diagram
+Here we have a different type of diagram, which combime node states and link states of ou co-evolutionary network. In this plot, we draw the percentage of links that connect the same node states (you can think of them as epigenetic states or compartments), and the percentage of links that connect different node states.
+
+![image](https://github.com/user-attachments/assets/74ed5c8e-d052-4ecd-aed4-8600fb3e04a1)
+
+What is this diagram showing us
+
+- There is a small increase in links with the same node state during S phase. This is good because, Peano et al. observed similar behavior experimentally.
+- In G2/M phase we have sudden decrease of the links that connect the same node state. This can be because during mitosis, condensins extrude long loops and loop extrusion wins over compartmentalization. In general, this result might be different depending of the parameters of `N_lef2` (number of condensins in G2/M phase) or their folding coefficient.
+
+From this plot we can see that there is equillibrium in node states in each phase (also important).
+
+#### Structural metrics
+Previous two metrics were connected with the states of our graph, but they did not touch at all a very important aspect of modelling: the 3D structure. This is the reason why RepliSage outputs a set of sructural metrics as well. For example,
+
+![image](https://github.com/user-attachments/assets/59279709-80b2-4916-b139-4b00df01223a)
+![image](https://github.com/user-attachments/assets/9ded9dfc-e9d6-4885-9e9f-6866718f7548)
+![image](https://github.com/user-attachments/assets/dc9af63a-541b-4203-b721-914eae7dd633)
+
+These plots show us that during S phase replication forks are detaching the two replicates from each other. This effect in combination to the excluded volume causes less compacted structure. After S phase, in G2/M phase there is further compactions due to the interplay of: excluded volume, block-copolymer forces and long range condensin loops.
 
 ## Citation
 
