@@ -16,6 +16,14 @@ except FileNotFoundError:
     # If running in a development setup without the resource installed, fallback to a relative path
     default_xml_path = 'RepliSage/forcefields/classic_sm_ff.xml'
 
+# Dynamically set the default path to the XML file in the package
+try:
+    with importlib.resources.path('RepliSage.data', 'replication_timing_data.parquet') as default_xml_path:
+        default_rept_path = str(default_xml_path)
+except FileNotFoundError:
+    # If running in a development setup without the resource installed, fallback to a relative path
+    default_rept_path = 'RepliSage/data/replication_timing_data.parquet'
+
 @dataclass
 class Arg(object):
     name: str
@@ -139,7 +147,7 @@ args = ListOfArgs([
     # Input data
     Arg('N_BEADS', help="Number of Simulation Beads.", type=int, default='', val=''),
     Arg('BEDPE_PATH', help="A .bedpe file path with loops. It is required.", type=str, default='', val=''),
-    Arg('REPT_PATH', help="The replication timing dataset.", type=str, default='', val=''),
+    Arg('SC_REPT_PATH', help="The replication timing dataset.", type=str, default=default_rept_path, val=default_rept_path),
     Arg('OUT_PATH', help="Output folder name.", type=str, default='../results', val='../results'),
     Arg('REGION_START', help="Starting region coordinate.", type=int, default='', val=''),
     Arg('REGION_END', help="Ending region coordinate.", type=int, default='', val=''),

@@ -6,7 +6,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='pyRepliSage',  # Package name
-    version='0.0.12',  # Version of the software
+    version='0.0.13',  # Version of the software
 
     description='A stochastic model for the modeling of DNA replication and cell-cycle dynamics.',
     long_description=long_description,
@@ -18,7 +18,7 @@ setup(
     packages=find_packages(include=['RepliSage', 'RepliSage.*']),
     include_package_data=True,
     package_data={
-    'RepliSage': ['forcefields/*'],
+    'RepliSage': ['forcefields/*','data/*'],
     },
     install_requires=[  # List your package dependencies here
         'scipy>=1.11.4',
@@ -34,7 +34,6 @@ setup(
         'scikit-image>=0.24.0',
         'networkx>=3.4.2',
         'numba>=0.60.0',
-        'mat73>=0.65',
         'hilbertcurve>=2.0.5',
         'matplotlib-venn>=1.1.1',
         'imageio>=2.36.0',

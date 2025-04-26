@@ -6,7 +6,7 @@ from scipy.signal import find_peaks
 from sklearn import preprocessing
 from .common import *
 from .replication_simulator import *
-import mat73
+import pandas as pd
 import time
 from tqdm import tqdm
 from numba import njit, prange
@@ -37,10 +37,11 @@ class Replikator:
         '''
         self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
         chrom_nr = int(re.sub(r'\D', '', self.chrom)) - 1
-        self.data = mat73.loadmat(rept_data_path)
-        self.gen_windows = self.data['genome_windows'][chrom_nr][0]
+        self.data = pd.read_parquet(rept_data_path)
+        self.gen_windows = self.data[self.data['chromosome'] == chrom_nr][['start', 'end', 'center']].values
         self.chrom_size = int(np.max(self.gen_windows))
-        self.mat = self.data['replication_state_filtered'][chrom_nr][0].T
+        single_cell_cols = [col for col in self.data.columns if col.startswith('SC_')]
+        self.mat = self.data[self.data['chromosome'] == chrom_nr][single_cell_cols].T.values
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor

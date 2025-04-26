@@ -77,7 +77,7 @@ def main():
     # Define data and coordinates
     region, chrom =  [args.REGION_START, args.REGION_END], args.CHROM
     bedpe_file = args.BEDPE_PATH
-    rept_path = args.REPT_PATH
+    rept_path = args.SC_REPT_PATH
     out_path = args.OUT_PATH
     
     # Run simulation
