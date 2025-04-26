@@ -154,6 +154,7 @@ args = ListOfArgs([
     Arg('CHROM', help="Chromosome that corresponds the the modelling region of interest (in case that you do not want to model the whole genome).", type=str, default='', val=''),
     
     # Replikator
+    Arg('REP_WITH_STRESS',help="True in case that you would like to have a helper that sets up the parameters to model replication stress.", type=bool, default='False', val='False'),
     Arg('REP_T_STD_FACTOR', help="The factor with which you would like to multiply the standard deviation of replication timing curve.", type=float, default='0.1', val='0.1'),
     Arg('REP_SPEED_SCALE', help="A scale that quantifies the speed of the replication forks.", type=float, default='20', val='20'),
     Arg('REP_INIT_RATE_SCALE', help="A number with which you multiply all values of the experimentally estimated initiation rate.", type=float, default='1.0', val='1.0'),

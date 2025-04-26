@@ -67,6 +67,46 @@ The usage is very simple. To run this model you need to specify the parameters a
 
 Note that to run replisage it is needed to have `GM12878_single_cell_data_hg37.mat` data, for single-cell replication timing. These data are not produced by our laboratory, but they are alredy published in the paper of D. S. Massey et al. Please do not forget to cite them. We have uploaded the input data used in the paper here: https://drive.google.com/drive/folders/1PLA147eiHenOw_VojznnlC_ZywhLzGWx?usp=sharing.
 
+
+### Input Data
+
+Single-cell replication timing data are imported automatically in RepliSage (into the directory `RepliSage/data`),
+therefore it is not necessary to prepare them manually. However, in case you would like to use your own data, RepliSage understands Parquet format (for high compression).
+
+Example structure of the expected Parquet data:
+
+```text
+   chromosome   start     end   center  SC_1  SC_2  SC_3
+0           1       0   20000    10000   1.0  NaN   2.0
+1           1   20000   40000    30000   3.0  2.0   4.0
+```
+
+Each `SC_#` column corresponds to a single-cell replication state in the specified genomic window.
+
+From these replication timing data, compartmentalization is also determined,
+thus it is not required to run any separate compartment caller.
+
+The main assumption of this work is that the process of replication provides information about compartmentalization and epigenetic mark spreading,
+since replication timing is highly correlated with compartmentalization, and compartmentalization itself emerges as a macrostate of many interacting epigenetic domains following block-copolymer physics.
+
+
+However, it is important that the user would specify a `.bedpe` file with loops. Therefore, in this case RepliSage follows a similar approach like LoopSage and the `.bedpe` file must be in the following format,
+
+```
+chr1	903917	906857	chr1	937535	939471	16	3.2197903072213415e-05	0.9431392038374097
+chr1	979970	987923	chr1	1000339	1005916	56	0.00010385804708107556	0.9755733944997329
+chr1	980444	982098	chr1	1063024	1065328	12	0.15405319074060866	0.999801529750033
+chr1	981076	985322	chr1	1030933	1034105	36	9.916593137693526e-05	0.01617512105347667
+chr1	982171	985182	chr1	990837	995510	27	2.7536240913152036e-05	0.5549511180231224
+chr1	982867	987410	chr1	1061124	1066833	71	1.105408615726611e-05	0.9995462969421808
+chr1	983923	985322	chr1	1017610	1019841	11	1.7716275555648395e-06	0.10890923034907056
+chr1	984250	986141	chr1	1013038	1015474	14	1.7716282101935205e-06	0.025665007111095667
+chr1	990949	994698	chr1	1001076	1003483	34	0.5386388489931403	0.9942742844900859
+chr1	991375	993240	chr1	1062647	1064919	15	1.0	0.9997541297643132
+```
+
+where the last two columns represent the probabilites for left and right anchor respectively to be tandem right. If the probability is negative it means that no CTCF motif was detected in this anchor. You can extract these probabilities from the repo: https://github.com/SFGLab/3d-analysis-toolkit, with `find_motifs.py` file. Please set `probabilistic=True` `statistics=False`.
+
 ### Python API
 ```python
 from RepliSage.stochastic_model import *
