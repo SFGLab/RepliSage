@@ -1,11 +1,32 @@
 from .stochastic_model import *
 from .args_definition import *
-import os
-import time
 import argparse
 import configparser
 from typing import List
 from sys import stdout
+
+class ArgumentChanger:
+    def __init__(self, args):
+        self.args = args
+
+    def set_arg(self, name, value):
+        """Set argument value in both attribute and internal argument list."""
+        if hasattr(self.args, name):
+            setattr(self.args, name, value)
+        try:
+            self.args.get_arg(name).val = value
+        except AttributeError:
+            print(f"Warning: Argument '{name}' not found in args object.")
+
+    def convenient_argument_changer(self):
+        if self.args.REP_WITH_STRESS:
+            self.set_arg('REP_T_STD_FACTOR', 0.2)
+            self.set_arg('REP_SPEED_SCALE', 5.0)
+            self.set_arg('REP_INIT_RATE_SCALE', 5.0)
+            print("Arguments changed because REP_WITH_STRESS is True:")
+            print(f"REP_T_STD_FACTOR: {self.args.REP_T_STD_FACTOR}")
+            print(f"REP_SPEED_SCALE: {self.args.REP_SPEED_SCALE}")
+            print(f"REP_INIT_RATE_SCALE: {self.args.REP_INIT_RATE_SCALE}")
 
 def my_config_parser(config_parser: configparser.ConfigParser) -> List[tuple[str, str]]:
     """Helper function that makes flat list arg name, and it's value from ConfigParser object."""
@@ -57,6 +78,8 @@ def get_config() -> ListOfArgs:
 
     # Step 4: Finalize
     args.to_python()
+    changer = ArgumentChanger(args)
+    changer.convenient_argument_changer()
     args.write_config_file()
     
     return args

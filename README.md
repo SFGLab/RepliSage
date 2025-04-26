@@ -187,7 +187,7 @@ You can define these parameters based on the table of simulation parameters.
 
 ### General Settings
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | PLATFORM                | str       | CPU             | Specifies the computational platform to use (e.g., CPU, CUDA).             |
 | DEVICE                  | str       | None            | Defines the specific device to run the simulation (e.g., GPU ID).          |
 | OUT_PATH                | str       | ../results      | Directory where simulation results will be saved.                          |
@@ -197,7 +197,7 @@ You can define these parameters based on the table of simulation parameters.
 
 ### Input Data
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
 | SC_REPT_PATH            | str       | None            | Path to the single cell replication timing data file.                      |
 | REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
@@ -206,13 +206,14 @@ You can define these parameters based on the table of simulation parameters.
 
 ### Simulation Parameters
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | N_BEADS                 | int       | None            | Number of beads in the polymer chain.                                      |
 | N_LEF                   | int       | None            | Number of loop extrusion factors (LEFs).                                   |
 | N_LEF2                  | int       | 0               | Number of secondary loop extrusion factors.                                |
 | LEF_RW                  | bool      | True            | Enables random walk for loop extrusion factors (LEFs).                     |
 | LEF_DRIFT               | bool      | False           | Enables drift for loop extrusion factors.                                  |
 | RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial Potts model spin states.                                |
+| REP_WITH_STRESS         | bool      | False           | Enables a helper to set parameters for modeling replication stress. Overrides user-defined REP_T_STD_FACTOR, REP_SPEED_SCALE, and REP_INIT_RATE_SCALE. |
 | REP_START_TIME          | int       | 50000           | Start time for replication in simulation steps.                            |
 | REP_TIME_DURATION       | int       | 50000           | Duration of the replication process in simulation steps.                   |
 | REP_T_STD_FACTOR        | float     | 0.1             | Standard deviation factor for replication timing.                          |
@@ -225,7 +226,7 @@ You can define these parameters based on the table of simulation parameters.
 
 ### Stochastic Energy Coefficients
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | FOLDING_COEFF           | float     | 1.0             | Coefficient controlling chromatin folding.                                 |
 | FOLDING_COEFF2          | float     | 0.0             | Secondary coefficient for chromatin folding.                               |
 | REP_COEFF               | float     | 1.0             | Coefficient for replication-related energy terms.                          |
@@ -236,13 +237,13 @@ You can define these parameters based on the table of simulation parameters.
 
 ### Annealing Parameters
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | T_INIT                  | float     | 2.0             | Initial temperature for annealing.                                         |
 | T_FINAL                 | float     | 1.0             | Final temperature for annealing.                                           |
 
 ### Molecular Dynamics
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|-----------------------------------------------------------------------------|
+|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | INITIAL_STRUCTURE_TYPE  | str       | rw              | Type of initial structure (e.g., rw for random walk).                      |
 | SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM).                                |
 | INTGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
