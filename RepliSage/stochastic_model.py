@@ -66,7 +66,7 @@ class StochasticSimulation:
         print('\nRunning RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.Ks, self.Rs, self.spin_traj, self.mags = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags = run_energy_minimization(
         N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
         mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
         L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
@@ -94,7 +94,7 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
-        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.Rs, self.Ks, self.mags, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)

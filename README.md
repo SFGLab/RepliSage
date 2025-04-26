@@ -199,7 +199,7 @@ You can define these parameters based on the table of simulation parameters.
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
-| SC_REPT_PATH            | str       | None            | Path to the single cell replication timing data file.                      |
+| SC_REPT_PATH            | str       | `defailt_rept_path` | Path to the single cell replication timing data file.                      |
 | REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
 | REGION_END              | int       | None            | End position of the genomic region to simulate.                            |
 | CHROM                   | str       | None            | Chromosome identifier for the simulation.                                  |
