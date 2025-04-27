@@ -142,19 +142,49 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     plt.grid(True)
     plt.close()
 
-def coh_traj_plot(ms,ns,N_beads,path):
+def coh_traj_plot(ms,ns,N_beads,path,jump_threshold=200,min_stable_time=10):
     print('\nPlotting trajectories of cohesins...')
     start = time.time()
     N_coh = len(ms)
-    figure(figsize=(20, 20),dpi=400)
-    color = ["#"+''.join([rd.choice('0123456789ABCDEF') for j in range(6)]) for i in range(N_coh)]
-    size = 0.1
-    
+    figure(figsize=(10, 10),dpi=200)
+    cmap = plt.get_cmap('prism')
+    colors = [cmap(i / N_coh) for i in range(N_coh)]
+
     for nn in tqdm(range(N_coh)):
-        tr_m, tr_n = ms[nn], ns[nn]
-        plt.fill_between(np.arange(len(tr_m)), tr_m, tr_n, color=color[nn], alpha=0.4, interpolate=False, linewidth=0)
-    plt.xlabel('Simulation Step', fontsize=28)
-    plt.ylabel('Position of Cohesin', fontsize=28)
+        tr_m, tr_n = np.array(ms[nn]), np.array(ns[nn])
+        steps = np.arange(len(tr_m))
+
+        # Calculate jump size between steps
+        jumps = np.abs(np.diff(tr_m)) + np.abs(np.diff(tr_n))
+
+        # Create mask: True = good point, False = jump
+        jump_mask = np.ones_like(tr_m, dtype=bool)
+        jump_mask[1:] = jumps < jump_threshold  # after a jump, mark as bad
+
+        # Now we want to detect stable regions
+        stable_mask = np.copy(jump_mask)
+
+        # Find connected regions
+        current_length = 0
+        for i in range(len(stable_mask)):
+            if jump_mask[i]:
+                current_length += 1
+            else:
+                if current_length < min_stable_time:
+                    stable_mask[i-current_length:i] = False
+                current_length = 0
+        # Handle last region
+        if current_length < min_stable_time:
+            stable_mask[len(stable_mask)-current_length:] = False
+
+        # Apply mask
+        tr_m_masked = np.ma.masked_array(tr_m, mask=~stable_mask)
+        tr_n_masked = np.ma.masked_array(tr_n, mask=~stable_mask)
+
+    plt.fill_between(steps, tr_m_masked, tr_n_masked,
+                     color=colors[nn], alpha=0.6, interpolate=False, linewidth=0)
+    plt.xlabel('MC Step', fontsize=16)
+    plt.ylabel('Simulation Beads', fontsize=16)
     plt.gca().invert_yaxis()
     plt.ylim((0,N_beads))
     # plt.gca().set_ylim(bottom=0) 
@@ -271,11 +301,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
         plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
-def ising_traj_plot(traj, save_path):    
-    figure(figsize=(20, 20), dpi=500)
-    plt.imshow(traj, cmap='coolwarm', aspect='auto')
-    plt.xlabel('Computational Time', fontsize=28)
-    plt.ylabel('Region', fontsize=28)
+def ising_traj_plot(spins, save_path):
+    plt.figure(figsize=(10, 10),dpi=200)
+    plt.imshow(spins, cmap='bwr', aspect='auto')
+    plt.xlabel('MC step', fontsize=16)
+    plt.ylabel('Simulation Beads', fontsize=16)
     plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=200)
     plt.savefig(save_path + '/plots/potts_traj.svg', format='svg', dpi=200)
     plt.close()
