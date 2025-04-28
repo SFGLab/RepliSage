@@ -41,6 +41,8 @@ setup(
         'jupyterlab>=4.2.5',
         'jupyter_core>=5.7.2',
         'tqdm',
+        'pyarrow',
+        'fastparquet',
     ],
     entry_points={
         'console_scripts': [

@@ -83,8 +83,6 @@ class StochasticSimulation:
             np.save(f'{self.out_path}/metadata/Es.npy', self.Es)
             np.save(f'{self.out_path}/metadata/Fs.npy', self.Fs)
             np.save(f'{self.out_path}/metadata/Bs.npy', self.Bs)
-            np.save(f'{self.out_path}/metadata/Rs.npy', self.Rs)
-            np.save(f'{self.out_path}/metadata/Ks.npy', self.Ks)
             np.save(f'{self.out_path}/metadata/loop_lengths.npy', self.Ns-self.Ms)
             np.save(f'{self.out_path}/metadata/Es_potts.npy', self.Es_potts)
             np.save(f'{self.out_path}/metadata/mags.npy',self.mags)
@@ -95,7 +93,7 @@ class StochasticSimulation:
         Draw plots.
         '''
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
-        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path)
+        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=100,min_stable_time=self.N_steps//self.MC_step//10)
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
         plot_loop_length(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
@@ -117,14 +115,14 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 1000, 100, 100
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(4e2), int(1e3), 1.6, 1.0, int(5e3), int(1e4)
+    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(4e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
     
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
-    c_state_field, c_state_interact, c_rep = 2.0, 1.0, 1.0
+    c_state_field, c_state_interact, c_rep = 1.0, 1.0, 1.0
     mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
     save_MDT, save_plots = True, True
-
+    
     # for stress scale=5.0, sigma_t = T*0.2, speed=5*
     # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
     
