@@ -41,7 +41,8 @@ class StochasticSimulation:
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
         else:
-            self.l_forks, self.r_forks = np.array([[1,0],[1,0]],dtype=np.int32),  np.array([[1,0],[1,0]],dtype=np.int32)
+            self.rep_frac = None
+            self.h = np.zeros(self.N_beads)
 
         # Import loop data
         self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)

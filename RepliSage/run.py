@@ -123,14 +123,18 @@ def main():
     # Heatmap Visualization
     if args.VIZ_HEATS:
         print('\nMaking averaged heatmap plots...')
-        print('Before replication...')
-        get_avg_heatmap(args.OUT_PATH,1,(args.REP_START_TIME-args.BURNIN)//args.MC_STEP+1)
-        print('During replication...')
-        get_avg_heatmap(args.OUT_PATH,(args.REP_START_TIME-args.BURNIN)//args.MC_STEP+1,(args.REP_START_TIME+args.REP_TIME_DURATION-args.BURNIN)//args.MC_STEP+1)
-        print('After replication...')
-        get_avg_heatmap(args.OUT_PATH,(args.REP_START_TIME+args.REP_TIME_DURATION-args.BURNIN)//args.MC_STEP+1,(args.N_STEPS-args.BURNIN)//args.MC_STEP+1)
-        print('And all of them together...')
-        get_avg_heatmap(args.OUT_PATH,1,(args.N_STEPS-args.BURNIN)//args.MC_STEP+1)
+        if sim.rep_frac is None:
+            print('Replication fraction is None, generating only the combined heatmap...')
+            get_avg_heatmap(args.OUT_PATH, 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
+        else:
+            print('Before replication...')
+            get_avg_heatmap(args.OUT_PATH, 1, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1)
+            print('During replication...')
+            get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
+            print('After replication...')
+            get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
+            print('And all of them together...')
+            get_avg_heatmap(args.OUT_PATH, 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
         print('Done!')
 
 if __name__=='__main__':

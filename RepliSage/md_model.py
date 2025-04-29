@@ -12,33 +12,37 @@ from .initial_structures import *
 from .utils import *
 
 class MD_MODEL:
-    def __init__(self,M,N,N_beads,burnin,MC_step,out_path,platform,rep_frac=None,t_rep=None,Cs=None):
+    def __init__(self, M, N, N_beads, burnin, MC_step, out_path, platform, rep_frac=None, t_rep=None, Cs=None):
         '''
         M, N (np arrays): Position matrix of two legs of cohesin m,n. 
-                          Rows represent  loops/cohesins and columns represent time
+                          Rows represent loops/cohesins and columns represent time
         N_beads (int): The number of beads of initial structure.
         step (int): sampling rate
         out_path (int): the out_path where the simulation will save structures etc.
         '''
         self.M, self.N, self.Cs = M, N, Cs
-        self.replicated_dna, self.t_rep = rep_frac, t_rep
-        self.rep_duration = len(self.replicated_dna[0,:])
+        self.replicated_dna = rep_frac
+        self.t_rep = t_rep if rep_frac is not None else 0
+        self.rep_duration = len(rep_frac[0, :]) if rep_frac is not None else 0
         self.N_coh, self.N_steps = M.shape
-        self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin//MC_step
+        self.N_beads, self.step, self.burnin = N_beads, MC_step, burnin // MC_step
         self.out_path = out_path
         self.platform = platform
-        self.rw_l = np.sqrt(self.N_beads)*0.1
-        self.run_repli = np.all(rep_frac!=None)
+        self.rw_l = np.sqrt(self.N_beads) * 0.1
+        self.run_repli = rep_frac is not None  # Enable replication logic only if rep_frac is provided
         self.chain_idx = list()
-        print('Average random walk distance:',self.rw_l)
+        print('Average random walk distance:', self.rw_l)
         for i in range(N_beads): self.chain_idx.append(0)
-        for i in range(N_beads,2*N_beads): self.chain_idx.append(1)
+        for i in range(N_beads, 2 * N_beads): self.chain_idx.append(1)
 
-    def compute_rep(self,i):
-        if i*self.step<self.t_rep:
+    def compute_rep(self, i):
+        if not self.run_repli:
+            return 0  # Return 0 if replication is disabled
+
+        if i * self.step < self.t_rep:
             rep_per = 0
-        elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
-            rep_per = np.count_nonzero(self.replicated_dna[:,i*self.step-self.t_rep])/self.N_beads*100
+        elif i * self.step >= self.t_rep and i * self.step < self.t_rep + self.rep_duration:
+            rep_per = np.count_nonzero(self.replicated_dna[:, i * self.step - self.t_rep]) / self.N_beads * 100
         else:
             rep_per = 100
         return rep_per
@@ -109,7 +113,7 @@ class MD_MODEL:
             rep_per = self.compute_rep(i)
             
             # Change forces
-            self.change_repliforce(i)
+            if self.run_repli: self.change_repliforce(i)
             self.change_loop(i)
             if p_ev>0: self.ps_ev = np.random.rand(self.N_beads)
             self.change_ev()
@@ -141,21 +145,29 @@ class MD_MODEL:
         print('Energy minimization done <3')
 
     def change_ev(self):
-        ev_strength = (self.ps_ev>self.p_ev).astype(int)*np.sqrt(200) if self.p_ev>0 else np.sqrt(200)*np.ones(self.N_beads)
+        '''
+        Update excluded volume force parameters.
+        '''
+        ev_strength = (self.ps_ev > self.p_ev).astype(int) * np.sqrt(200) if self.p_ev > 0 else np.sqrt(200) * np.ones(self.N_beads)
         for n in range(self.N_beads):
-            self.ev_force.setParticleParameters(n,[ev_strength[n],0.05])
-            self.ev_force.setParticleParameters(n+self.N_beads,[ev_strength[n],0.05])
+            self.ev_force.setParticleParameters(n, [ev_strength[n], 0.05])
+        if self.run_repli:  # Only update replicated particles if replication is enabled
+            for n in range(self.N_beads, 2 * self.N_beads):
+                self.ev_force.setParticleParameters(n, [ev_strength[n % self.N_beads], 0.05])
         self.ev_force.updateParametersInContext(self.simulation.context)
 
-    def change_repliforce(self,i):
-        if i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
-            rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]
+    def change_repliforce(self, i):
+        if not self.run_repli:
+            return  # Skip if replication is disabled
+
+        if i * self.step >= self.t_rep and i * self.step < self.t_rep + self.rep_duration:
+            rep_dna = self.replicated_dna[:, i * self.step - self.t_rep]
             rep_locs = np.nonzero(rep_dna)[0]
             for l in rep_locs:
-                self.repli_force.setBondParameters(int(l),int(l),int(l)+self.N_beads,[self.rw_l/4,1000])
-        elif i*self.step>=self.t_rep+self.rep_duration:
+                self.repli_force.setBondParameters(int(l), int(l), int(l) + self.N_beads, [self.rw_l / 4, 1000])
+        elif i * self.step >= self.t_rep + self.rep_duration:
             for j in range(self.N_beads):
-                self.repli_force.setBondParameters(j,j,j+self.N_beads,[5*self.rw_l,0.0])
+                self.repli_force.setBondParameters(j, j, j + self.N_beads, [5 * self.rw_l, 0.0])
         self.repli_force.updateParametersInContext(self.simulation.context)
 
     def change_loop(self,i):
@@ -190,10 +202,10 @@ class MD_MODEL:
         self.ev_force.setCutoffDistance(distance=0.2)
         self.ev_force.setForceGroup(1)
         for i in range(self.N_beads):
-            self.ev_force.addParticle([np.sqrt(200),0.05])
+            self.ev_force.addParticle([np.sqrt(200), 0.05])
         if self.run_repli:
-            for i in range(self.N_beads,2*self.N_beads):
-                self.ev_force.addParticle([np.sqrt(200),0.05])
+            for i in range(self.N_beads, 2 * self.N_beads):
+                self.ev_force.addParticle([np.sqrt(200), 0.05])
         self.system.addForce(self.ev_force)
 
     def add_bonds(self):
@@ -218,7 +230,6 @@ class MD_MODEL:
                 self.angle_force.addAngle(i, i + 1, i + 2, np.pi, 200)
         self.system.addForce(self.angle_force)
     
-
     def add_loops(self, i):
         'LE force that connects cohesin restraints or adds dummy loops if undefined'
         self.LE_force = mm.HarmonicBondForce()
@@ -270,8 +281,11 @@ class MD_MODEL:
     def add_pulling_force(self):
         self.pull_force = mm.CustomExternalForce("-f * x")
         self.pull_force.addPerParticleParameter("f")
-        for i in range(2*self.N_beads):
+        for i in range(self.N_beads):
             self.pull_force.addParticle(i, [0.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
+        if self.run_repli:
+            for i in range(self.N_beads, 2 * self.N_beads):
+                self.pull_force.addParticle(i, [0.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
         self.system.addForce(self.pull_force)
     
     def add_blocks(self,i):
@@ -310,7 +324,7 @@ class MD_MODEL:
                 self.container_force.addParticle([self.chain_idx[i]])
         self.system.addForce(self.container_force)
     
-    def add_forcefield(self,i,use_container=False):
+    def add_forcefield(self, i, use_container=False):
         '''
         Here is the definition of the forcefield.
 
@@ -324,7 +338,8 @@ class MD_MODEL:
         self.add_bonds()
         self.add_stiffness()
         self.add_pulling_force()
-        if use_container: self.add_container(R = self.rw_l)
-        if np.all(self.Cs!=None): self.add_blocks(i)
-        if self.run_repli: self.add_repliforce(i)
+        if use_container: self.add_container(R=self.rw_l)
+        if np.all(self.Cs != None): self.add_blocks(i)
+        if self.run_repli:  # Add replication forces only if replication is enabled
+            self.add_repliforce(i)
         self.add_loops(i)

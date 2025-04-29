@@ -2,7 +2,6 @@ from numba import njit, prange
 import numpy as np
 import random as rd
 from .preproc import *
-from tqdm import tqdm
 
 def preprocessing(bedpe_file:str, region:list, chrom:str, N_beads:int):
     '''
@@ -109,8 +108,7 @@ def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_nor
     '''
     energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm) + E_fold(ms, ns, fold_norm)
     if fold_norm2!=0: energy += E_fold(ms[N_lef:N_lef+N_lef2],ns[N_lef:N_lef+N_lef2],fold_norm2)
-    if rep_norm!=0.0:
-        energy += E_rep(f_rep, ms, ns, t, rep_norm)
+    if rep_norm!=0.0 and f_rep is not None: energy += E_rep(f_rep, ms, ns, t, rep_norm)
     if (potts_norm1!=0.0 or potts_norm2!=0.0): energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)
     return energy
 
@@ -161,8 +159,7 @@ def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
 @njit
-def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,N_lef,potts_norm2=0.0):
-    N_beads = len(spins)
+def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,potts_norm2=0.0):
     if m_new>=0 and m_old>=0:
         dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])-J[m_old,n_old]*(spins[m_old]==spins[n_old])
     elif m_new<0 and m_old>=0:
@@ -174,20 +171,25 @@ def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,N_lef,potts_norm2=0.0):
     return potts_norm2*dE
 
 @njit
-def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm ,rep_norm, ms, ns, m_new, n_new, idx,  t, f_rep, spins, J, potts_norm2=0.0):
+def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, idx, t, f_rep, spins, J, potts_norm2=0.0):
     '''
     Total energy difference.
     '''
     dE = 0.0
-    if idx<N_lef:
-        dE += get_dE_fold(fold_norm,ms[:N_lef],ns[:N_lef],m_new,n_new,idx)
+    if idx < N_lef:
+        dE += get_dE_fold(fold_norm, ms[:N_lef], ns[:N_lef], m_new, n_new, idx)
     else:
-        dE += get_dE_fold(fold_norm2,ms[N_lef:N_lef+N_lef2],ns[N_lef:N_lef+N_lef2],m_new,n_new,idx-N_lef)
+        dE += get_dE_fold(fold_norm2, ms[N_lef:N_lef+N_lef2], ns[N_lef:N_lef+N_lef2], m_new, n_new, idx - N_lef)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm)
-    if rep_norm!=0.0:
+    
+    # Explicitly handle replication energy only if rep_norm > 0 and f_rep is not None
+    if rep_norm > 0.0 and f_rep is not None:
         dE += get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx)
-    if potts_norm2!=0.0: dE += get_dE_potts_link(spins,J, m_new, n_new, ms[idx], ns[idx], len(ms), potts_norm2)
+    
+    if potts_norm2 > 0.0:
+        dE += get_dE_potts_link(spins, J, m_new, n_new, ms[idx], ns[idx], potts_norm2)
+    
     return dE
 
 @njit
@@ -200,7 +202,7 @@ def unbind_bind(N_beads):
     return int(m_new), int(n_new)
 
 @njit
-def slide(m_old, n_old, N_beads, f, t, rw=True):
+def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     '''
     Sliding Monte-Carlo step.
     '''
@@ -219,17 +221,18 @@ def slide(m_old, n_old, N_beads, f, t, rw=True):
         elif n_new < N_beads - 1:
             n_new += 1
 
-    # Pushing or replication forks
-    if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-        m_new = closest_opposite(f[:, t], m_new)
-    if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-        n_new = closest_opposite(f[:, t], n_new)    
+    # Handle replication forks only if f is provided
+    if f is not None:
+        if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+            m_new = closest_opposite(f[:, t], m_new)
+        if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+            n_new = closest_opposite(f[:, t], n_new)    
     
     # They cannot go further than chromosome boundaries
-    if n_new>=N_beads: n_new = N_beads - 1
-    if m_new>=N_beads: m_new = N_beads - 1
-    if m_new<0: m_new = 0
-    if n_new<0: n_new = 0
+    if n_new >= N_beads: n_new = N_beads - 1
+    if m_new >= N_beads: m_new = N_beads - 1
+    if m_new < 0: m_new = 0
+    if n_new < 0: n_new = 0
 
     return int(m_new), int(n_new)
 
@@ -258,93 +261,99 @@ def initialize_J(N_beads, J, ms, ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=np.array([[1,0],[1,0]],dtype=np.int32), potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
-    # Initialization of parameters@n
+    # Initialization of parameters
     Ti = T
 
-    # Initialization of the time dependent component of the magnetic field
-    ht = ht_old = np.zeros(N_beads,dtype=np.float64)
+    # Initialization of the time-dependent component of the magnetic field
+    ht = ht_old = np.zeros(N_beads, dtype=np.float64)
     mask = (ht_old == 0)
 
-    # Choices for MC
-    spin_choices = np.array([-2,-1,0,1,2])
+    # Choices for Monte Carlo
+    spin_choices = np.array([-2, -1, 0, 1, 2])
     spin_idx_choices = np.arange(N_beads)
     lef_idx_choices = np.arange(N_lef)
     
     # Initialization of matrices
-    ms, ns, spins = initialize(N_lef,N_lef2, N_beads)
-    spin_traj = np.zeros((N_beads, N_steps//MC_step),dtype=np.int32)
-    J = initialize_J(N_beads,J,ms,ns)
+    ms, ns, spins = initialize(N_lef, N_lef2, N_beads)
+    spin_traj = np.zeros((N_beads, N_steps // MC_step), dtype=np.int32)
+    J = initialize_J(N_beads, J, ms, ns)
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
-    Es = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Ks = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Es_potts = np.zeros(N_steps//MC_step, dtype=np.float64)
-    mags = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Fs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Bs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Rs = np.zeros(N_steps//MC_step, dtype=np.float64)
-    Ms, Ns = np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int64), np.zeros((N_lef+N_lef2, N_steps//MC_step), dtype=np.int64)
-    Ms[:,0], Ns[:,0] = ms, ns
+    Es = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Ks = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Es_potts = np.zeros(N_steps // MC_step, dtype=np.float64)
+    mags = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Fs = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Bs = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Rs = np.zeros(N_steps // MC_step, dtype=np.float64)
+    Ms, Ns = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64), np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
+    Ms[:, 0], Ns[:, 0] = ms, ns
 
     for i in range(N_steps):
         # Calculate replication time
-        rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration)-1
-        if rt==(int(rep_duration)-1): lef_idx_choices = np.arange(N_lef+N_lef2)
-        mag_field = 2 * (1 - 2 * rt / rep_duration)
-        ht += mask * mag_field * f_rep[:, rt]
+        if rep_norm == 0.0 or f_rep is None:
+            rt = 0
+        else:
+            rt = 0 if i < t_rep else int(i - t_rep) if (i >= t_rep and i < t_rep + rep_duration) else int(rep_duration) - 1
+            if rt == (int(rep_duration) - 1):
+                lef_idx_choices = np.arange(N_lef + N_lef2)
+            mag_field = 2 * (1 - 2 * rt / rep_duration)
+            ht += mask * mag_field * f_rep[:, rt]
+
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
         for j in range(N_beads):
             # Propose a move for cohesins (rewiring)
-            do_rewiring = rd.random()<p_rew
+            do_rewiring = rd.random() < p_rew
             if do_rewiring:
                 lef_idx = np.random.choice(lef_idx_choices)
                 m_old, n_old = ms[lef_idx], ns[lef_idx]
-                r = np.random.choice(np.array([0,1]))
-                if m_old<=0 or n_old<=0: r=0
-                if r==0:
+                r = np.random.choice(np.array([0, 1]))
+                if m_old <= 0 or n_old <= 0:
+                    r = 0
+                if r == 0:
                     m_new, n_new = unbind_bind(N_beads)
-                elif r==1:
+                elif r == 1:
                     m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, f_rep, rt, rw)
                     
                 # Cohesin energy difference for rewiring move
                 dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
-                    # Change the inetraction matrix
-                    if m_old>=0:
-                        J[m_old,n_old] -= 1
-                        J[n_old,m_old] -= 1
-                    if m_new>=0:
-                        J[m_new,n_new] += 1
-                        J[n_new,m_new] += 1
+                    # Change the interaction matrix
+                    if m_old >= 0:
+                        J[m_old, n_old] -= 1
+                        J[n_old, m_old] -= 1
+                    if m_new >= 0:
+                        J[m_new, n_new] += 1
+                        J[n_new, m_new] += 1
                     ms[lef_idx], ns[lef_idx] = m_new, n_new
             else:
                 # Propose a node state change
                 spin_idx = np.random.choice(spin_idx_choices)
-                s = np.random.choice(spin_choices[spin_choices!=spins[spin_idx]])
+                s = np.random.choice(spin_choices[spin_choices != spins[spin_idx]])
 
                 # Compute the energy that corresponds only to the node change
-                dE = get_dE_node(spins,spin_idx,s,J,h,ht,ht_old,potts_norm1,potts_norm2,rt,rep_fork_organizers)
+                dE = get_dE_node(spins, spin_idx, s, J, h, ht, ht_old, potts_norm1, potts_norm2, rt, rep_fork_organizers)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     spins[spin_idx] = s
         ht_old = ht
         mask = (ht_old == 0)
         
-        # Keep track on energies and trajectories of LEFs and spins
+        # Keep track of energies and trajectories of LEFs and spins
         if i % MC_step == 0:
-            Es[i//MC_step] = E
-            # Ks[i//MC_step] = E_cross(ms, ns, k_norm)
-            mags[i//MC_step] = np.average(spins)
-            Ms[:, i//MC_step], Ns[:, i//MC_step] = ms, ns
-            spin_traj[:,i//MC_step] = spins
-            Es_potts[i//MC_step] = E_potts(spins, J, h, ht, potts_norm1, potts_norm2, rt, rep_fork_organizers)
-            Fs[i//MC_step] = E_fold(ms, ns, fold_norm)
-            Bs[i//MC_step] = E_bind(L,R,ms,ns,bind_norm)
-            # if rep_norm!=0.0: Rs[i//MC_step] = E_rep(f_rep,ms,ns,rt,rep_norm)
+            Es[i // MC_step] = E
+            mags[i // MC_step] = np.average(spins)
+            Ms[:, i // MC_step], Ns[:, i // MC_step] = ms, ns
+            spin_traj[:, i // MC_step] = spins
+            Es_potts[i // MC_step] = E_potts(spins, J, h, ht, potts_norm1, potts_norm2, rt, rep_fork_organizers)
+            Fs[i // MC_step] = E_fold(ms, ns, fold_norm)
+            Bs[i // MC_step] = E_bind(L, R, ms, ns, bind_norm)
+            if rep_norm != 0.0 and f_rep is not None:
+                Rs[i // MC_step] = E_rep(f_rep, ms, ns, rt, rep_norm)
 
     return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags
