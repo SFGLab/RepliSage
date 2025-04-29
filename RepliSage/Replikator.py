@@ -3,13 +3,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.signal import find_peaks
-from sklearn import preprocessing
 from .common import *
 from .replication_simulator import *
 import pandas as pd
 import time
 from tqdm import tqdm
-from numba import njit, prange
+from numba import njit
 
 @njit
 def gaussian(x, mu, sig):
