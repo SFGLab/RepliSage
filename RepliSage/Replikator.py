@@ -22,8 +22,27 @@ def get_p_vector(T, mu, sig):
         ps.append(gaussian(i, mu, sig)/(1-ps[-1]))
     return ps
 
+def sanitize_chr_dataframe(df):
+    """
+    Takes a pandas DataFrame and checks whether the first column header looks like 'Chr', 'chrom', etc.
+    If so, the header row is discarded and column names are reset to integers: 0, 1, 2, ...
+    """
+    chr_like = ['chr', 'chrom', 'chromosome']
+    
+    # Get the first column header, normalized
+    first_col = str(df.columns[0]).strip().lower()
+    
+    if any(first_col.startswith(prefix) for prefix in chr_like):
+        # Header is present, so remove the first row and reset index
+        df = df.drop(index=0).reset_index(drop=True)
+
+    # Rename all columns to integers
+    df.columns = range(df.shape[1])
+    
+    return df
+
 class Replikator:
-    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None,Tstd_factor=0.1,speed_factor=20):
+    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None,Tstd_factor=0.1,speed_factor=20,sc=True):
         '''
         Initialization of the data preprocessing.
         ------------------------------------------
@@ -34,16 +53,33 @@ class Replikator:
         chrom: the chromosome of interest
         coords: the region of interest as list [start,end]. It should be a list.
         '''
-        self.chrom, self.coords, self.is_region = chrom, np.array(coords), np.all(coords!=None)
+        self.chrom, self.coords, self.is_region, self.sc = chrom, np.array(coords), np.all(coords!=None), sc
         chrom_nr = int(re.sub(r'\D', '', self.chrom)) - 1
-        self.data = pd.read_parquet(rept_data_path)
-        self.gen_windows = self.data[self.data['chromosome'] == chrom_nr][['start', 'end', 'center']].values
-        self.chrom_size = int(np.max(self.gen_windows))
-        single_cell_cols = [col for col in self.data.columns if col.startswith('SC_')]
-        self.mat = self.data[self.data['chromosome'] == chrom_nr][single_cell_cols].T.values
+        if sc:
+            self.data = pd.read_parquet(rept_data_path)
+            self.gen_windows = self.data[self.data['chromosome'] == chrom_nr][['start', 'end', 'center']].values
+            self.chrom_size = int(np.max(self.gen_windows))
+            single_cell_cols = [col for col in self.data.columns if col.startswith('SC_')]
+            self.mat = self.data[self.data['chromosome'] == chrom_nr][single_cell_cols].T.values
+        else:
+            self.data = pd.read_csv(rept_data_path, sep='\t', header=None)
+            self.data = self.data.fillna(0)
+            self.data = sanitize_chr_dataframe(self.data)
+            self.data[0] = 'chr' + self.data[0].astype(str)
+
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
+
+    def process_df(self):
+        self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
+        if self.is_region:
+            start, end = self.coords[0], self.coords[1]
+            self.data = self.data[(self.data[1] >= start) & (self.data[1] <= end)].reset_index(drop=True)
+        self.avg_fx = self.data[2].values
+        print(self.avg_fx)
+        self.avg_fx = (self.avg_fx - np.min(self.avg_fx)) / (np.max(self.avg_fx) - np.min(self.avg_fx))
+        self.avg_fx = reshape_array(self.avg_fx, self.L)
     
     def process_matrix(self):
         '''
@@ -140,8 +176,11 @@ class Replikator:
         This function prepares the data and computes the initiation rate.
         The functions are called in the correct sequence here.
         '''
-        self.process_matrix()
-        self.compute_f()
+        if self.sc:
+            self.process_matrix()
+            self.compute_f()
+        else:
+            self.process_df()
         self.compute_peaks()
         self.compute_slopes()
         self.compute_init_rate()

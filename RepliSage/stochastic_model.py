@@ -36,7 +36,7 @@ class StochasticSimulation:
         # Import replication data
         self.run_replication = rept_path!=None
         if self.run_replication:
-            rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale)
+            rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'))
             rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots')
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()

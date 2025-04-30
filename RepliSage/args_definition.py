@@ -147,7 +147,8 @@ args = ListOfArgs([
     # Input data
     Arg('N_BEADS', help="Number of Simulation Beads.", type=int, default='', val=''),
     Arg('BEDPE_PATH', help="A .bedpe file path with loops. It is required.", type=str, default='', val=''),
-    Arg('SC_REPT_PATH', help="The replication timing dataset.", type=str, default=default_rept_path, val=default_rept_path),
+    Arg('REPT_PATH', help="The replication timing dataset.", type=str, default='', val=''),
+    Arg('SC_REPT_PATH', help="The single cell replication timing dataset.", type=str, default=default_rept_path, val=default_rept_path),
     Arg('OUT_PATH', help="Output folder name.", type=str, default='../results', val='../results'),
     Arg('REGION_START', help="Starting region coordinate.", type=int, default='', val=''),
     Arg('REGION_END', help="Ending region coordinate.", type=int, default='', val=''),

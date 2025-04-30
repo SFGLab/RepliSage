@@ -100,7 +100,12 @@ def main():
     # Define data and coordinates
     region, chrom =  [args.REGION_START, args.REGION_END], args.CHROM
     bedpe_file = args.BEDPE_PATH
-    rept_path = args.SC_REPT_PATH
+    rept_path = args.SC_REPT_PATH if args.REPT_PATH is None else args.REPT_PATH
+    if args.REPT_PATH is not None:
+        if not args.REPT_PATH.endswith('.txt'):
+            raise ValueError("REPT_PATH must be a .txt file if provided.")
+        print(f"Using provided REPT_PATH: {rept_path} instead of the built-in single-cell one.")
+
     out_path = args.OUT_PATH
     
     # Run simulation

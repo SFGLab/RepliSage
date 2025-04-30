@@ -70,10 +70,11 @@ Note that to run replisage it is needed to have `GM12878_single_cell_data_hg37.m
 
 ### Input Data
 
+#### Replication Timing Data
 Single-cell replication timing data are imported automatically in RepliSage (into the directory `RepliSage/data`),
 therefore it is not necessary to prepare them manually. However, in case you would like to use your own data, RepliSage understands Parquet format (for high compression).
 
-Example structure of the expected Parquet data:
+Example structure of the expected Parquet data in `SC_REPT_PATH`:
 
 ```text
    chromosome   start     end   center  SC_1  SC_2  SC_3
@@ -86,6 +87,30 @@ Each `SC_#` column corresponds to a single-cell replication state in the specifi
 From these replication timing data, compartmentalization is also determined,
 thus it is not required to run any separate compartment caller.
 
+Alternativelly, the user can provide classical averaged replication timing curves in `REPT_PATH`. The truth is that the single-cell experiment does not add any significant information, and thus the user is free to choose the format they prefer.
+
+The averaged replication timing data should be in `txt` format  and look like this,
+
+```txt
+Chr 	 Coordinate 	 Replication Timing 
+1	10257	-0.7371
+1	15536	-0.6772
+1	17346	-0.6566
+1	30810	-0.5037
+1	54126	-0.2384
+1	57466	-0.2003
+1	61854	-0.1502
+1	67222	-0.0887
+1	95431	0.236
+1	100750	0.2976
+1	103105	0.3249
+1	107644	0.3776
+1	109329	0.3972
+1	112556	0.4348
+1	115568	0.4698
+```
+
+#### Loop interactions
 The main assumption of this work is that the process of replication provides information about compartmentalization and epigenetic mark spreading,
 since replication timing is highly correlated with compartmentalization, and compartmentalization itself emerges as a macrostate of many interacting epigenetic domains following block-copolymer physics.
 
@@ -200,6 +225,7 @@ You can define these parameters based on the table of simulation parameters.
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
 | SC_REPT_PATH            | str       | `defailt_rept_path` | Path to the single cell replication timing data file.                      |
+| REPT_PATH               | str       | None            | Path to the replication timing data file. If specified, it does not take `SC_REPT_PATH` into account.  |
 | REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
 | REGION_END              | int       | None            | End position of the genomic region to simulate.                            |
 | CHROM                   | str       | None            | Chromosome identifier for the simulation.                                  |
