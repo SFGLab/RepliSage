@@ -41,6 +41,11 @@ This parts takes as input the states produced by the stochastic simulation and o
 
 For more details of the implementation, we suggest to our users to read the method paper of RepliSage.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a3f5dc42-df41-4ab0-a4d7-4e0ae9b306e3" alt="schema">
+</p>
+
+
 ## Requirements
 
 RepliSage is a computationally and biophysically demanding project. It requires significant computing resources, both CPU and GPU. We recommend running RepliSage on high-performance workstations or HPC clusters equipped with a strong CPU and a GPU supporting CUDA (preferred) or at least OpenCL.
