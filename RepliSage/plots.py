@@ -7,7 +7,6 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from tqdm import tqdm
 import time
-from matplotlib.colors import ListedColormap
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -84,8 +83,8 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
 
     # plt.ylim((0,1))
     # plt.title('Proportion of Same-State and Different-State Links Over Time')
-    plt.savefig(out_path+'/plots/same_diff_sign.png',format='png',dpi=200)
-    plt.savefig(out_path+'/plots/same_diff_sign.svg',format='svg',dpi=200)
+    plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.png',format='png',dpi=200)
+    plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.svg',format='svg',dpi=200)
     plt.grid(True)
     plt.close()
 
@@ -137,8 +136,8 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     #             fontsize=14)
 
     # plt.title('Average Ls with 95% Confidence Interval',fontsize=16)
-    plt.savefig(out_path+'/plots/loop_length.png',format='svg',dpi=200)
-    plt.savefig(out_path+'/plots/loop_length.svg',format='svg',dpi=200)
+    plt.savefig(out_path+'/plots/MCMC_diagnostics/loop_length.png',format='svg',dpi=200)
+    plt.savefig(out_path+'/plots/MCMC_diagnostics/loop_length.svg',format='svg',dpi=200)
     plt.grid(True)
     plt.close()
 
@@ -188,9 +187,9 @@ def coh_traj_plot(ms,ns,N_beads,path,jump_threshold=200,min_stable_time=10):
     plt.gca().invert_yaxis()
     plt.ylim((0,N_beads))
     # plt.gca().set_ylim(bottom=0) 
-    save_path = path+'/plots/LEFs.png'
+    save_path = path+'/plots/MCMC_diagnostics/LEFs.png'
     plt.savefig(save_path,format='png')
-    save_path = path+'/plots/LEFs.svg'
+    save_path = path+'/plots/MCMC_diagnostics/LEFs.svg'
     plt.savefig(save_path,format='svg')
     plt.close()
     end = time.time()
@@ -208,11 +207,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.xlabel('Monte Carlo Step', fontsize=16)
     # plt.yscale('symlog')
     plt.legend()
-    save_path = path+'/plots/energies.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/energies.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/energies.svg'
+    save_path = path+'/plots/MCMC_diagnostics/energies.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/energies.png'
+    save_path = path+'/plots/MCMC_diagnostics/energies.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -220,11 +219,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.plot(Es, 'k',label='Total Energy')
     plt.ylabel('Total Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/total_energy.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/total_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/total_energy.svg'
+    save_path = path+'/plots/MCMC_diagnostics/total_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/total_energy.png'
+    save_path = path+'/plots/MCMC_diagnostics/total_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -232,11 +231,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.plot(mags, 'purple',label='mags')
     plt.ylabel('Magnetization', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/mag.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/mag.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/mag.svg'
+    save_path = path+'/plots/MCMC_diagnostics/mag.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/mag.png'
+    save_path = path+'/plots/MCMC_diagnostics/mag.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -244,11 +243,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.plot(Fs, 'b')
     plt.ylabel('Folding Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/fold_energy.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/fold_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/fold_energy.svg'
+    save_path = path+'/plots/MCMC_diagnostics/fold_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/fold_energy.png'
+    save_path = path+'/plots/MCMC_diagnostics/fold_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -256,11 +255,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.plot(Es_potts, 'orange')
     plt.ylabel('Energy of the Potts Model', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/potts_energy.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/potts_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/potts_energy.svg'
+    save_path = path+'/plots/MCMC_diagnostics/potts_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/potts_energy.png'
+    save_path = path+'/plots/MCMC_diagnostics/potts_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -268,11 +267,11 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.plot(Bs, 'g')
     plt.ylabel('Binding Energy', fontsize=16)
     plt.xlabel('Monte Carlo Step', fontsize=16)
-    save_path = path+'/plots/bind_energy.pdf'
+    save_path = path+'/plots/MCMC_diagnostics/bind_energy.pdf'
     plt.savefig(save_path,format='pdf',dpi=200)
-    save_path = path+'/plots/bind_energy.svg'
+    save_path = path+'/plots/MCMC_diagnostics/bind_energy.svg'
     plt.savefig(save_path,format='svg',dpi=200)
-    save_path = path+'/plots/bind_energy.png'
+    save_path = path+'/plots/MCMC_diagnostics/bind_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
     
@@ -291,13 +290,13 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.xlabel("Lags", fontsize=16)
     plt.grid()
     if path!=None:
-        save_path = path+'/plots/autoc.png'
+        save_path = path+'/plots/MCMC_diagnostics/autoc.png'
         plt.savefig(save_path,dpi=400)
-        save_path = path+'/plots/autoc.svg'
+        save_path = path+'/plots/MCMC_diagnostics/autoc.svg'
         plt.savefig(save_path,format='svg',dpi=200)
-        save_path = path+'/plots/autoc.pdf'
+        save_path = path+'/plots/MCMC_diagnostics/autoc.pdf'
         plt.savefig(save_path,format='pdf',dpi=200)
-        save_path = path+'/plots/autoc.png'
+        save_path = path+'/plots/MCMC_diagnostics/autoc.png'
         plt.savefig(save_path,format='png',dpi=200)
     plt.close()
 
@@ -306,6 +305,6 @@ def ising_traj_plot(spins, save_path):
     plt.imshow(spins, cmap='bwr', aspect='auto')
     plt.xlabel('MC step', fontsize=16)
     plt.ylabel('Simulation Beads', fontsize=16)
-    plt.savefig(save_path + '/plots/potts_traj.png', format='png', dpi=200)
-    plt.savefig(save_path + '/plots/potts_traj.svg', format='svg', dpi=200)
+    plt.savefig(save_path + '/plots/MCMC_diagnostics/potts_traj.png', format='png', dpi=200)
+    plt.savefig(save_path + '/plots/MCMC_diagnostics/potts_traj.svg', format='svg', dpi=200)
     plt.close()

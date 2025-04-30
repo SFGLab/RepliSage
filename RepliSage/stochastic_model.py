@@ -37,7 +37,7 @@ class StochasticSimulation:
         self.run_replication = rept_path!=None
         if self.run_replication:
             rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'))
-            rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots')
+            rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots/replication_simulation')
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
         else:
@@ -79,22 +79,24 @@ class StochasticSimulation:
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
 
         if save_MDT:
-            np.save(f'{self.out_path}/metadata/Ms.npy', self.Ms)
-            np.save(f'{self.out_path}/metadata/Ns.npy', self.Ns)
-            np.save(f'{self.out_path}/metadata/Es.npy', self.Es)
-            np.save(f'{self.out_path}/metadata/Fs.npy', self.Fs)
-            np.save(f'{self.out_path}/metadata/Bs.npy', self.Bs)
-            np.save(f'{self.out_path}/metadata/loop_lengths.npy', self.Ns-self.Ms)
-            np.save(f'{self.out_path}/metadata/Es_potts.npy', self.Es_potts)
-            np.save(f'{self.out_path}/metadata/mags.npy',self.mags)
-            np.save(f'{self.out_path}/metadata/spins.npy', self.spin_traj)
+            np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)
+            np.save(f'{self.out_path}/metadata/MCMC_output/Ns.npy', self.Ns)
+            np.save(f'{self.out_path}/metadata/energy_factors/Es.npy', self.Es)
+            np.save(f'{self.out_path}/metadata/energy_factors/Fs.npy', self.Fs)
+            np.save(f'{self.out_path}/metadata/energy_factors/Bs.npy', self.Bs)
+            np.save(f'{self.out_path}/metadata/MCMC_output/loop_lengths.npy', self.Ns-self.Ms)
+            np.save(f'{self.out_path}/metadata/energy_factors/Es_potts.npy', self.Es_potts)
+            np.save(f'{self.out_path}/metadata/MCMC_output/mags.npy',self.mags)
+            np.save(f'{self.out_path}/metadata/MCMC_output/spins.npy', self.spin_traj)
     
     def show_plots(self):
         '''
         Draw plots.
         '''
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
-        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=100,min_stable_time=self.N_steps//self.MC_step//10)
+        print('Minstable time:', self.N_steps//self.MC_step//20)
+        print('Jump threshold:', self.N_beads//self.N_lef)
+        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
         plot_loop_length(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)

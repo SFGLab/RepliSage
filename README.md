@@ -272,6 +272,7 @@ You can define these parameters based on the table of simulation parameters.
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | INITIAL_STRUCTURE_TYPE  | str       | rw              | Type of initial structure (e.g., rw for random walk).                      |
 | SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM).                                |
+| DCD_REPORTER           | bool      | False           | Enables saving of molecular dynamics trajectories in DCD format.           |
 | INTGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
 | INTEGRATOR_STEP         | Quantity  | 10 femtosecond  | Time step for the molecular dynamics integrator.                           |
 | FORCEFIELD_PATH         | str       | default_xml_path| Path to the force field XML file.                                          |
@@ -280,48 +281,68 @@ You can define these parameters based on the table of simulation parameters.
 | SIM_TEMP                | Quantity  | 310 kelvin      | Temperature for molecular dynamics simulation.                             |
 | SIM_STEP                | int       | 10000           | Number of steps for molecular dynamics simulation.                         |
 
-## Output and results
+## Output and Results
 
-The output is organized in the following folders,
+The output is organized into a well-structured directory hierarchy as follows:
 
 ```
 .
 ├── ensemble
-│   ├── ensemble_100_BR.cif
-...
-├── LE_init_struct.cif
+│   ├── ensemble_10_BR.cif
+│   ├── ensemble_11_BR.cif
+│   ├── ensemble_12_BR.cif
+│   ├── ensemble_13_BR.cif
 ├── metadata
-│   ├── asphs.npy
-│   ├── binder_cumulant.npy
-│   ├── Bs.npy
-│   ├── cluster_order.npy
-│   ├── CNs.npy
-│   ├── convex_hull_volume.npy
-│   ├── eeds.npy
-│   ├── entropy.npy
-│   ├── Es.npy
-│   ├── Es_potts.npy
-│   ├── fractal_dims.npy
-│   ├── Fs.npy
-│   ├── gdfs.npy
-...
-├── minimized_model.cif
+│   ├── energy_factors
+│   │   ├── Bs.npy
+│   │   ├── Es.npy
+│   │   ├── Es_potts.npy
+│   │   └── Fs.npy
+│   ├── graph_metrics
+│   ├── MCMC_output
+│   │   ├── loop_lengths.npy
+│   │   ├── mags.npy
+│   │   ├── Ms.npy
+│   │   ├── Ns.npy
+│   │   └── spins.npy
+│   ├── md_dynamics
+│   │   ├── LE_init_struct.cif
+│   │   ├── minimized_model.cif
+│   │   └── replisage.psf
+│   └── structural_metrics
 └── plots
-    ├── asphericity.svg
-    ├── autoc.pdf
-    ├── autoc.png
-    ├── autoc.svg
-    ├── bind_energy.pdf
-    ├── bind_energy.png
-    ├── bind_energy.svg
-    ├── binder_cumulant.png
-...
+    ├── graph_metrics
+    ├── MCMC_diagnostics
+    ├── replication_simulation
+    │   ├── rep_frac.png
+    │   └── rep_simulation.png
+    └── structural_metrics
+└── params.txt
 ```
 
-Therefore:
-* In the first directory `ensemble` you can find ensembles of 3D structures produced by RepliSage. The index indicates pseudo-time and the tag `BR`, `R` or `AR` it has to do about the phase of cell cycle. `BR` means before replication (G1 phase), `R` during replication (S phase), and `AR` after replication (G2/M phase).
-* In the `metadata` you can find a lot of arrays that are produced during simulation. There are all the energy factors, and the metrics of the 3D structure of polymer, as a functions of time. Moreover, there are saved the parameters that were used for input and the some files that are appropriate for visualization in UCSF chimera (for example `psf` and `dcd`).
-* In `plots` there are output plots. Some of the most important ones are: the digram of the trajectories of LEFs, the diagram of potts states, the average length during time. It is also important to track the autocorrelations of the MCMC algorithm. Heatmaps are produced as well for comparisons with experimental data.
+### Directory Details
+
+1. **`ensemble`**: Stores 3D structural ensembles categorized by cell cycle phase:
+   - `G1`: Structures representing the pre-replication phase (with BR, before replication).
+   - `S`: Structures captured during the replication phase (with R during replication).
+   - `G2M`: Structures corresponding to the post-replication phase (with AR after replication).
+
+2. **`metadata`**: Contains simulation data and intermediate outputs:
+   - `energy_factors`: Numerical arrays for energy components (e.g., folding, Potts model).
+   - `graph_metrics`: Graph-related metrics such as clustering coefficients and degree distributions.
+   - `MCMC_output`: Results from the Monte Carlo simulation, including loop lengths and spin states.
+   - `md_dynamics`: Files for molecular dynamics visualization (e.g., `.psf`, `.cif`).
+   - `structural_metrics`: Structural properties like radius of gyration and contact probabilities.
+
+3. **`plots`**: Includes visualizations and diagnostic plots:
+   - `graph_metrics`: Graph-related metric plots (e.g., clustering coefficients).
+   - `MCMC_diagnostics`: Diagnostics for the MCMC algorithm (e.g., autocorrelation).
+   - `replication_simulation`: Visualizations of replication dynamics.
+   - `structural_metrics`: Plots of structural properties (e.g., radius of gyration).
+
+This directory structure ensures clear organization and facilitates efficient analysis of results, with data neatly separated by phase and type.
+
+`params.txt` file contains information about the input parameters.
 
 ### Expected Results
 #### Averaged loop diagram

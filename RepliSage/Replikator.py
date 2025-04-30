@@ -65,7 +65,8 @@ class Replikator:
             self.data = pd.read_csv(rept_data_path, sep='\t', header=None)
             self.data = self.data.fillna(0)
             self.data = sanitize_chr_dataframe(self.data)
-            self.data[0] = 'chr' + self.data[0].astype(str)
+            if not self.data[0].str.startswith('chr').all():
+                self.data[0] = 'chr' + self.data[0].astype(str)
 
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T*Tstd_factor
@@ -77,7 +78,6 @@ class Replikator:
             start, end = self.coords[0], self.coords[1]
             self.data = self.data[(self.data[1] >= start) & (self.data[1] <= end)].reset_index(drop=True)
         self.avg_fx = self.data[2].values
-        print(self.avg_fx)
         self.avg_fx = (self.avg_fx - np.min(self.avg_fx)) / (np.max(self.avg_fx) - np.min(self.avg_fx))
         self.avg_fx = reshape_array(self.avg_fx, self.L)
     

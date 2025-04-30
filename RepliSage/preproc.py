@@ -32,9 +32,9 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     # Check if columns 7 and 8 exist
     has_col_7_8 = df.shape[1] > 8
     if has_col_7_8:
-        print("The input file contains CTCF orientation! It will run taking it into account.")
+        print("\033[92mThe input bedpe file contains CTCF orientation! It will run taking it into account.\033[0m")
     else:
-        print("WARNING: The script does not contain CTCF orientation and thus it is not taken into account. If you would like to add CTCF orientation check the documentation.")
+        print("\033[93mWARNING: The input bedpe file does not contain CTCF orientation and thus it is not taken into account. If you would like to add CTCF orientation check the documentation.\033[0m")
 
     # Compute the matrix
     distances = list()

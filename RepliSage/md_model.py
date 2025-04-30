@@ -6,8 +6,7 @@ import numpy as np
 import time
 import openmm as mm
 from tqdm import tqdm
-from openmm.mtsintegrator import MTSLangevinIntegrator
-from openmm.app import PDBxFile, ForceField, Simulation, DCDReporter, StateDataReporter
+from openmm.app import PDBxFile, ForceField, Simulation, DCDReporter
 from .initial_structures import *
 from .utils import *
 
@@ -70,14 +69,14 @@ class MD_MODEL:
         print('\nBuilding initial structure...')
         points1 = compute_init_struct(self.N_beads,init_struct)
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
-        write_mmcif(points1,points2,self.out_path+'/LE_init_struct.cif')
-        generate_psf(self.N_beads,self.out_path+'/metadata/replisage.psf',duplicated=True)
+        write_mmcif(points1,points2,self.out_path+'/metadata/md_dynamics/LE_init_struct.cif')
+        generate_psf(self.N_beads,self.out_path+'/metadata/md_dynamics/replisage.psf',duplicated=True)
         print('Initial Structure Created Succesfully <3')
         
         platform = mm.Platform.getPlatformByName(self.platform)
 
         # Set up simulation
-        pdb = PDBxFile(self.out_path+'/LE_init_struct.cif')
+        pdb = PDBxFile(self.out_path+'/metadata/md_dynamics/LE_init_struct.cif')
         forcefield = ForceField(ff_path)
 
         # Define the system
@@ -98,9 +97,8 @@ class MD_MODEL:
         self.simulation.minimizeEnergy(tolerance=tol)
         self.state = self.simulation.context.getState(getPositions=True)
         if reporters:
-            self.simulation.reporters.append(StateDataReporter(stdout, (self.N_steps*sim_step)//1000, step=True, totalEnergy=True, potentialEnergy=True, temperature=True))
-            self.simulation.reporters.append(DCDReporter(self.out_path+'/metadata/replisage.dcd', sim_step))
-        PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/minimized_model.cif', 'w'))
+            self.simulation.reporters.append(DCDReporter(self.out_path+'/metadata/md_dynamics/replisage.dcd', sim_step))
+        PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/metadata/md_dynamics/minimized_model.cif', 'w'))
         end = time.time()
         elapsed = end - start
         print(f'Energy minimization finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')

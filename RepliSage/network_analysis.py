@@ -29,7 +29,7 @@ def magnetization(S, q=5, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         max_state = np.max(state_counts)
         M[t] = (q * max_state - N) / (N * (q - 1))
-    np.save(out_path+'/metadata/Mag_potts.npy',M)
+    np.save(out_path+'/metadata/graph_metrics/Mag_potts.npy',M)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -37,8 +37,8 @@ def magnetization(S, q=5, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Potts Magnetization',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/plots/potts_model_normalized_magnetization.svg',format='svg',dpi=200)
-            plt.savefig(out_path+'/plots/potts_model_normalized_magnetization.png',format='png',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/potts_model_normalized_magnetization.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/potts_model_normalized_magnetization.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return M
@@ -61,7 +61,7 @@ def cluster_order(S, viz=False, out_path=None):
         state_counts = np.bincount(S[:, t])
         largest_cluster = np.max(state_counts)
         C[t] = largest_cluster / N
-    np.save(out_path+'/metadata/cluster_order.npy',C)
+    np.save(out_path+'/metadata/graph_metrics/cluster_order.npy',C)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -69,8 +69,8 @@ def cluster_order(S, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Cluster Order',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/plots/cluster_order.svg',format='svg',dpi=200)
-            plt.savefig(out_path+'/plots/cluster_order.png',format='png',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/cluster_order.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/cluster_order.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return C
@@ -88,7 +88,7 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         m2 = np.sum(probs**2)
         m4 = np.sum(probs**4)
         U[t] = 1 - m4 / (3 * m2**2)
-    np.save(out_path+'/metadata/binder_cumulant.npy',U)
+    np.save(out_path+'/metadata/graph_metrics/binder_cumulant.npy',U)
     
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -96,8 +96,8 @@ def binder_cumulant(S, q=5, viz=False, out_path=None):
         plt.xlabel('MC step',fontsize=16)
         plt.ylabel('Binder cumulant',fontsize=16)
         if out_path!=None:
-            plt.savefig(out_path+'/plots/binder_cumulant.svg',format='svg',dpi=200)
-            plt.savefig(out_path+'/plots/binder_cumulant.png',format='png',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/binder_cumulant.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/binder_cumulant.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return U
@@ -121,7 +121,7 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         state_counts = np.bincount(S[:, t], minlength=q)
         probs = state_counts / N
         S_entropy[t] = entropy(probs, base=np.e)
-    np.save(out_path+'/metadata/entropy.npy',S_entropy)
+    np.save(out_path+'/metadata/graph_metrics/entropy.npy',S_entropy)
 
     if viz:
         figure(figsize=(10, 6), dpi=400)
@@ -129,8 +129,8 @@ def entropy_order(S, q=5, viz=False,out_path=None):
         plt.xlabel('MC step')
         plt.ylabel('S entropy')
         if out_path!=None:
-            plt.savefig(out_path+'/plots/entropy.svg',format='svg',dpi=200)
-            plt.savefig(out_path+'/plots/entropy.png',format='png',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/entropy.svg',format='svg',dpi=200)
+            plt.savefig(out_path+'/plots/graph_metrics/entropy.png',format='png',dpi=200)
         plt.grid()
         plt.close()
     return S_entropy
@@ -144,7 +144,7 @@ def overlap_order(S1, S2, out_path=None):
     Q = np.zeros(T)
     for t in range(T):
         Q[t] = np.mean(S1[:, t] == S2[:, t])
-    np.save(out_path+'/metadata/configuration_overlap.npy',Q)
+    np.save(out_path+'/metadata/graph_metrics/configuration_overlap.npy',Q)
     return Q
 
 def visualize_potts_graph(G):
@@ -275,8 +275,8 @@ def get_synch_ensemble(Ms,Ns,Cs,out_path=None):
     plt.ylabel('Synchronization Metric',fontsize=16)
     plt.grid()
     if out_path!=None:
-        plt.savefig(out_path+'/plots/sync.svg',format='svg',dpi=200)
-        plt.savefig(out_path+'/plots/sync.png',format='png',dpi=200)
+        plt.savefig(out_path+'/plots/graph_metrics/sync.svg',format='svg',dpi=200)
+        plt.savefig(out_path+'/plots/graph_metrics/sync.png',format='png',dpi=200)
     plt.close()
 
 def compute_potts_metrics(Ms, Ns, Cs, path):

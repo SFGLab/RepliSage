@@ -11,11 +11,23 @@ import pandas as pd
 from scipy.spatial import distance
 from importlib.resources import files
 from matplotlib.colors import LinearSegmentedColormap
-from scipy.stats.stats import pearsonr, spearmanr, kendalltau
 from tqdm import tqdm
 
 def make_folder(folder_name):
-    subfolders = ['plots', 'metadata', 'ensemble']
+    subfolders = [
+        'plots',
+        'metadata',
+        'ensemble',
+        'plots/MCMC_diagnostics', 
+        'plots/structural_metrics', 
+        'plots/graph_metrics',
+        'plots/replication_simulation', 
+        'metadata/energy_factors',
+        'metadata/MCMC_output',
+        'metadata/structural_metrics', 
+        'metadata/graph_metrics',
+        'metadata/md_dynamics',
+    ]
     for subfolder in subfolders:
         path = os.path.join(folder_name, subfolder)
         os.makedirs(path, exist_ok=True)
@@ -383,10 +395,10 @@ def get_avg_heatmap(path,N1,N2):
         avg_heat += 1/heat
 
     avg_heat = avg_heat/(N2-N1)
-    np.save(path+f'/metadata/heatmap_{N1}_{N2}.npy', avg_heat)
+    np.save(path+f'/metadata/structural_metrics/heatmap_{N1}_{N2}.npy', avg_heat)
 
     figure(figsize=(20, 20))
     plt.imshow(avg_heat,cmap='Reds',vmax=0.2, aspect='auto')
-    plt.savefig(path+f'/plots/heatmap_{N1}_{N2}.png',format='png',dpi=200)
-    plt.savefig(path+f'/plots/heatmap_{N1}_{N2}.svg',format='svg',dpi=200)
+    plt.savefig(path+f'/plots/structural_metrics/heatmap_{N1}_{N2}.png',format='png',dpi=200)
+    plt.savefig(path+f'/plots/structural_metrics/heatmap_{N1}_{N2}.svg',format='svg',dpi=200)
     plt.close()

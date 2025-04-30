@@ -16,17 +16,17 @@ class ArgumentChanger:
         try:
             self.args.get_arg(name).val = value
         except AttributeError:
-            print(f"Warning: Argument '{name}' not found in args object.")
+            print(f"\033[93mWarning: Argument '{name}' not found in args object.\033[0m")
 
     def convenient_argument_changer(self):
         if self.args.REP_WITH_STRESS:
             self.set_arg('REP_T_STD_FACTOR', 0.2)
             self.set_arg('REP_SPEED_SCALE', 5.0)
             self.set_arg('REP_INIT_RATE_SCALE', 5.0)
-            print("Arguments changed because REP_WITH_STRESS is True:")
-            print(f"REP_T_STD_FACTOR: {self.args.REP_T_STD_FACTOR}")
-            print(f"REP_SPEED_SCALE: {self.args.REP_SPEED_SCALE}")
-            print(f"REP_INIT_RATE_SCALE: {self.args.REP_INIT_RATE_SCALE}")
+            print("\033[92mArguments changed because REP_WITH_STRESS is True:\033[0m")
+            print(f"\033[92mREP_T_STD_FACTOR: {self.args.REP_T_STD_FACTOR}\033[0m")
+            print(f"\033[92mREP_SPEED_SCALE: {self.args.REP_SPEED_SCALE}\033[0m")
+            print(f"\033[92mREP_INIT_RATE_SCALE: {self.args.REP_INIT_RATE_SCALE}\033[0m")
 
 def my_config_parser(config_parser: configparser.ConfigParser) -> List[tuple[str, str]]:
     """Helper function that makes flat list arg name, and it's value from ConfigParser object."""
@@ -103,15 +103,23 @@ def main():
     rept_path = args.SC_REPT_PATH if args.REPT_PATH is None else args.REPT_PATH
     if args.REPT_PATH is not None:
         if not args.REPT_PATH.endswith('.txt'):
-            raise ValueError("REPT_PATH must be a .txt file if provided.")
-        print(f"Using provided REPT_PATH: {rept_path} instead of the built-in single-cell one.")
+            raise ValueError("\033[91mREPT_PATH must be a .txt file if provided.\033[0m")
+        print(f"\033[92mUsing provided REPT_PATH: {rept_path} instead of the built-in single-cell one.\033[0m")
 
     out_path = args.OUT_PATH
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
-    sim.run_openmm(args.PLATFORM,mode=args.SIMULATION_TYPE,init_struct=args.INITIAL_STRUCTURE_TYPE,integrator_mode=args.INTEGRATOR_TYPE,integrator_step=args.INTEGRATOR_STEP,p_ev=args.EV_P,sim_step=args.SIM_STEP,tol=args.TOLERANCE,md_temperature=args.SIM_TEMP,ff_path=args.FORCEFIELD_PATH)
+    if args.SIMULATION_TYPE in ['MD', 'EM']:
+        sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
+                       integrator_mode=args.INTEGRATOR_TYPE, integrator_step=args.INTEGRATOR_STEP, 
+                       p_ev=args.EV_P, sim_step=args.SIM_STEP, tol=args.TOLERANCE, 
+                       md_temperature=args.SIM_TEMP, ff_path=args.FORCEFIELD_PATH,
+                       reporters=args.DCD_REPORTER)
+        print("\033[92mCongratulations RepliSage simulation just finished! :)\033[0m")
+    else:
+        raise ValueError("\033[91mError: You did not specify a correct simulation type. Please use 'MD' or 'EM'.\033[0m")
     if save_plots:
         print('\nPloting stuff...') 
         sim.show_plots()
