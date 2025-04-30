@@ -100,8 +100,6 @@ class StochasticSimulation:
         Draw plots.
         '''
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
-        print('Minstable time:', self.N_steps//self.MC_step//20)
-        print('Jump threshold:', 10*self.N_beads//self.N_lef)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=10*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
