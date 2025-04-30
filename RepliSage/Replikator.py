@@ -81,8 +81,6 @@ class Replikator:
             start, end = self.coords[0], self.coords[1]
             self.avg_fx = self.avg_fx[(self.gen_windows >= start) & (self.gen_windows <= end)]
         self.avg_fx = reshape_array(self.avg_fx, self.L)
-        plt.plot(self.avg_fx)
-        plt.show()
     
     def process_matrix(self):
         '''
@@ -112,8 +110,6 @@ class Replikator:
         self.std_fx = reshape_array(self.std_fx, self.L)
         self.avg_ft = reshape_array(self.avg_ft, self.T)
         self.std_ft = reshape_array(self.std_ft, self.T)
-        plt.plot(self.avg_fx)
-        plt.show()
 
     def compute_peaks(self,prominence=0.01):
         '''
