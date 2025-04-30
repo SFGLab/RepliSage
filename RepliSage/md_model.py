@@ -66,14 +66,14 @@ class MD_MODEL:
         '''
         self.p_ev = p_ev
         # Define initial structure
-        print('\nBuilding initial structure...')
+        print('\nStep #3: Run MD model for 3D structure simulation...')
+        print('Building initial structure...')
         points1 = compute_init_struct(self.N_beads,init_struct)
         points2 = points1 + [0.2,0.2,0.2] if self.run_repli else None
         write_mmcif(points1,points2,self.out_path+'/metadata/md_dynamics/LE_init_struct.cif')
         generate_psf(self.N_beads,self.out_path+'/metadata/md_dynamics/replisage.psf',duplicated=True)
         print('Initial Structure Created Succesfully <3')
         
-        platform = mm.Platform.getPlatformByName(self.platform)
 
         # Set up simulation
         pdb = PDBxFile(self.out_path+'/metadata/md_dynamics/LE_init_struct.cif')
@@ -88,6 +88,12 @@ class MD_MODEL:
         
         # Forcefield and Simulation Definition
         self.add_forcefield(self.burnin)
+        try:
+            platform = mm.Platform.getPlatformByName(self.platform)
+            print(f"\033[92mMD simulation will run on the {self.platform} platform.\033[0m")
+        except Exception as e:
+            print(f"\033[93mWarning: {self.platform} platform not found. Falling back to CPU.\033[0m")
+            platform = mm.Platform.getPlatformByName("CPU")
         self.simulation = Simulation(pdb.topology, self.system, integrator, platform)
         self.simulation.context.setPositions(pdb.positions)
 
@@ -105,7 +111,7 @@ class MD_MODEL:
         
         print(f'\nCreating ensembles ({mode} mode)...')
         start = time.time()
-        if not reporters: pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
+        pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
         for i in range(self.burnin,self.N_steps):
             # Compute replicated DNA
             rep_per = self.compute_rep(i)
@@ -133,9 +139,8 @@ class MD_MODEL:
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
             
             # Update progress-bar
-            if not reporters:
-                pbar.update(1)
-                pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
+            pbar.update(1)
+            pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
         if not reporters: pbar.close()
         end = time.time()
         elapsed = end - start

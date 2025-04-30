@@ -74,12 +74,15 @@ class Replikator:
 
     def process_df(self):
         self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
-        if self.is_region:
-            start, end = self.coords[0], self.coords[1]
-            self.data = self.data[(self.data[1] >= start) & (self.data[1] <= end)].reset_index(drop=True)
+        self.gen_windows = self.data[1].values
         self.avg_fx = self.data[2].values
         self.avg_fx = (self.avg_fx - np.min(self.avg_fx)) / (np.max(self.avg_fx) - np.min(self.avg_fx))
+        if self.is_region:
+            start, end = self.coords[0], self.coords[1]
+            self.avg_fx = self.avg_fx[(self.gen_windows >= start) & (self.gen_windows <= end)]
         self.avg_fx = reshape_array(self.avg_fx, self.L)
+        plt.plot(self.avg_fx)
+        plt.show()
     
     def process_matrix(self):
         '''
@@ -109,6 +112,8 @@ class Replikator:
         self.std_fx = reshape_array(self.std_fx, self.L)
         self.avg_ft = reshape_array(self.avg_ft, self.T)
         self.std_ft = reshape_array(self.std_ft, self.T)
+        plt.plot(self.avg_fx)
+        plt.show()
 
     def compute_peaks(self,prominence=0.01):
         '''

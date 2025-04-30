@@ -37,7 +37,13 @@ class StochasticSimulation:
         self.run_replication = rept_path!=None
         if self.run_replication:
             rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'))
-            rep_frac, _, _ = rep.run(scale=scale,out_path=self.out_path+'/plots/replication_simulation')
+            try:
+                rep_frac, _, _ = rep.run(scale=scale, out_path=self.out_path+'/plots/replication_simulation')
+            except Exception as e:
+                raise ValueError("\033[93mSomething went wrong with the replication simulation. "
+                                 "Try to re-run it and see what happens."
+                                 "Probably the region of modeling that you specified is too large or too short "
+                                 "for the resolution of the simulation (number of beads) specified.\033[0m") from e
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
         else:
@@ -64,7 +70,7 @@ class StochasticSimulation:
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
         
         # Running the simulation
-        print('\nRunning RepliSage...')
+        print('\nStep #2: Running RepliSage...')
         start = time.time()
         self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
         self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags = run_energy_minimization(
@@ -95,8 +101,8 @@ class StochasticSimulation:
         '''
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
         print('Minstable time:', self.N_steps//self.MC_step//20)
-        print('Jump threshold:', self.N_beads//self.N_lef)
-        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
+        print('Jump threshold:', 10*self.N_beads//self.N_lef)
+        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=10*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
         plot_loop_length(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)

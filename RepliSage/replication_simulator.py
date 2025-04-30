@@ -48,7 +48,7 @@ def simulator(initiation_rate, speed_mean, speed_std):
         if t>=1_000_000:
             raise(Exception(f"The replication simulation failed to finish before time T={1000000}. \
                 \nPlease increase the initiation rate or velocities parameters and rerun the simulation."))
-
+    
     replicated_dna = rescale_matrix(replicated_dna, T_orig, fork_mat=False)
     l_forks_mat = rescale_matrix(l_forks_mat, T_orig, fork_mat=True)
     r_forks_mat = rescale_matrix(r_forks_mat, T_orig, fork_mat=True)
@@ -144,9 +144,9 @@ class ReplicationSimulator:
         '''
         Run replication simulation.
         '''
-        print("Running replication simulation...")
+        print("Step #1: Running replication simulation...")
         self.f, self.l_forks, self.r_forks, T_final, self.rep_fract = simulator(self.initiation_rate, self.speed_mean, self.speed_std)
-        print(f"Replication simulation finished in time {str(T_final)}.")
+        print("Replication simulation finished! :)")
 
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract
 

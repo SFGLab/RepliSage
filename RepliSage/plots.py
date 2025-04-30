@@ -7,6 +7,7 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from tqdm import tqdm
 import time
+from scipy.signal import detrend
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -141,11 +142,11 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     plt.grid(True)
     plt.close()
 
-def coh_traj_plot(ms,ns,N_beads,path,jump_threshold=200,min_stable_time=10):
+def coh_traj_plot(ms, ns, N_beads, path, jump_threshold=200, min_stable_time=10):
     print('\nPlotting trajectories of cohesins...')
     start = time.time()
     N_coh = len(ms)
-    figure(figsize=(10, 10),dpi=200)
+    figure(figsize=(10, 10), dpi=200)
     cmap = plt.get_cmap('prism')
     colors = [cmap(i / N_coh) for i in range(N_coh)]
 
@@ -153,12 +154,13 @@ def coh_traj_plot(ms,ns,N_beads,path,jump_threshold=200,min_stable_time=10):
         tr_m, tr_n = np.array(ms[nn]), np.array(ns[nn])
         steps = np.arange(len(tr_m))
 
-        # Calculate jump size between steps
-        jumps = np.abs(np.diff(tr_m)) + np.abs(np.diff(tr_n))
+        # Calculate jump size for tr_m and tr_n independently
+        jumps_m = np.abs(np.diff(tr_m))
+        jumps_n = np.abs(np.diff(tr_n))
 
         # Create mask: True = good point, False = jump
         jump_mask = np.ones_like(tr_m, dtype=bool)
-        jump_mask[1:] = jumps < jump_threshold  # after a jump, mark as bad
+        jump_mask[1:] = (jumps_m < jump_threshold) & (jumps_n < jump_threshold)  # both must be below threshold
 
         # Now we want to detect stable regions
         stable_mask = np.copy(jump_mask)
@@ -180,21 +182,20 @@ def coh_traj_plot(ms,ns,N_beads,path,jump_threshold=200,min_stable_time=10):
         tr_m_masked = np.ma.masked_array(tr_m, mask=~stable_mask)
         tr_n_masked = np.ma.masked_array(tr_n, mask=~stable_mask)
 
-    plt.fill_between(steps, tr_m_masked, tr_n_masked,
-                     color=colors[nn], alpha=0.6, interpolate=False, linewidth=0)
+        plt.fill_between(steps, tr_m_masked, tr_n_masked,
+                         color=colors[nn], alpha=0.6, interpolate=False, linewidth=0)
     plt.xlabel('MC Step', fontsize=16)
     plt.ylabel('Simulation Beads', fontsize=16)
     plt.gca().invert_yaxis()
-    plt.ylim((0,N_beads))
-    # plt.gca().set_ylim(bottom=0) 
-    save_path = path+'/plots/MCMC_diagnostics/LEFs.png'
-    plt.savefig(save_path,format='png')
-    save_path = path+'/plots/MCMC_diagnostics/LEFs.svg'
-    plt.savefig(save_path,format='svg')
+    plt.ylim((0, N_beads))
+    save_path = path + '/plots/MCMC_diagnostics/LEFs.png'
+    plt.savefig(save_path, format='png')
+    save_path = path + '/plots/MCMC_diagnostics/LEFs.svg'
+    plt.savefig(save_path, format='svg')
     plt.close()
     end = time.time()
     elapsed = end - start
-    print(f'Plot created succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
+    print(f'Plot created successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')
 
 def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     figure(figsize=(10, 6), dpi=200)
@@ -275,29 +276,26 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
     
-    # Step 1: Fit regression model
+    # Step 1: Use a non-parametric method to remove the trend
+
     ys = np.array(Fs)[burnin:]
-    xs = np.arange(len(ys))
-    coeffs = np.polyfit(xs, ys, 6)  # Polynomial coefficients
-    trend = np.polyval(coeffs, xs)  # Evaluate the polynomial at x
+    detrended_signal = detrend(ys, type='linear')  # Remove linear trend
 
-    # Step 2: Detrend the signal
-    detrended_signal = ys - trend
-
+    # Step 2: Plot the autocorrelation of the detrended signal
     figure(figsize=(10, 6), dpi=400)
-    plot_acf(detrended_signal, title=None, lags = len(np.array(Fs)[burnin:])//2)
+    plot_acf(detrended_signal, title=None, lags=len(detrended_signal) // 2)
     plt.ylabel("Autocorrelations", fontsize=16)
     plt.xlabel("Lags", fontsize=16)
     plt.grid()
-    if path!=None:
-        save_path = path+'/plots/MCMC_diagnostics/autoc.png'
-        plt.savefig(save_path,dpi=400)
-        save_path = path+'/plots/MCMC_diagnostics/autoc.svg'
-        plt.savefig(save_path,format='svg',dpi=200)
-        save_path = path+'/plots/MCMC_diagnostics/autoc.pdf'
-        plt.savefig(save_path,format='pdf',dpi=200)
-        save_path = path+'/plots/MCMC_diagnostics/autoc.png'
-        plt.savefig(save_path,format='png',dpi=200)
+    if path is not None:
+        save_path = path + '/plots/MCMC_diagnostics/autoc.png'
+        plt.savefig(save_path, dpi=400)
+        save_path = path + '/plots/MCMC_diagnostics/autoc.svg'
+        plt.savefig(save_path, format='svg', dpi=200)
+        save_path = path + '/plots/MCMC_diagnostics/autoc.pdf'
+        plt.savefig(save_path, format='pdf', dpi=200)
+        save_path = path + '/plots/MCMC_diagnostics/autoc.png'
+        plt.savefig(save_path, format='png', dpi=200)
     plt.close()
 
 def ising_traj_plot(spins, save_path):
