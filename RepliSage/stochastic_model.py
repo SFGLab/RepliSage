@@ -41,7 +41,7 @@ class StochasticSimulation:
                 rep_frac, _, _ = rep.run(scale=scale, out_path=self.out_path+'/plots/replication_simulation')
             except Exception as e:
                 raise ValueError("\033[93mSomething went wrong with the replication simulation. "
-                                 "Try to re-run it and see what happens."
+                                 "Try to re-run it and see what happens. "
                                  "Probably the region of modeling that you specified is too large or too short "
                                  "for the resolution of the simulation (number of beads) specified.\033[0m") from e
             self.rep_frac = expand_columns(rep_frac, rep_duration)

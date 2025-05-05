@@ -54,7 +54,7 @@ class Replikator:
         coords: the region of interest as list [start,end]. It should be a list.
         '''
         self.chrom, self.coords, self.is_region, self.sc = chrom, np.array(coords), np.all(coords!=None), sc
-        chrom_nr = int(re.sub(r'\D', '', self.chrom)) - 1
+        chrom_nr = int(re.sub(r'\D', '', self.chrom))
         if sc:
             self.data = pd.read_parquet(rept_data_path)
             self.gen_windows = self.data[self.data['chromosome'] == chrom_nr][['start', 'end', 'center']].values
