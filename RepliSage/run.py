@@ -110,8 +110,8 @@ def main():
     out_path = args.OUT_PATH
     
     # Run simulation
-    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale, cohesin_blocks_condensin)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
+    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
+    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, cohesin_blocks_condensin)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
         sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
                        integrator_mode=args.INTEGRATOR_TYPE, integrator_step=args.INTEGRATOR_STEP, 

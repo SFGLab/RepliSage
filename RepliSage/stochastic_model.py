@@ -58,7 +58,7 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis',rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True):
+    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis', rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
         '''
         Energy minimization script.
         '''
@@ -73,17 +73,18 @@ class StochasticSimulation:
         # Running the simulation
         print('This may take some time...')
         start = time.time()
-        self.N_steps,self.MC_step, self.burnin, self.T, self.T_in = N_steps,MC_step, burnin, T, T_min
+        self.N_steps, self.MC_step, self.burnin, self.T, self.T_in = N_steps, MC_step, burnin, T, T_min
         self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags = run_energy_minimization(
-        N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
-        mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
-        L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
-        bind_norm=bind_norm, rep_norm=rep_norm,
-        f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
-        h=self.h, J=self.J, rw=rw, rep_fork_organizers=rep_fork_organizers)
+            N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
+            mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
+            L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
+            bind_norm=bind_norm, rep_norm=rep_norm,
+            f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
+            h=self.h, J=self.J, rw=rw, rep_fork_organizers=rep_fork_organizers,
+            cohesin_blocks_condensin=cohesin_blocks_condensin)
         end = time.time()
         elapsed = end - start
-        print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
+        print(f'Computation finished successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')
 
         if save_MDT:
             np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)
@@ -93,7 +94,7 @@ class StochasticSimulation:
             np.save(f'{self.out_path}/metadata/energy_factors/Bs.npy', self.Bs)
             np.save(f'{self.out_path}/metadata/MCMC_output/loop_lengths.npy', self.Ns-self.Ms)
             np.save(f'{self.out_path}/metadata/energy_factors/Es_potts.npy', self.Es_potts)
-            np.save(f'{self.out_path}/metadata/MCMC_output/mags.npy',self.mags)
+            np.save(f'{self.out_path}/metadata/MCMC_output/mags.npy', self.mags)
             np.save(f'{self.out_path}/metadata/MCMC_output/spins.npy', self.spin_traj)
     
     def show_plots(self):
