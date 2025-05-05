@@ -51,10 +51,10 @@ class StochasticSimulation:
             self.h = np.zeros(self.N_beads)
 
         # Import loop data
+        print('\nStep #2: Running RepliSage...')
         self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
         self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
         self.N_lef2 = N_lef2
-        print('\nStep #2: Running RepliSage...')
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
