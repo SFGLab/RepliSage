@@ -288,7 +288,6 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
     J = initialize_J(N_beads, J, ms, ns)
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers, cohesin_blocks_condensin)
     Es = np.zeros(N_steps // MC_step, dtype=np.float64)
-    Ks = np.zeros(N_steps // MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps // MC_step, dtype=np.float64)
     mags = np.zeros(N_steps // MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps // MC_step, dtype=np.float64)
@@ -296,6 +295,10 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
     Rs = np.zeros(N_steps // MC_step, dtype=np.float64)
     Ms, Ns = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64), np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
     Ms[:, 0], Ns[:, 0] = ms, ns
+
+    # Progress tracking variables
+    progress_interval = max(1, N_steps // 100)  # Update progress every 1% of steps
+    progress_counter = 0
 
     for i in range(N_steps):
         # Calculate replication time
@@ -360,5 +363,10 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
             Bs[i // MC_step] = E_bind(L, R, ms, ns, bind_norm)
             if rep_norm != 0.0 and f_rep is not None:
                 Rs[i // MC_step] = E_rep(f_rep, ms, ns, rt, rep_norm)
+
+        # Update progress counter
+        if i % progress_interval == 0:
+            progress_counter += 1
+            print(f"Progress: {progress_counter}% completed.")
 
     return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags

@@ -31,7 +31,7 @@ def make_folder(folder_name):
     for subfolder in subfolders:
         path = os.path.join(folder_name, subfolder)
         os.makedirs(path, exist_ok=True)
-    print(f'All necessary folders have been created or already exist in "{folder_name}".')
+    print(f'\033[94mAll necessary folders have been created or already exist in "{folder_name}".\033[0m')
     return folder_name
 
 ############# Creation of mmcif and psf files #############

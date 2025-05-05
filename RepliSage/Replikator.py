@@ -68,6 +68,7 @@ class Replikator:
             if not self.data[0].str.startswith('chr').all():
                 self.data[0] = 'chr' + self.data[0].astype(str)
 
+        print('\nStep #0: Preprocessing replication timing data...')
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
@@ -142,8 +143,8 @@ class Replikator:
         self.speed_avg = self.speed_factor*np.average(avg_slopes)
         self.speed_std = self.speed_factor*np.average(std_slopes)
         self.speed_ratio = self.speed_std/self.speed_avg
-        print(f'Speed average: {self.speed_avg}, Speed Std: {self.speed_std}')
-        print('Done!\n')
+        # print(f'Speed average: {self.speed_avg}, Speed Std: {self.speed_std}')
+        print('Done!')
 
     def compute_init_rate(self,viz=False):
         '''
