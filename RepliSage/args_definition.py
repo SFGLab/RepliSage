@@ -162,6 +162,7 @@ args = ListOfArgs([
     
     # Stochastic Simulation parameters
     Arg('LEF_RW', help="True in case that you would like to make cohesins slide as random walk, instead of sliding only in one direction.", type=bool, default='True', val='True'),
+    Arg('COHESIN_BLOCKS_CONDENSIN', help="True if cohesins should block condensins during simulation.", type=bool, default='False', val='False'),
     Arg('RANDOM_INIT_SPINS', help="True if the initial distribution of spins should be considered random.", type=bool, default='True', val='True'),
     Arg('P_REW',help="Probability that the Monte Carlo algorithm will propose a rewiring move (move a LEF), instead of epigenetic node state change move.", type=float, default='0.5', val='0.5'),
     Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="If true, it models replication forks as epienetic organizers.", type=bool, default='True', val='True'),

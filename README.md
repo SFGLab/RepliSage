@@ -241,6 +241,7 @@ You can define these parameters based on the table of simulation parameters.
 | N_BEADS                 | int       | None            | Number of beads in the polymer chain.                                      |
 | N_LEF                   | int       | None            | Number of loop extrusion factors (LEFs).                                   |
 | N_LEF2                  | int       | 0               | Number of secondary loop extrusion factors.                                |
+| COHESIN_BLOCKS_CONDENSIN | bool      | False           | Enables a feature where cohesin blocks condensin activity during G2/M phase. |
 | LEF_RW                  | bool      | True            | Enables random walk for loop extrusion factors (LEFs).                     |
 | LEF_DRIFT               | bool      | False           | Enables drift for loop extrusion factors.                                  |
 | RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial Potts model spin states.                                |

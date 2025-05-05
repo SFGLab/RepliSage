@@ -70,7 +70,7 @@ def E_rep(f_rep, ms, ns, t, rep_norm):
     return rep_norm * E_penalty
 
 @njit(parallel=True)
-def E_cross(ms, ns, k_norm):
+def E_cross(ms, ns, k_norm, cohesin_blocks_condensin=False):
     '''
     The crossing energy.
     '''
@@ -78,7 +78,8 @@ def E_cross(ms, ns, k_norm):
     N_lef = len(ms)
     for i in range(N_lef):
         for j in range(i + 1, N_lef):
-            crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
+            if cohesin_blocks_condensin or (i < N_lef and j < N_lef) or (i >= N_lef and j >= N_lef):
+                crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
     return k_norm * crossing
 
 @njit
@@ -102,14 +103,17 @@ def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers):
     return potts_norm1 * E1 + potts_norm2 * E2
 
 @njit
-def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0, rep_fork_organizers=True):
+def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''
     The total energy.
     '''
-    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm) + E_fold(ms, ns, fold_norm)
-    if fold_norm2!=0: energy += E_fold(ms[N_lef:N_lef+N_lef2],ns[N_lef:N_lef+N_lef2],fold_norm2)
-    if rep_norm!=0.0 and f_rep is not None: energy += E_rep(f_rep, ms, ns, t, rep_norm)
-    if (potts_norm1!=0.0 or potts_norm2!=0.0): energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)
+    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm, cohesin_blocks_condensin) + E_fold(ms, ns, fold_norm)
+    if fold_norm2 != 0: 
+        energy += E_fold(ms[N_lef:N_lef+N_lef2], ns[N_lef:N_lef+N_lef2], fold_norm2)
+    if rep_norm != 0.0 and f_rep is not None: 
+        energy += E_rep(f_rep, ms, ns, t, rep_norm)
+    if potts_norm1 != 0.0 or potts_norm2 != 0.0: 
+        energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)
     return energy
 
 @njit
@@ -137,7 +141,7 @@ def get_dE_rep(f_rep,rep_norm, ms,ns,m_new,n_new,t,idx):
     return rep_norm*dE_rep
 
 @njit(parallel=True)
-def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
+def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin=False):
     '''
     Energy difference for crossing energy.
     '''
@@ -146,8 +150,9 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm):
     
     for i in range(N_lef):
         if i != idx:
-            K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
-            K2 += Kappa(m_new, n_new, ms[i], ns[i])
+            if cohesin_blocks_condensin or (idx < N_lef and i < N_lef) or (idx >= N_lef and i >= N_lef):
+                K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
+                K2 += Kappa(m_new, n_new, ms[i], ns[i])
     return k_norm*(K2 - K1)
 
 @njit
@@ -171,7 +176,7 @@ def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,potts_norm2=0.0):
     return potts_norm2*dE
 
 @njit
-def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, idx, t, f_rep, spins, J, potts_norm2=0.0):
+def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, idx, t, f_rep, spins, J, potts_norm2=0.0, cohesin_blocks_condensin=False):
     '''
     Total energy difference.
     '''
@@ -181,7 +186,7 @@ def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_nor
     else:
         dE += get_dE_fold(fold_norm2, ms[N_lef:N_lef+N_lef2], ns[N_lef:N_lef+N_lef2], m_new, n_new, idx - N_lef)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
-    dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm)
+    dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin)
     
     # Explicitly handle replication energy only if rep_norm > 0 and f_rep is not None
     if rep_norm > 0.0 and f_rep is not None:
@@ -261,7 +266,7 @@ def initialize_J(N_beads, J, ms, ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True):
+def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
@@ -281,7 +286,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
     ms, ns, spins = initialize(N_lef, N_lef2, N_beads)
     spin_traj = np.zeros((N_beads, N_steps // MC_step), dtype=np.int32)
     J = initialize_J(N_beads, J, ms, ns)
-    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers)
+    E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers, cohesin_blocks_condensin)
     Es = np.zeros(N_steps // MC_step, dtype=np.float64)
     Ks = np.zeros(N_steps // MC_step, dtype=np.float64)
     Es_potts = np.zeros(N_steps // MC_step, dtype=np.float64)
@@ -320,7 +325,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
                     m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, f_rep, rt, rw)
                     
                 # Cohesin energy difference for rewiring move
-                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2)
+                dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2, cohesin_blocks_condensin)
                 if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
                     E += dE
                     # Change the interaction matrix

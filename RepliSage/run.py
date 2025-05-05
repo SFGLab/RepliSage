@@ -96,6 +96,7 @@ def main():
     mode, rw, random_spins, p_rew, rep_fork_organizers = args.METHOD, args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
     Tstd_factor, speed_scale, init_rate_scale, p_rew = args.REP_T_STD_FACTOR, args.REP_SPEED_SCALE, args.REP_INIT_RATE_SCALE, args.P_REW
     save_MDT, save_plots, viz_heats = args.SAVE_MDT, args.SAVE_PLOTS, args.VIZ_HEATS
+    cohesin_blocks_condensin = args.COHESIN_BLOCKS_CONDENSIN
     
     # Define data and coordinates
     region, chrom =  [args.REGION_START, args.REGION_END], args.CHROM
@@ -109,7 +110,7 @@ def main():
     out_path = args.OUT_PATH
     
     # Run simulation
-    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
+    sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale, cohesin_blocks_condensin)
     sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
         sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
