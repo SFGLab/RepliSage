@@ -106,7 +106,7 @@ def main():
         if not args.REPT_PATH.endswith('.txt'):
             raise ValueError("\033[91mREPT_PATH must be a .txt file if provided.\033[0m")
         print(f"\033[92mUsing provided REPT_PATH: {rept_path} instead of the built-in single-cell one.\033[0m")
-
+    
     out_path = args.OUT_PATH
     
     # Run simulation
