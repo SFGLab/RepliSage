@@ -87,7 +87,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns - ms + 1e-5))
+    folding = np.sum(np.log(ns - ms))
     return fold_norm * folding
 
 @njit(parallel=True)
@@ -130,7 +130,7 @@ def get_dE_fold(fold_norm, ms, ns, m_new, n_new, idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm * (np.log(n_new - m_new + 1e-5) - np.log(ns[idx] - ms[idx] + 1e-5))
+    return fold_norm * (np.log(n_new - m_new) - np.log(ns[idx] - ms[idx]))
 
 @njit(fastmath=True)
 def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
@@ -207,8 +207,8 @@ def unbind_bind(N_beads):
     '''
     Rebinding Monte-Carlo step.
     '''
-    m_new = rd.randint(0, N_beads - 5)
-    n_new = m_new + rd.randint(2, 4)  # Ensure n_new - m_new >= 1
+    m_new = rd.randint(0, N_beads - 3)
+    n_new = m_new + 2  # Ensure n_new - m_new >= 1
     return m_new, n_new
 
 @njit(fastmath=True)
@@ -224,12 +224,12 @@ def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     m_new = max(0, m_old + r1)
     n_new = min(N_beads - 1, n_old + r2)
 
-    # Ensure n_new - m_new is always positive and at least 1
-    if n_new - m_new <= 2:
+    # Adjust to ensure n_new - m_new is always at least 2
+    if n_new - m_new < 2:
         if m_new > 0:
-            m_new -= 1
+            m_new = max(0, n_new - 2)
         if n_new < N_beads - 1:
-            n_new += 1
+            n_new = min(N_beads - 1, m_new + 2)
 
     # Handle replication forks only if f is provided
     if f is not None:
@@ -310,10 +310,10 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
                 lef_idx_choices = np.arange(N_lef + N_lef2, dtype=np.int64)
             mag_field = 2 * (1 - 2 * rt * inv_rep_duration)
             ht += mask * mag_field * f_rep[:, rt]
-
+        
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
-        for j in prange(N_beads):  # Parallelize over beads
+        for j in prange(N_lef+N_lef2):  # Parallelize over beads
             # Propose a move for cohesins (rewiring)
             do_rewiring = rd.random() < p_rew
             if do_rewiring:
