@@ -28,10 +28,16 @@ def make_folder(folder_name):
         'metadata/graph_metrics',
         'metadata/md_dynamics',
     ]
+    created_any = False
     for subfolder in subfolders:
         path = os.path.join(folder_name, subfolder)
-        os.makedirs(path, exist_ok=True)
-    print(f'\033[94mAll necessary folders have been created or already exist in "{folder_name}".\033[0m')
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+            created_any = True
+    if created_any:
+        print(f'\033[92mDirectories were created in "{folder_name}".\033[0m')
+    else:
+        print(f'\033[94mAll necessary folders already exist in "{folder_name}".\033[0m')
     return folder_name
 
 ############# Creation of mmcif and psf files #############
