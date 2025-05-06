@@ -313,7 +313,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
         
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
-        for j in prange(N_lef+N_lef2):  # Parallelize over beads
+        for j in range(N_lef+N_lef2):  # Parallelize over beads
             # Propose a move for cohesins (rewiring)
             do_rewiring = rd.random() < p_rew
             if do_rewiring:
