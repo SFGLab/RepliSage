@@ -131,9 +131,7 @@ def main():
     mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
     save_MDT, save_plots = True, True
-    
-    # for stress scale=5.0, sigma_t = T*0.2, speed=5*
-    # for normal replication scale=1.0, sigma_t = T*0.1, speed=20*
+    cohesin_blocks_condensin = False
     
     # Define data and coordinates
     region, chrom =  [80835000, 98674700], 'chr14'
@@ -146,7 +144,7 @@ def main():
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT)
+    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT =save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
     if save_plots: sim.show_plots()
     sim.run_openmm('CUDA',mode='MD')
     if save_plots: sim.compute_structure_metrics()
