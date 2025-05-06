@@ -1,4 +1,4 @@
-from numba import njit, prange
+from numba import njit
 import numpy as np
 import random as rd
 from .preproc import *
@@ -50,7 +50,7 @@ def Rep_Penalty(m, n, f):
     
     return r
 
-@njit(parallel=True)
+@njit
 def E_bind(L, R, ms, ns, bind_norm):
     '''
     The binding energy.
@@ -59,30 +59,30 @@ def E_bind(L, R, ms, ns, bind_norm):
     E_b = bind_norm * binding
     return E_b
 
-@njit(parallel=True)
+@njit
 def E_rep(f_rep, ms, ns, t, rep_norm):
     '''
     Penalty of the replication energy.
     '''
     E_penalty = 0.0
-    for i in prange(len(ms)):
+    for i in range(len(ms)):
         E_penalty += Rep_Penalty(ms[i], ns[i], f_rep[:, t])
     return rep_norm * E_penalty
 
-@njit(parallel=True)
+@njit
 def E_cross(ms, ns, k_norm, cohesin_blocks_condensin=False):
     '''
     The crossing energy.
     '''
     crossing = 0.0
     N_lef = len(ms)
-    for i in prange(N_lef):
+    for i in range(N_lef):
         for j in range(i + 1, N_lef):
             if cohesin_blocks_condensin or (i < N_lef and j < N_lef) or (i >= N_lef and j >= N_lef):
                 crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
     return k_norm * crossing
 
-@njit(parallel=True)
+@njit
 def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
@@ -90,19 +90,19 @@ def E_fold(ms, ns, fold_norm):
     folding = np.sum(np.log(ns - ms))
     return fold_norm * folding
 
-@njit(parallel=True)
+@njit
 def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers):
     N_beads = len(J)
     E1 = np.sum(h * spins) / 2 + np.sum(h * spins) / 2 * (1 - int(rep_fork_organizers))
     if t > 0: E1 += np.sum(ht * spins) / 2 * int(rep_fork_organizers)
     
     E2 = 0.0
-    for i in prange(N_beads):
+    for i in range(N_beads):
         E2 += np.sum(J[i, i + 1:] * np.abs(spins[i] - spins[i + 1:]))
 
     return potts_norm1 * E1 + potts_norm2 * E2
 
-@njit(parallel=True)
+@njit
 def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep, spins, J, h, ht, potts_norm1=0.0, potts_norm2=0.0, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''
     The total energy.
@@ -116,7 +116,7 @@ def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_nor
         energy += E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)
     return energy
 
-@njit(fastmath=True)
+@njit
 def get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx):
     '''
     Energy difference for binding energy.
@@ -125,14 +125,14 @@ def get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx):
     B_old = L[ms[idx]] + R[ns[idx]] if ms[idx] >= 0 and ns[idx] >= 0 else 0
     return bind_norm * (B_new - B_old)
 
-@njit(fastmath=True)
+@njit
 def get_dE_fold(fold_norm, ms, ns, m_new, n_new, idx):
     '''
     Energy difference for folding energy.
     '''
     return fold_norm * (np.log(n_new - m_new) - np.log(ns[idx] - ms[idx]))
 
-@njit(fastmath=True)
+@njit
 def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
     '''
     Energy difference for replication energy.
@@ -140,7 +140,7 @@ def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
     dE_rep = Rep_Penalty(m_new, n_new, f_rep[:, t]) - Rep_Penalty(ms[idx], ns[idx], f_rep[:, t - 1])
     return rep_norm * dE_rep
 
-@njit(parallel=True, fastmath=True)
+@njit(parallel=True)
 def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin=False):
     '''
     Energy difference for crossing energy.
@@ -148,14 +148,14 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin=Fal
     K1, K2 = 0, 0
     N_lef = len(ms)
     
-    for i in prange(N_lef):
+    for i in range(N_lef):
         if i != idx:
             if cohesin_blocks_condensin or (idx < N_lef and i < N_lef) or (idx >= N_lef and i >= N_lef):
                 K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
                 K2 += Kappa(m_new, n_new, ms[i], ns[i])
     return k_norm * (K2 - K1)
 
-@njit(fastmath=True)
+@njit
 def get_dE_node(spins, spin_idx, spin_val, J, h, ht_new, ht_old, potts_norm1, potts_norm2, t, rep_fork_organizers=True):
     '''
     Energy difference for node state change.
@@ -166,7 +166,7 @@ def get_dE_node(spins, spin_idx, spin_val, J, h, ht_new, ht_old, potts_norm1, po
     dE2 = np.sum(J[spin_idx, :] * (np.abs(spin_val - spins) - np.abs(spins[spin_idx] - spins)))
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
-@njit(fastmath=True)
+@njit
 def get_dE_potts_link(spins, J, m_new, n_new, m_old, n_old, potts_norm2=0.0):
     '''
     Energy difference for Potts link energy.
@@ -181,7 +181,7 @@ def get_dE_potts_link(spins, J, m_new, n_new, m_old, n_old, potts_norm2=0.0):
         dE = 0
     return potts_norm2 * dE
 
-@njit(fastmath=True)
+@njit
 def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, idx, t, f_rep, spins, J, potts_norm2=0.0, cohesin_blocks_condensin=False):
     '''
     Total energy difference for rewiring.
@@ -202,7 +202,7 @@ def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_nor
     
     return dE
 
-@njit(fastmath=True)
+@njit
 def unbind_bind(N_beads):
     '''
     Rebinding Monte-Carlo step.
@@ -211,7 +211,7 @@ def unbind_bind(N_beads):
     n_new = m_new + 2  # Ensure n_new - m_new >= 1
     return m_new, n_new
 
-@njit(fastmath=True)
+@njit
 def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     '''
     Sliding Monte-Carlo step.
@@ -240,31 +240,31 @@ def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
 
     return m_new, n_new
 
-@njit(parallel=True, fastmath=True)
+@njit
 def initialize(N_lef, N_lef2, N_beads):
     '''
     Random initial condition of the simulation.
     '''
     ms = np.full(N_lef + N_lef2, -5, dtype=np.int64)
     ns = np.full(N_lef + N_lef2, -4, dtype=np.int64)
-    for j in prange(N_lef):
+    for j in range(N_lef):
         ms[j], ns[j] = unbind_bind(N_beads)
     state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     return ms, ns, state
 
-@njit(parallel=True, fastmath=True)
+@njit
 def initialize_J(N_beads, J, ms, ns):
-    for i in prange(N_beads - 1):
+    for i in range(N_beads - 1):
         J[i, i + 1] += 1
         J[i + 1, i] += 1
-    for idx in prange(len(ms)):
+    for idx in range(len(ms)):
         m, n = ms[idx], ns[idx]
         if m >= 0 and n >= 0:  # Ensure valid indices
             J[m, n] += 1
             J[n, m] += 1
     return J
 
-@njit(parallel=True, fastmath=True)
+@njit
 def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
