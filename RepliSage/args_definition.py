@@ -18,8 +18,8 @@ except FileNotFoundError:
 
 # Dynamically set the default path to the XML file in the package
 try:
-    with importlib.resources.path('RepliSage.data', 'replication_timing_data.parquet') as default_xml_path:
-        default_rept_path = str(default_xml_path)
+    with importlib.resources.path('RepliSage.data', 'replication_timing_data.parquet') as default_rept_path:
+        default_rept_path = str(default_rept_path)
 except FileNotFoundError:
     # If running in a development setup without the resource installed, fallback to a relative path
     default_rept_path = 'RepliSage/data/replication_timing_data.parquet'
