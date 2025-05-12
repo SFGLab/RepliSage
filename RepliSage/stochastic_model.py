@@ -46,10 +46,11 @@ class StochasticSimulation:
                                  "for the resolution of the simulation (number of beads) specified.\033[0m") from e
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
+            np.save(f'{self.out_path}/metadata/MCMC_output/rep_state.npy',self.rep_frac)
         else:
             self.rep_frac = None
             self.h = np.zeros(self.N_beads)
-
+        
         # Import loop data
         print('\nStep #2: Running RepliSage...')
         self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
