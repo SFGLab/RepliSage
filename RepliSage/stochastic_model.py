@@ -125,7 +125,7 @@ class StochasticSimulation:
 def main():
     # Set parameters
     N_beads, N_lef, N_lef2 = 1000, 100, 100
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(4e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
+    N_steps, N_swift, MC_step, burnin, T, T_min, t_rep, rep_duration = int(2e4), int(1e3), int(4e2), int(1e3), 1.8, 1.0, int(5e3), int(1e4)
     
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 1.0, 1.0, 1.0
@@ -145,7 +145,7 @@ def main():
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
-    sim.run_stochastic_simulation(N_steps, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT =save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
+    sim.run_stochastic_simulation(N_steps, N_swift, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT =save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
     if save_plots: sim.show_plots()
     sim.run_openmm('CUDA',mode='MD')
     if save_plots: sim.compute_structure_metrics()

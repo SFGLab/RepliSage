@@ -90,7 +90,7 @@ def main():
     
     # Set parameters
     N_beads, N_lef, N_lef2 = args.N_BEADS, args.N_LEF, args.N_LEF2
-    N_steps, MC_step, burnin, T, T_min, t_rep, rep_duration = args.N_STEPS, args.MC_STEP, args.BURNIN, args.T_INIT, args.T_FINAL, args.REP_START_TIME, args.REP_TIME_DURATION
+    N_steps, N_swift, MC_step, burnin, T, T_min, t_rep, rep_duration = args.N_STEPS, args.N_SWIFT, args.MC_STEP, args.BURNIN, args.T_INIT, args.T_FINAL, args.REP_START_TIME, args.REP_TIME_DURATION
     f, f2, b, kappa = args.FOLDING_COEFF, args.FOLDING_COEFF2, args.BIND_COEFF, args.CROSS_COEFF
     c_state_field, c_state_interact, c_rep = args.POTTS_FIELD_COEFF, args.POTTS_INTERACT_COEFF, args.REP_COEFF
     mode, rw, random_spins, p_rew, rep_fork_organizers = args.METHOD, args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
@@ -114,7 +114,7 @@ def main():
                                bedpe_file=bedpe_file, out_path=out_path, rept_path=rept_path,
                                N_lef=N_lef, N_lef2=N_lef2, 
                                t_rep=t_rep, rep_duration=rep_duration, Tstd_factor=Tstd_factor, speed_scale=speed_scale, scale=init_rate_scale)
-    sim.run_stochastic_simulation(N_steps=N_steps, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, 
+    sim.run_stochastic_simulation(N_steps=N_steps, N_swift=N_swift, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, 
                                   f=f, f2=f2, b=b, kappa=kappa, c_rep=c_rep, c_potts1=c_state_field, c_potts2=c_state_interact, 
                                   mode=mode, rw=rw, p_rew= p_rew,
                                   rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
