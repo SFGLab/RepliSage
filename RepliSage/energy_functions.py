@@ -265,7 +265,7 @@ def initialize_J(N_beads, J, ms, ns):
     return J
 
 @njit
-def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False):
+def run_energy_minimization(N_steps, N_swift, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode, L, R, k_norm, fold_norm, fold_norm2, bind_norm, rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None, potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None, p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''
     It performs Monte Carlo or simulated annealing of the simulation.
     '''
@@ -313,7 +313,7 @@ def run_energy_minimization(N_steps, N_lef, N_lef2, N_beads, MC_step, T, T_min, 
         
         Ti = T - (T - T_min) * i / N_steps if mode == 'Annealing' else T
         
-        for j in range(N_lef+N_lef2):  # Parallelize over beads
+        for j in range(N_swift):  # Parallelize over beads
             # Propose a move for cohesins (rewiring)
             do_rewiring = rd.random() < p_rew
             if do_rewiring:
