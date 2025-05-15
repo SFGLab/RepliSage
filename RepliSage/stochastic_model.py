@@ -59,7 +59,7 @@ class StochasticSimulation:
         print(f'Simulation starts with number of beads: {self.N_beads}')
         print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis', rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
+    def run_stochastic_simulation(self, N_steps, N_swift, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis', rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
         '''
         Energy minimization script.
         '''
@@ -76,7 +76,7 @@ class StochasticSimulation:
         start = time.time()
         self.N_steps, self.MC_step, self.burnin, self.T, self.T_in = N_steps, MC_step, burnin, T, T_min
         self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags = run_energy_minimization(
-            N_steps=N_steps, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
+            N_steps=N_steps, N_swift=N_swift, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
             mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
             L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
             bind_norm=bind_norm, rep_norm=rep_norm,
