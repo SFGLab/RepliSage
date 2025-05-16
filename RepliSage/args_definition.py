@@ -169,7 +169,7 @@ args = ListOfArgs([
     Arg('REP_START_TIME', help="Time step at which replication starts.", type=int, default='50000', val='50000'),
     Arg('REP_TIME_DURATION', help="Duration of the replication process.", type=int, default='50000', val='50000'),
     Arg('N_STEPS', help="Total number of Monte Carlo steps.", type=int, default='200000', val='200000'),
-    Arg('N_SWIFT', help="Number of node or link state changes proposed per simulation step.", type=int, default='1000', val='1000'),
+    Arg('N_SWEEP', help="Number of node or link state changes proposed per simulation step.", type=int, default='1000', val='1000'),
     Arg('N_LEF', help="Number of loop extrusion factors (LEFs). Leave empty to set it to twice the number of CTCFs.", type=int, default='', val=''),
     Arg('N_LEF2', help="Number of second-family LEFs for simulating a group with different speed.", type=int, default='0', val='0'),
     Arg('MC_STEP', help="Frequency of Monte Carlo steps to avoid autocorrelation.", type=int, default='200', val='200'),

@@ -252,7 +252,7 @@ You can define these parameters based on the table of simulation parameters.
 | REP_SPEED_SCALE         | float     | 20              | Scaling factor for replication fork speed.                                 |
 | REP_INIT_RATE_SCALE     | float     | 1.0             | Scaling factor for replication initiation rate.                            |
 | N_STEPS                 | int       | 200000          | Total number of simulation steps.                                          |
-| N_SWIFT                 | int       | 1000           | Number of proposed moves per step.                             |
+| N_SWEEP                 | int       | 1000           | Number of proposed moves per step.                             |
 | MC_STEP                 | int       | 200             | Number of steps per Monte Carlo iteration.                                 |
 | BURNIN                  | int       | 1000            | Number of burn-in steps before data collection.                            |
 | METHOD                  | str       | Annealing       | Simulation method (e.g., Metropolis, Annealing).                           |
