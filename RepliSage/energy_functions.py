@@ -375,7 +375,7 @@ def run_energy_minimization(
         percent = int(100 * i / N_steps)
         if percent % 5 == 0 and percent != last_percent:
             # Numba can't use print with flush, so just print
-            print(percent, "% completed")
+            print(f"Progres: {percent} % completed.")
             last_percent = percent
 
         # Determine current replication time index (rt)
