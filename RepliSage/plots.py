@@ -1,15 +1,8 @@
 import numpy as np
-import random as rd
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-import seaborn as sns
-from statsmodels.graphics.tsaplots import plot_acf
 from tqdm import tqdm
 import time
-from scipy.signal import detrend
-from scipy.signal import savgol_filter
-from PyEMD import EMD
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -62,30 +55,7 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
 
     # Vertical line at x = 123
     plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
-
-    # # Annotate G1 phase
-    # plt.annotate('G1 phase', 
-    #             xy=(S_time-50, 0.38),  # Position of the annotation (centered)
-    #             xytext=(S_time-50, 0.38),  # Text position
-    #             fontsize=14)
-
-    # Vertical line at x = 123
     plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
-
-    # # Annotate G1 phase
-    # plt.annotate('S phase', 
-    #             xy=(S_time+50, 0.38),  # Position of the annotation (centered)
-    #             xytext=(S_time+50, 0.38),  # Text position
-    #             fontsize=14)
-
-    # # Annotate G1 phase
-    # plt.annotate('G2/M phase', 
-    #             xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
-    #             xytext=(G2_time+50, 0.5),  # Text position
-    #             fontsize=14)
-
-    # plt.ylim((0,1))
-    # plt.title('Proportion of Same-State and Different-State Links Over Time')
     plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.png',format='png',dpi=200)
     plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.svg',format='svg',dpi=200)
     plt.grid(True)
@@ -114,29 +84,8 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     plt.xlabel('MC step',fontsize=16)
     plt.ylabel('Average Loop Length',fontsize=16)
     plt.legend()
-    # Vertical line at x = 123
     plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
-
-    # # Annotate G1 phase
-    # plt.annotate('G1 phase', 
-    #             xy=(S_time-50, 0.38),  # Position of the annotation (centered)
-    #             xytext=(S_time-50, 0.38),  # Text position
-    #             fontsize=14)
-
-    # Vertical line at x = 123
     plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
-
-    # # Annotate G1 phase
-    # plt.annotate('S phase', 
-    #             xy=(S_time+50, 0.38),  # Position of the annotation (centered)
-    #             xytext=(S_time+50, 0.38),  # Text position
-    #             fontsize=14)
-
-    # # Annotate G1 phase
-    # plt.annotate('G2/M phase', 
-    #             xy=(G2_time+50, 0.42),  # Position of the annotation (centered)
-    #             xytext=(G2_time+50, 0.5),  # Text position
-    #             fontsize=14)
 
     # plt.title('Average Ls with 95% Confidence Interval',fontsize=16)
     plt.savefig(out_path+'/plots/MCMC_diagnostics/loop_length.png',format='svg',dpi=200)
@@ -277,53 +226,6 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     save_path = path+'/plots/MCMC_diagnostics/bind_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
     plt.close()
-    
-    # Step 1: Use a non-parametric method to remove the trend
-
-    ys = np.array(Es)[burnin:]
-    # Remove non-linear trend using a robust, parameter-free method: empirical mode decomposition (EMD) if available, else use Savitzky-Golay filter
-    try:
-        emd = EMD()
-        imfs = emd.emd(ys)
-        # Remove the last IMF (trend), sum the rest as detrended signal
-        if imfs.shape[0] > 1:
-            detrended_signal = np.sum(imfs[:-1], axis=0)
-        else:
-            detrended_signal = ys - np.mean(ys)
-    except Exception:
-        # Fallback: Savitzky-Golay filter with automatic window
-        window = max(11, len(ys) // 50)
-        if window % 2 == 0:
-            window += 1
-        if len(ys) >= window:
-            trend = savgol_filter(ys, window_length=window, polyorder=3, mode='interp')
-            detrended_signal = ys - trend
-        else:
-            detrended_signal = ys - np.mean(ys)
-
-    # Step 2: Plot the autocorrelation of the detrended signal if possible
-    if (
-        detrended_signal is not None
-        and np.all(np.isfinite(detrended_signal))
-        and len(detrended_signal) > 2
-    ):
-        figure(figsize=(10, 6), dpi=400)
-        plot_acf(detrended_signal, title=None, lags=min(len(detrended_signal) // 2, 100))
-        plt.ylabel("Autocorrelations", fontsize=16)
-        plt.xlabel("Lags", fontsize=16)
-        plt.grid()
-        if path is not None:
-            save_path = path + '/plots/MCMC_diagnostics/autoc.png'
-            plt.savefig(save_path, dpi=400)
-            save_path = path + '/plots/MCMC_diagnostics/autoc.svg'
-            plt.savefig(save_path, format='svg', dpi=200)
-            save_path = path + '/plots/MCMC_diagnostics/autoc.pdf'
-            plt.savefig(save_path, format='pdf', dpi=200)
-            save_path = path + '/plots/MCMC_diagnostics/autoc.png'
-            plt.savefig(save_path, format='png', dpi=200)
-        plt.close()
-    else:
-        print("\033[38;5;208mAutocorrelation plot skipped: detrended signal is not suitable (too short or contains NaN/inf).\033[0m")
 
 def ising_traj_plot(spins, save_path):
     plt.figure(figsize=(10, 10),dpi=200)

@@ -43,7 +43,6 @@ setup(
         'tqdm',
         'pyarrow',
         'fastparquet',
-        'EMD-signal>=1.6.0',
     ],
     entry_points={
         'console_scripts': [

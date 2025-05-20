@@ -126,17 +126,21 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
+        print("Calculainge MCMC metrics...")
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=10*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
+        print("Calculating graph metrics...")
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
+        print("Calculating node and link state metrics...")
         plot_loop_length(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
         compute_state_proportions_sign_based(self.Ms, self.Ns, self.spin_traj, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
     
     def compute_structure_metrics(self):
         '''
         It computes plots with metrics for analysis after simulation.
-        '''      
+        '''
+        print("Calculating metrics from 3D structures...")
         compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path)
 
     def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin',integrator_step=10.0 * mm.unit.femtosecond,tol=1.0,sim_step=10000,p_ev=0.01,reporters=False, md_temperature=310*mm.unit.kelvin, ff_path='RepliSage/forcefields/classic_sm_ff.xml'):
