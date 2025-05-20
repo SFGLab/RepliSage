@@ -255,7 +255,7 @@ You can define these parameters based on the table of simulation parameters.
 | N_SWEEP                 | int       | 1000           | Number of proposed moves per step.                             |
 | MC_STEP                 | int       | 200             | Number of steps per Monte Carlo iteration.                                 |
 | BURNIN                  | int       | 1000            | Number of burn-in steps before data collection.                            |
-| METHOD                  | str       | Annealing       | Simulation method (e.g., Metropolis, Annealing).                           |
+| T_MC                  | float     | 1.5             | Order parameter or "temperature" of Metropolis-Hastings.            |
 
 ### Stochastic Energy Coefficients
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
@@ -267,12 +267,6 @@ You can define these parameters based on the table of simulation parameters.
 | POTTS_FIELD_COEFF       | float     | 1.0             | Coefficient for Potts model field energy.                                  |
 | CROSS_COEFF             | float     | 1.0             | Coefficient penalizing LEF crossing.                                       |
 | BIND_COEFF              | float     | 1.0             | Coefficient for LEF binding energy.                                        |
-
-### Annealing Parameters
-| Parameter Name         | Type      | Default Value   | Description                                                                 |
-|-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
-| T_INIT                  | float     | 2.0             | Initial temperature for annealing.                                         |
-| T_FINAL                 | float     | 1.0             | Final temperature for annealing.                                           |
 
 ### Molecular Dynamics
 | Parameter Name         | Type      | Default Value   | Description                                                                 |

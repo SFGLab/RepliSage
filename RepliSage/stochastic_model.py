@@ -56,10 +56,8 @@ class StochasticSimulation:
         self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
         self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
         self.N_lef2 = N_lef2
-        print(f'Simulation starts with number of beads: {self.N_beads}')
-        print(f'Number of CTCFs is N_CTCF={self.N_CTCF}, and number of LEFs is N_lef={self.N_lef}.\nNumber of LEFs in the second family N_lef2={self.N_lef2}.')
 
-    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, T_min, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, mode='Metropolis', rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
+    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
         '''
         Energy minimization script.
         '''
@@ -74,10 +72,10 @@ class StochasticSimulation:
         # Running the simulation
         print('This may take some time...')
         start = time.time()
-        self.N_steps, self.MC_step, self.burnin, self.T, self.T_in = N_steps, MC_step, burnin, T, T_min
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags = run_energy_minimization(
-            N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, T=T, T_min=T_min, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
-            mode=mode, N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
+        self.N_steps, self.MC_step, self.burnin, self.T = N_steps, MC_step, burnin, T
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags, self.acceptance_rate = run_energy_minimization(
+            N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, T=T, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
+            N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
             L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
             bind_norm=bind_norm, rep_norm=rep_norm,
             f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
@@ -86,7 +84,33 @@ class StochasticSimulation:
         end = time.time()
         elapsed = end - start
         print(f'Computation finished successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')
-
+        print("\n\033[94m---------- Stochastic Simulation Report ----------\033[0m")
+        print("\033[94m-\033[0m" * 50)
+        print(f"\033[94mAcceptance rate: {self.acceptance_rate*100:.2f}%\033[0m")
+        if self.acceptance_rate < 0.1:
+            print(f"\033[93m\033[1mWarning:\033[0m\033[93m The acceptance rate is low ({self.acceptance_rate:.2f}). Consider adjusting the parameters.\033[0m")
+        elif self.acceptance_rate > 0.6:
+            print(f"\033[93m\033[1mWarning:\033[0m\033[93m The acceptance rate is high ({self.acceptance_rate:.2f}). Consider adjusting the parameters.\033[0m")
+        print(f"\033[94mNumber of steps: {self.N_steps}\033[0m")
+        print(f"\033[94mNumber of sweeps: {self.N_steps//self.MC_step}\033[0m")
+        print(f"\033[94mNumber of beads: {self.N_beads}\033[0m")
+        print(f"\033[94mNumber of CTCFs: {self.N_CTCF}\033[0m")
+        print(f"\033[94mNumber of LEFs: {self.N_lef}\033[0m")
+        print(f"\033[94mNumber of LEFs in the second family: {self.N_lef2}\033[0m")
+        print(f"\033[94mNumber of LEF2s: {self.N_lef2}\033[0m")
+        g1_start = self.burnin // self.MC_step
+        s_start = self.t_rep // self.MC_step
+        s_end = (self.t_rep + self.rep_duration) // self.MC_step
+        print(f"\033[94mEnergy in G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[94mEnergy in S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[94mEnergy in G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
+        print(f"\033[94mPotts energy in G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[94mPotts energy in S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[94mPotts energy in G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
+        print(f"\033[94mMean loop length in G1 phase: {(self.Ns[g1_start:s_start]-self.Ms[g1_start:s_start]).mean():.2f}\033[0m")
+        print(f"\033[94mMean loop length in S phase: {(self.Ns[s_start:s_end]-self.Ms[s_start:s_end]).mean():.2f}\033[0m")
+        print(f"\033[94mMean loop length in G2 phase: {(self.Ns[s_end:]-self.Ms[s_end:]).mean():.2f}\033[0m")
+        
         if save_MDT:
             np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)
             np.save(f'{self.out_path}/metadata/MCMC_output/Ns.npy', self.Ns)
@@ -129,7 +153,7 @@ def main():
     
     f, f2, b, kappa= 1.0, 5.0, 1.0, 1.0
     c_state_field, c_state_interact, c_rep = 1.0, 1.0, 1.0
-    mode, rw, random_spins, rep_fork_organizers = 'Metropolis', True, True, True
+    rw, random_spins, rep_fork_organizers = True, True, True
     Tstd_factor, speed_scale, init_rate_scale, p_rew = 0.1, 20, 1.0, 0.5
     save_MDT, save_plots = True, True
     cohesin_blocks_condensin = False
@@ -145,10 +169,12 @@ def main():
     
     # Run simulation
     sim = StochasticSimulation(N_beads, chrom, region, bedpe_file, out_path, N_lef, N_lef2, rept_path, t_rep, rep_duration, Tstd_factor, speed_scale, init_rate_scale)
-    sim.run_stochastic_simulation(N_steps, N_sweep, MC_step, burnin, T, T_min, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, mode, rw, p_rew, rep_fork_organizers, save_MDT =save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
-    if save_plots: sim.show_plots()
-    sim.run_openmm('CUDA',mode='MD')
-    if save_plots: sim.compute_structure_metrics()
+    sim.run_stochastic_simulation(N_steps, N_sweep, MC_step, burnin, T, f, f2, b, kappa, c_rep, c_state_field, c_state_interact, rw, p_rew, rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
+    if save_plots:
+        sim.show_plots()
+    sim.run_openmm('CUDA', mode='MD')
+    if save_plots:
+        sim.compute_structure_metrics()
 
     # Save Parameters
     if save_MDT:

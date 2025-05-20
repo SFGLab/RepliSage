@@ -6,7 +6,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='pyRepliSage',  # Package name
-    version='0.1.9',  # Version of the software
+    version='0.1.10',  # Version of the software
 
     description='A stochastic model for the modeling of DNA replication and cell-cycle dynamics.',
     long_description=long_description,
@@ -43,6 +43,7 @@ setup(
         'tqdm',
         'pyarrow',
         'fastparquet',
+        'EMD-signal>=1.6.0',
     ],
     entry_points={
         'console_scripts': [

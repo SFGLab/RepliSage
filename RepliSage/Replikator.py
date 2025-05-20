@@ -186,7 +186,7 @@ class Replikator:
         self.compute_peaks()
         self.compute_slopes()
         self.compute_init_rate()
-
+    
     def run(self, scale=1, out_path=None):
         '''
         This function calls replication simulation.

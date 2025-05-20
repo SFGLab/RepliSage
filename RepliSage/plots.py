@@ -8,6 +8,8 @@ from statsmodels.graphics.tsaplots import plot_acf
 from tqdm import tqdm
 import time
 from scipy.signal import detrend
+from scipy.signal import savgol_filter
+from PyEMD import EMD
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -278,25 +280,50 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     
     # Step 1: Use a non-parametric method to remove the trend
 
-    ys = np.array(Fs)[burnin:]
-    detrended_signal = detrend(ys, type='linear')  # Remove linear trend
+    ys = np.array(Es)[burnin:]
+    # Remove non-linear trend using a robust, parameter-free method: empirical mode decomposition (EMD) if available, else use Savitzky-Golay filter
+    try:
+        emd = EMD()
+        imfs = emd.emd(ys)
+        # Remove the last IMF (trend), sum the rest as detrended signal
+        if imfs.shape[0] > 1:
+            detrended_signal = np.sum(imfs[:-1], axis=0)
+        else:
+            detrended_signal = ys - np.mean(ys)
+    except Exception:
+        # Fallback: Savitzky-Golay filter with automatic window
+        window = max(11, len(ys) // 50)
+        if window % 2 == 0:
+            window += 1
+        if len(ys) >= window:
+            trend = savgol_filter(ys, window_length=window, polyorder=3, mode='interp')
+            detrended_signal = ys - trend
+        else:
+            detrended_signal = ys - np.mean(ys)
 
-    # Step 2: Plot the autocorrelation of the detrended signal
-    figure(figsize=(10, 6), dpi=400)
-    plot_acf(detrended_signal, title=None, lags=len(detrended_signal) // 2)
-    plt.ylabel("Autocorrelations", fontsize=16)
-    plt.xlabel("Lags", fontsize=16)
-    plt.grid()
-    if path is not None:
-        save_path = path + '/plots/MCMC_diagnostics/autoc.png'
-        plt.savefig(save_path, dpi=400)
-        save_path = path + '/plots/MCMC_diagnostics/autoc.svg'
-        plt.savefig(save_path, format='svg', dpi=200)
-        save_path = path + '/plots/MCMC_diagnostics/autoc.pdf'
-        plt.savefig(save_path, format='pdf', dpi=200)
-        save_path = path + '/plots/MCMC_diagnostics/autoc.png'
-        plt.savefig(save_path, format='png', dpi=200)
-    plt.close()
+    # Step 2: Plot the autocorrelation of the detrended signal if possible
+    if (
+        detrended_signal is not None
+        and np.all(np.isfinite(detrended_signal))
+        and len(detrended_signal) > 2
+    ):
+        figure(figsize=(10, 6), dpi=400)
+        plot_acf(detrended_signal, title=None, lags=min(len(detrended_signal) // 2, 100))
+        plt.ylabel("Autocorrelations", fontsize=16)
+        plt.xlabel("Lags", fontsize=16)
+        plt.grid()
+        if path is not None:
+            save_path = path + '/plots/MCMC_diagnostics/autoc.png'
+            plt.savefig(save_path, dpi=400)
+            save_path = path + '/plots/MCMC_diagnostics/autoc.svg'
+            plt.savefig(save_path, format='svg', dpi=200)
+            save_path = path + '/plots/MCMC_diagnostics/autoc.pdf'
+            plt.savefig(save_path, format='pdf', dpi=200)
+            save_path = path + '/plots/MCMC_diagnostics/autoc.png'
+            plt.savefig(save_path, format='png', dpi=200)
+        plt.close()
+    else:
+        print("\033[38;5;208mAutocorrelation plot skipped: detrended signal is not suitable (too short or contains NaN/inf).\033[0m")
 
 def ising_traj_plot(spins, save_path):
     plt.figure(figsize=(10, 10),dpi=200)

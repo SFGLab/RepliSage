@@ -87,7 +87,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns - ms))
+    folding = np.sum(np.log(ns-ms+1e-5))
     return fold_norm * folding
 
 @njit
@@ -139,11 +139,11 @@ def get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx):
     return bind_norm * (B_new - B_old)
 
 @njit
-def get_dE_fold(fold_norm, ms, ns, m_new, n_new, idx):
+def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm * (np.log(n_new - m_new) - np.log(ns[idx] - ms[idx]))
+    return fold_norm*(np.log(n_new-m_new+1e-5)-np.log(ns[idx]-ms[idx]+1e-5))
 
 @njit
 def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
@@ -153,85 +153,51 @@ def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
     dE_rep = Rep_Penalty(m_new, n_new, f_rep[:, t]) - Rep_Penalty(ms[idx], ns[idx], f_rep[:, t - 1])
     return rep_norm * dE_rep
 
-@njit(fastmath=True, cache=True)
+@njit
 def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin=False):
     '''
-    Optimized energy difference for crossing energy.
+    Energy difference for crossing energy.
     '''
-    K1 = 0.0
-    K2 = 0.0
-    N_lef = ms.shape[0]
-
-    ms_idx = ms[idx]
-    ns_idx = ns[idx]
-
-    # Precompute block type for idx
-    idx_block = idx < N_lef
-
+    K1, K2 = 0, 0
+    N_lef = len(ms)
+    
     for i in range(N_lef):
-        if i == idx:
-            continue
-        i_block = i < N_lef
-        if cohesin_blocks_condensin or (idx_block and i_block) or (not idx_block and not i_block):
-            ms_i = ms[i]
-            ns_i = ns[i]
-            K1 += Kappa(ms_idx, ns_idx, ms_i, ns_i)
-            K2 += Kappa(m_new, n_new, ms_i, ns_i)
-    return k_norm * (K2 - K1)
+        if i != idx:
+            if cohesin_blocks_condensin or (idx < N_lef and i < N_lef) or (idx >= N_lef and i >= N_lef):
+                K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
+                K2 += Kappa(m_new, n_new, ms[i], ns[i])
+    return k_norm*(K2 - K1)
 
-@njit(fastmath=True, cache=True, inline='always')
-def get_dE_node(spins, spin_idx, spin_val, J, h, ht_new, ht_old, potts_norm1, potts_norm2, t, rep_fork_organizers=True):
-    '''
-    Optimized energy difference for node state change.
-    '''
-    old_spin = spins[spin_idx]
-    delta_spin = spin_val - old_spin
-
-    # h term
-    dE1 = h[spin_idx] * delta_spin
-    if not rep_fork_organizers:
-        dE1 *= 1.0
-    else:
-        dE1 *= 0.5
-
-    # ht term (only if t > 0 and rep_fork_organizers)
-    if t > 0 and rep_fork_organizers:
-        # Only the changed spin contributes to the difference
-        dE1 += 0.5 * (ht_new[spin_idx] - ht_old[spin_idx]) * delta_spin
-
-    # J term: only neighbors affected
-    dE2 = 0.0
-    N = spins.shape[0]
-    for j in range(N):
-        if j == spin_idx:
-            continue
-        dE2 += J[spin_idx, j] * (abs(spin_val - spins[j]) - abs(old_spin - spins[j]))
-
+@njit
+def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
+    # In case that we change node state
+    dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2+h[spin_idx]*(spin_val-spins[spin_idx])/2*(1-int(rep_fork_organizers))
+    if t>0: dE1 += ((np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2)*int(rep_fork_organizers)
+    dE2 = np.sum(J[spin_idx, :] * (np.abs(spin_val - spins) - np.abs(spins[spin_idx] - spins)))
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
-@njit(fastmath=True, cache=True, inline='always')
-def get_dE_potts_link(spins, J, m_new, n_new, m_old, n_old, potts_norm2=0.0):
-    '''
-    Optimized energy difference for Potts link energy.
-    '''
-    dE = 0.0
-    # Avoid branching by using masks and direct computation
-    if m_new >= 0 and n_new >= 0:
-        dE += J[m_new, n_new] * (spins[m_new] == spins[n_new])
-    if m_old >= 0 and n_old >= 0:
-        dE -= J[m_old, n_old] * (spins[m_old] == spins[n_old])
-    return potts_norm2 * dE
+@njit
+def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,potts_norm2=0.0):
+    if m_new>=0 and m_old>=0:
+        dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])-J[m_old,n_old]*(spins[m_old]==spins[n_old])
+    elif m_new<0 and m_old>=0:
+        dE = -J[m_old,n_old]*(spins[m_old]==spins[n_old])
+    elif m_new>=0 and m_old<0:
+        dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])
+    else:
+        dE = 0
+    return potts_norm2*dE
 
 @njit
 def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, idx, t, f_rep, spins, J, potts_norm2=0.0, cohesin_blocks_condensin=False):
     '''
-    Total energy difference for rewiring.
+    Total energy difference.
     '''
     dE = 0.0
     if idx < N_lef:
         dE += get_dE_fold(fold_norm, ms[:N_lef], ns[:N_lef], m_new, n_new, idx)
     else:
-        dE += get_dE_fold(fold_norm2, ms[N_lef:N_lef + N_lef2], ns[N_lef:N_lef + N_lef2], m_new, n_new, idx - N_lef)
+        dE += get_dE_fold(fold_norm2, ms[N_lef:N_lef+N_lef2], ns[N_lef:N_lef+N_lef2], m_new, n_new, idx - N_lef)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin)
     
@@ -248,55 +214,44 @@ def unbind_bind(N_beads):
     '''
     Rebinding Monte-Carlo step.
     '''
-    m_new = rd.randint(0, N_beads - 3)
-    n_new = m_new + 2  # Ensure n_new - m_new >= 1
+    m_new = rd.randint(0, N_beads - 4)
+    n_new = m_new + 3  # Ensure n_new - m_new >= 1
     return m_new, n_new
 
 @njit(fastmath=True, cache=True, inline='always')
 def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     '''
-    Optimized sliding Monte-Carlo step.
+    Sliding Monte-Carlo step.
     '''
-    # Use integer random for speed
-    r1 = -1 if not rw else (1 if np.random.randint(2) else -1)
-    r2 = 1 if not rw else (1 if np.random.randint(2) else -1)
+    # Choose random step for sliding
+    choices = np.array([-1, 1], dtype=np.int64)
+    r1 = np.random.choice(choices) if rw else -1
+    r2 = np.random.choice(choices) if rw else 1
+    
+    m_new = m_old + r1 if m_old + r1 >= 0 else 0
+    n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
 
-    m_new = m_old + r1
-    n_new = n_old + r2
-
-    # Clamp to valid range
-    if m_new < 0:
-        m_new = 0
-    if n_new > N_beads - 1:
-        n_new = N_beads - 1
-
-    # Ensure n_new - m_new >= 2
-    if n_new - m_new < 2:
+    # Ensure n_new - m_new is always positive and at least 1
+    if n_new - m_new <= 2:
         if m_new > 0:
-            m_new = n_new - 2
-            if m_new < 0:
-                m_new = 0
-        if n_new < N_beads - 1:
-            n_new = m_new + 2
-            if n_new > N_beads - 1:
-                n_new = N_beads - 1
+            m_new -= 1
+        elif n_new < N_beads - 1:
+            n_new += 1
 
-    # Replication fork logic (minimize np.any and slicing)
+    # Handle replication forks only if f is provided
     if f is not None:
-        t_prev = t - 1 if t > 0 else 0
-        # Only check if there are any zeros in f[:, t]
-        has_zero = False
-        for i in range(f.shape[0]):
-            if f[i, t] == 0:
-                has_zero = True
-                break
-        if has_zero:
-            if f[m_new, t] != f[m_old, t_prev]:
-                m_new = closest_opposite(f[:, t], m_new)
-            if f[n_new, t] != f[n_old, t_prev]:
-                n_new = closest_opposite(f[:, t], n_new)
+        if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+            m_new = closest_opposite(f[:, t], m_new)
+        if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
+            n_new = closest_opposite(f[:, t], n_new)    
+    
+    # They cannot go further than chromosome boundaries
+    if n_new >= N_beads: n_new = N_beads - 1
+    if m_new >= N_beads: m_new = N_beads - 1
+    if m_new < 0: m_new = 0
+    if n_new < 0: n_new = 0
 
-    return m_new, n_new
+    return int(m_new), int(n_new)
 
 @njit
 def initialize(N_lef, N_lef2, N_beads):
@@ -324,7 +279,7 @@ def initialize_J(N_beads, J, ms, ns):
 
 @njit(fastmath=True, cache=True)
 def run_energy_minimization(
-    N_steps, N_sweep, N_lef, N_lef2, N_beads, MC_step, T, T_min, mode,
+    N_steps, N_sweep, N_lef, N_lef2, N_beads, MC_step, T,
     L, R, k_norm, fold_norm, fold_norm2, bind_norm,
     rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None,
     potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None,
@@ -334,10 +289,10 @@ def run_energy_minimization(
     Runs a Monte Carlo or simulated annealing energy minimization for a chromatin simulation.
     [docstring omitted for brevity]
     '''
-    Ti = T  # Current temperature
     ht = np.zeros(N_beads, dtype=np.float64)      # Time-dependent field (for Potts)
     ht_old = np.zeros(N_beads, dtype=np.float64)  # Previous time-dependent field
     mask = (ht_old == 0)  # Mask for updating ht
+    n_accepted = 0
 
     # Possible spin values and indices
     spin_choices = np.array([-2, -1, 0, 1, 2], dtype=np.int64)
@@ -375,7 +330,7 @@ def run_energy_minimization(
         percent = int(100 * i / N_steps)
         if percent % 5 == 0 and percent != last_percent:
             # Numba can't use print with flush, so just print
-            print(f"Progres: {percent} % completed.")
+            print(f"Progress: {percent} % completed.")
             last_percent = percent
 
         # Determine current replication time index (rt)
@@ -396,12 +351,6 @@ def run_energy_minimization(
                 mag_field = (1 - 2 * rt * inv_rep_duration)
                 ht += mask * mag_field * f_rep[:, rt]
 
-        # Update temperature for annealing
-        if mode == 'Annealing':
-            Ti = T - (T - T_min) * i / N_steps
-        else:
-            Ti = T
-
         for j in range(N_sweep):
             # With probability p_rew, propose a LEF rewiring move
             if np.random.rand() < p_rew:
@@ -421,7 +370,7 @@ def run_energy_minimization(
                 # Compute energy difference for move
                 dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2, cohesin_blocks_condensin)
                 # Metropolis criterion
-                if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
+                if dE <= 0 or np.exp(-dE / T) > np.random.rand():
                     E += dE
                     # Update J matrix for LEF move
                     if m_old >= 0:
@@ -431,6 +380,7 @@ def run_energy_minimization(
                         J[m_new, n_new] += 1
                         J[n_new, m_new] += 1
                     ms[lef_idx], ns[lef_idx] = m_new, n_new
+                    n_accepted += 1
             else:
                 # Propose a Potts spin flip
                 spin_idx = np.random.randint(N_beads)
@@ -438,10 +388,11 @@ def run_energy_minimization(
                 s = s_choices[np.random.randint(s_choices.shape[0])]
                 dE = get_dE_node(spins, spin_idx, s, J, h, ht, ht_old, potts_norm1, potts_norm2, rt, rep_fork_organizers)
                 # Metropolis criterion
-                if dE <= 0 or np.exp(-dE / Ti) > np.random.rand():
+                if dE <= 0 or np.exp(-dE / T) > np.random.rand():
                     E += dE
                     spins[spin_idx] = s
-
+                    n_accepted += 1
+        
         # Update previous time-dependent field and mask
         ht_old = ht
         mask = (ht_old == 0)
@@ -459,4 +410,5 @@ def run_energy_minimization(
             if rep_norm != 0.0 and f_rep is not None:
                 Rs[idx] = E_rep(f_rep, ms, ns, rt, rep_norm)
 
-    return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags
+    acceptance_rate = n_accepted / (N_steps * N_sweep)
+    return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags, acceptance_rate

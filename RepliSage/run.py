@@ -90,10 +90,10 @@ def main():
     
     # Set parameters
     N_beads, N_lef, N_lef2 = args.N_BEADS, args.N_LEF, args.N_LEF2
-    N_steps, N_sweep, MC_step, burnin, T, T_min, t_rep, rep_duration = args.N_STEPS, args.N_sweep, args.MC_STEP, args.BURNIN, args.T_INIT, args.T_FINAL, args.REP_START_TIME, args.REP_TIME_DURATION
+    N_steps, N_sweep, MC_step, burnin, T, t_rep, rep_duration = args.N_STEPS, args.N_sweep, args.MC_STEP, args.BURNIN, args.T_MC, args.REP_START_TIME, args.REP_TIME_DURATION
     f, f2, b, kappa = args.FOLDING_COEFF, args.FOLDING_COEFF2, args.BIND_COEFF, args.CROSS_COEFF
     c_state_field, c_state_interact, c_rep = args.POTTS_FIELD_COEFF, args.POTTS_INTERACT_COEFF, args.REP_COEFF
-    mode, rw, random_spins, p_rew, rep_fork_organizers = args.METHOD, args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
+    rw, random_spins, p_rew, rep_fork_organizers = args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
     Tstd_factor, speed_scale, init_rate_scale, p_rew = args.REP_T_STD_FACTOR, args.REP_SPEED_SCALE, args.REP_INIT_RATE_SCALE, args.P_REW
     save_MDT, save_plots, viz_heats = args.SAVE_MDT, args.SAVE_PLOTS, args.VIZ_HEATS
     cohesin_blocks_condensin = args.COHESIN_BLOCKS_CONDENSIN
@@ -114,9 +114,9 @@ def main():
                                bedpe_file=bedpe_file, out_path=out_path, rept_path=rept_path,
                                N_lef=N_lef, N_lef2=N_lef2, 
                                t_rep=t_rep, rep_duration=rep_duration, Tstd_factor=Tstd_factor, speed_scale=speed_scale, scale=init_rate_scale)
-    sim.run_stochastic_simulation(N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, burnin=burnin, T=T, T_min=T_min, 
+    sim.run_stochastic_simulation(N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, burnin=burnin, T=T,
                                   f=f, f2=f2, b=b, kappa=kappa, c_rep=c_rep, c_potts1=c_state_field, c_potts2=c_state_interact, 
-                                  mode=mode, rw=rw, p_rew= p_rew,
+                                  rw=rw, p_rew= p_rew,
                                   rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
         sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
@@ -125,12 +125,15 @@ def main():
                        md_temperature=args.SIM_TEMP, ff_path=args.FORCEFIELD_PATH,
                        reporters=args.DCD_REPORTER)
         print("\033[92mCongratulations RepliSage simulation just finished! :)\033[0m")
+    elif args.SIMULATION_TYPE is None:
+        print("\n\033[93mWarning: SIMULATION_TYPE was not specified, so there will not be a 3D structure ensemble.\033[0m")
     else:
-        raise ValueError("\033[91mError: You did not specify a correct simulation type. Please use 'MD' or 'EM'.\033[0m")
+        raise ValueError("\n\033[91mError: You did not specify a correct simulation type. Please use 'MD' or 'EM'.\033[0m")
+    
     if save_plots:
         print('\nPloting stuff...') 
         sim.show_plots()
-        sim.compute_structure_metrics()
+        if args.SIMULATION_TYPE is not None: sim.compute_structure_metrics()
         print('Done!')
     
     # Save Parameters
@@ -141,7 +144,7 @@ def main():
         print('Done')
 
     # Heatmap Visualization
-    if args.VIZ_HEATS:
+    if args.VIZ_HEATS and args.SIMULATION_TYPE is not None:
         print('\nMaking averaged heatmap plots...')
         if sim.rep_frac is None:
             print('Replication fraction is None, generating only the combined heatmap...')

@@ -30,7 +30,6 @@ class MD_MODEL:
         self.rw_l = np.sqrt(self.N_beads) * 0.1
         self.run_repli = rep_frac is not None  # Enable replication logic only if rep_frac is provided
         self.chain_idx = list()
-        print('Average random walk distance:', self.rw_l)
         for i in range(N_beads): self.chain_idx.append(0)
         for i in range(N_beads, 2 * N_beads): self.chain_idx.append(1)
 
@@ -55,7 +54,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=10000,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin, integrator_step=10.0 * mm.unit.femtosecond, ff_path='forcefields/classic_sm_ff.xml'):
+    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=100,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin, integrator_step=10.0 * mm.unit.femtosecond, ff_path='forcefields/classic_sm_ff.xml'):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
