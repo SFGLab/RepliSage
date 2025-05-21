@@ -164,6 +164,7 @@ class MD_MODEL:
                 distance = np.linalg.norm(com1 - com2)
                 if distance > separation_threshold and fully_separated_step is None:
                     fully_separated_step = i
+                    self.disable_pull_force()
 
             # Update progress-bar
             pbar.update(1)
@@ -180,7 +181,6 @@ class MD_MODEL:
                 print("\033[91mPolymers did not fully separate during the simulation. Consider to run more simulation steps.\033[0m")
         
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
-        print('Energy minimization done <3')
 
         return fully_separated_step
 
@@ -231,6 +231,14 @@ class MD_MODEL:
         if self.run_repli:
             for n in range(self.N_beads,2*self.N_beads):
                 self.pull_force.setParticleParameters(n,n, [-1000.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
+        self.pull_force.updateParametersInContext(self.simulation.context)
+
+    def disable_pull_force(self):
+        for n in range(self.N_beads):
+            self.pull_force.setParticleParameters(n,n, [0.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
+        if self.run_repli:
+            for n in range(self.N_beads,2*self.N_beads):
+                self.pull_force.setParticleParameters(n,n, [0.0 * mm.unit.kilojoule_per_mole / mm.unit.nanometer])
         self.pull_force.updateParametersInContext(self.simulation.context)
     
     def add_evforce(self):
