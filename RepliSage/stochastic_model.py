@@ -57,7 +57,7 @@ class StochasticSimulation:
         self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
         self.N_lef2 = N_lef2
 
-    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False):
+    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False, random_spins=True):
         '''
         Energy minimization script.
         '''
@@ -80,36 +80,36 @@ class StochasticSimulation:
             bind_norm=bind_norm, rep_norm=rep_norm,
             f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
             h=self.h, J=self.J, rw=rw, rep_fork_organizers=rep_fork_organizers,
-            cohesin_blocks_condensin=cohesin_blocks_condensin)
+            cohesin_blocks_condensin=cohesin_blocks_condensin, random_spins=random_spins)
         end = time.time()
         elapsed = end - start
         print(f'Computation finished successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')
-        print("\n\033[94m---------- Stochastic Simulation Report ----------\033[0m")
-        print("\033[94m-\033[0m" * 50)
-        print(f"\033[94mAcceptance rate: {self.acceptance_rate*100:.2f}%\033[0m")
+        print("\n\033[95m---------- Stochastic Simulation Report ----------\033[0m")
+        print("\033[95m-\033[0m" * 50)
+        print(f"\033[95mAcceptance rate: {self.acceptance_rate*100:.2f}%\033[0m")
         if self.acceptance_rate < 0.1:
             print(f"\033[93m\033[1mWarning:\033[0m\033[93m The acceptance rate is low ({self.acceptance_rate:.2f}). Consider adjusting the parameters.\033[0m")
         elif self.acceptance_rate > 0.6:
             print(f"\033[93m\033[1mWarning:\033[0m\033[93m The acceptance rate is high ({self.acceptance_rate:.2f}). Consider adjusting the parameters.\033[0m")
-        print(f"\033[94mNumber of steps: {self.N_steps}\033[0m")
-        print(f"\033[94mNumber of sweeps: {self.N_steps//self.MC_step}\033[0m")
-        print(f"\033[94mNumber of beads: {self.N_beads}\033[0m")
-        print(f"\033[94mNumber of CTCFs: {self.N_CTCF}\033[0m")
-        print(f"\033[94mNumber of LEFs: {self.N_lef}\033[0m")
-        print(f"\033[94mNumber of LEFs in the second family: {self.N_lef2}\033[0m")
-        print(f"\033[94mNumber of LEF2s: {self.N_lef2}\033[0m")
+        print(f"\033[95mNumber of steps: {self.N_steps}\033[0m")
+        print(f"\033[95mNumber of sweeps: {self.N_steps//self.MC_step}\033[0m")
+        print(f"\033[95mNumber of beads: {self.N_beads}\033[0m")
+        print(f"\033[95mNumber of CTCFs: {self.N_CTCF}\033[0m")
+        print(f"\033[95mNumber of LEFs: {self.N_lef}\033[0m")
+        print(f"\033[95mNumber of LEFs in the second family: {self.N_lef2}\033[0m")
+        print(f"\033[95mNumber of LEF2s: {self.N_lef2}\033[0m")
         g1_start = self.burnin // self.MC_step
         s_start = self.t_rep // self.MC_step
         s_end = (self.t_rep + self.rep_duration) // self.MC_step
-        print(f"\033[94mEnergy in G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
-        print(f"\033[94mEnergy in S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
-        print(f"\033[94mEnergy in G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
-        print(f"\033[94mPotts energy in G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
-        print(f"\033[94mPotts energy in S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
-        print(f"\033[94mPotts energy in G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
-        print(f"\033[94mMean loop length in G1 phase: {(self.Ns[g1_start:s_start]-self.Ms[g1_start:s_start]).mean():.2f}\033[0m")
-        print(f"\033[94mMean loop length in S phase: {(self.Ns[s_start:s_end]-self.Ms[s_start:s_end]).mean():.2f}\033[0m")
-        print(f"\033[94mMean loop length in G2 phase: {(self.Ns[s_end:]-self.Ms[s_end:]).mean():.2f}\033[0m")
+        print(f"\033[95mEnergy in G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[95mEnergy in S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[95mEnergy in G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy in G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy in S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy in G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in G1 phase: {(self.Ns[g1_start:s_start]-self.Ms[g1_start:s_start]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in S phase: {(self.Ns[s_start:s_end]-self.Ms[s_start:s_end]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in G2 phase: {(self.Ns[s_end:]-self.Ms[s_end:]).mean():.2f}\033[0m")
         
         if save_MDT:
             np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)

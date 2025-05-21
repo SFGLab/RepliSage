@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.interpolate import interp1d, interp2d
 from scipy.ndimage import zoom
-from numba import njit, int32, float64
 from scipy.ndimage import binary_dilation, binary_erosion
 import os
 import re

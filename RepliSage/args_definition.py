@@ -1,7 +1,6 @@
 import datetime
 import re
 from dataclasses import dataclass
-from math import pi
 from typing import Union
 import argparse
 import openmm as mm

@@ -16,18 +16,38 @@ def radius_of_gyration(V):
 
 def mean_pairwise_distance(V):
     distances = np.linalg.norm(V[:, np.newaxis] - V, axis=2)
-    # Take only upper triangle distances (no duplicates, no diagonal)
     triu_indices = np.triu_indices(len(V), k=1)
     mean_dist = np.mean(distances[triu_indices])
     return mean_dist
 
 def contact_number(V, cutoff=1.0):
     distances = np.linalg.norm(V[:, np.newaxis] - V, axis=2)
-    # Ignore self-contacts by setting diagonal to a large value
     np.fill_diagonal(distances, np.inf)
     contacts = np.sum(distances < cutoff, axis=1)
     mean_contacts = np.mean(contacts)
     return mean_contacts
+
+def max_pairwise_distance(V):
+    distances = np.linalg.norm(V[:, np.newaxis] - V, axis=2)
+    return np.max(distances)
+
+def bounding_box_volume(V):
+    mins = np.min(V, axis=0)
+    maxs = np.max(V, axis=0)
+    return np.prod(maxs - mins)
+
+def mean_distance_to_com(V):
+    com = np.mean(V, axis=0)
+    return np.mean(np.linalg.norm(V - com, axis=1))
+
+def std_pairwise_distance(V):
+    distances = np.linalg.norm(V[:, np.newaxis] - V, axis=2)
+    triu_indices = np.triu_indices(len(V), k=1)
+    return np.std(distances[triu_indices])
+
+def max_distance_to_com(V):
+    com = np.mean(V, axis=0)
+    return np.max(np.linalg.norm(V - com, axis=1))
 
 def end_to_end_distance(V):
     return np.linalg.norm(V[-1] - V[0])
@@ -42,22 +62,18 @@ def asphericity(V):
     return asphericity_value
 
 def box_counting_dimension(V, box_sizes=np.logspace(-1, 0, 10)):
-    bounds = np.ptp(V, axis=0)  # extent of the structure
+    bounds = np.ptp(V, axis=0)
     N = []
-    
     for size in box_sizes:
-        grid = np.ceil(bounds / size).astype(int)  # number of boxes in each dimension
-        occupied = set(tuple((V // size).astype(int).flatten()))  # check occupied boxes
+        grid = np.ceil(bounds / size).astype(int)
+        occupied = set(tuple((V // size).astype(int).flatten()))
         N.append(len(occupied))
-    
-    # Log-log fit for slope as fractal dimension
     coeffs = np.polyfit(np.log(box_sizes), np.log(N), 1)
     return -coeffs[0]
 
 def structural_anisotropy(V):
     pca = PCA(n_components=3)
     pca.fit(V)
-    # Ratio of explained variance by the first component to the sum of others
     anisotropy = pca.explained_variance_ratio_[0] / sum(pca.explained_variance_ratio_[1:])
     return anisotropy
 
@@ -71,9 +87,30 @@ def global_distance_fluctuation(V):
     gdf = np.std(distances)
     return gdf
 
+# New metric: Ellipsoid ratio (largest/smallest principal axis)
+def ellipsoid_ratio(V):
+    pca = PCA(n_components=3)
+    pca.fit(V)
+    axes = np.sqrt(pca.explained_variance_)
+    ratio = axes.max() / axes.min()
+    return ratio
+
+# New metric: Planarity (smallest eigenvalue / sum of eigenvalues of gyration tensor)
+def planarity(V):
+    center_of_mass = np.mean(V, axis=0)
+    distances = V - center_of_mass
+    gyr_tensor = np.dot(distances.T, distances) / len(V)
+    eigenvalues = np.linalg.eigvalsh(gyr_tensor)
+    planarity_value = eigenvalues.min() / np.sum(eigenvalues)
+    return planarity_value
+
 def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None):
     cifs = list_files_in_directory(ensemble_path)
     Rgs, mpds, eeds, asphs, fractals, convs, gdfs, CNs = list(), list(), list(), list(), list(), list(), list(), list()
+    ellipsoid_ratios, planarities = list(), list()
+    max_pairwise_distances, bounding_box_volumes = list(), list()
+    mean_distances_to_com, std_pairwise_distances = list(), list()
+    max_distances_to_com = list()
 
     for cif in tqdm(cifs):
         V = get_coordinates_cif(ensemble_path+'/'+cif)
@@ -82,80 +119,160 @@ def compute_metrics_for_ensemble(ensemble_path,duplicated_chain=False,path=None)
         mpds.append(mean_pairwise_distance(V))
         eeds.append(end_to_end_distance(V))
         asphs.append(asphericity(V))
-        fractals.append(box_counting_dimension(V))
-        convs.append(convex_hull_volume(V))
-        gdfs.append(global_distance_fluctuation(V))
+        # box_counting_dimension can be time consuming
+        # fractals.append(box_counting_dimension(V))
+        # convex_hull_volume can be time consuming for large point clouds
+        # convs.append(convex_hull_volume(V))
+        # global_distance_fluctuation can be time consuming (O(N^2) distance matrix)
+        # gdfs.append(global_distance_fluctuation(V))
         CNs.append(contact_number(V))
-    np.save(path+'/metadata/structural_metrics/Rgs.npy',np.array(Rgs))
-    np.save(path+'/metadata/structural_metrics/mpds.npy',np.array(mpds))
-    np.save(path+'/metadata/structural_metrics/eeds.npy',np.array(eeds))
-    np.save(path+'/metadata/structural_metrics/asphs.npy',np.array(asphs))
-    np.save(path+'/metadata/structural_metrics/fractal_dims.npy',np.array(fractals))
-    np.save(path+'/metadata/structural_metrics/convex_hull_volume.npy',np.array(convs))
-    np.save(path+'/metadata/structural_metrics/gdfs.npy',np.array(gdfs))
-    np.save(path+'/metadata/structural_metrics/CNs.npy',np.array(CNs))
+        ellipsoid_ratios.append(ellipsoid_ratio(V))
+        planarities.append(planarity(V))
+        max_pairwise_distances.append(max_pairwise_distance(V))
+        bounding_box_volumes.append(bounding_box_volume(V))
+        mean_distances_to_com.append(mean_distance_to_com(V))
+        std_pairwise_distances.append(std_pairwise_distance(V))
+        max_distances_to_com.append(max_distance_to_com(V))
 
+        np.save(path+'/metadata/structural_metrics/Rgs.npy',np.array(Rgs))
+        np.save(path+'/metadata/structural_metrics/mpds.npy',np.array(mpds))
+        np.save(path+'/metadata/structural_metrics/eeds.npy',np.array(eeds))
+        np.save(path+'/metadata/structural_metrics/asphs.npy',np.array(asphs))
+        # np.save(path+'/metadata/structural_metrics/fractal_dims.npy',np.array(fractals))
+        # np.save(path+'/metadata/structural_metrics/convex_hull_volume.npy',np.array(convs))
+        # np.save(path+'/metadata/structural_metrics/gdfs.npy',np.array(gdfs))
+        np.save(path+'/metadata/structural_metrics/CNs.npy',np.array(CNs))
+        np.save(path+'/metadata/structural_metrics/ellipsoid_ratios.npy',np.array(ellipsoid_ratios))
+        np.save(path+'/metadata/structural_metrics/planarities.npy',np.array(planarities))
+        np.save(path+'/metadata/structural_metrics/max_pairwise_distances.npy', np.array(max_pairwise_distances))
+        np.save(path+'/metadata/structural_metrics/bounding_box_volumes.npy', np.array(bounding_box_volumes))
+        np.save(path+'/metadata/structural_metrics/mean_distances_to_com.npy', np.array(mean_distances_to_com))
+        np.save(path+'/metadata/structural_metrics/std_pairwise_distances.npy', np.array(std_pairwise_distances))
+        np.save(path+'/metadata/structural_metrics/max_distances_to_com.npy', np.array(max_distances_to_com))
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(Rgs,'r-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Gyration Radius', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/Rg.svg',format='svg',dpi=400)
-    plt.close()
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(Rgs,'r-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Gyration Radius', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/Rg.svg',format='svg',dpi=400)
+        plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(mpds,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Mean Pairwise Distance', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/pairwise.svg',format='svg',dpi=400)
-    plt.close()
-    
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(eeds,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('End to End Distance', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/end2end.svg',format='svg',dpi=400)
-    plt.close()
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(mpds,'k-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Mean Pairwise Distance', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/pairwise.svg',format='svg',dpi=400)
+        plt.close()
+        
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(eeds,'k-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('End to End Distance', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/end2end.svg',format='svg',dpi=400)
+        plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(asphs,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Asphericity', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/asphericity.svg',format='svg',dpi=400)
-    plt.close()
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(asphs,'k-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Asphericity', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/asphericity.svg',format='svg',dpi=400)
+        plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(fractals,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Fractal Dimension', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/fractal.svg',format='svg',dpi=400)
-    plt.close()
+        # figure(figsize=(10, 6), dpi=400)
+        # plt.plot(fractals,'k-')
+        # plt.xlabel('sample number', fontsize=16)
+        # plt.ylabel('Fractal Dimension', fontsize=16)
+        # if path!=None:
+        #     plt.savefig(path+'/plots/structural_metrics/fractal.svg',format='svg',dpi=400)
+        # plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(convs,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Convex Volume', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/convex_vol.svg',format='svg',dpi=400)
-    plt.close()
+        # figure(figsize=(10, 6), dpi=400)
+        # plt.plot(convs,'k-')
+        # plt.xlabel('sample number', fontsize=16)
+        # plt.ylabel('Convex Volume', fontsize=16)
+        # if path!=None:
+        #     plt.savefig(path+'/plots/structural_metrics/convex_vol.svg',format='svg',dpi=400)
+        # plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(gdfs,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Global Distance Fluctuations', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/global_dist_flucts.svg',format='svg',dpi=400)
-    plt.close()
+        # figure(figsize=(10, 6), dpi=400)
+        # plt.plot(gdfs,'k-')
+        # plt.xlabel('sample number', fontsize=16)
+        # plt.ylabel('Global Distance Fluctuations', fontsize=16)
+        # if path!=None:
+        #     plt.savefig(path+'/plots/structural_metrics/global_dist_flucts.svg',format='svg',dpi=400)
+        # plt.close()
 
-    figure(figsize=(10, 6), dpi=400)
-    plt.plot(CNs,'k-')
-    plt.xlabel('sample number', fontsize=16)
-    plt.ylabel('Contact Number', fontsize=16)
-    if path!=None:
-        plt.savefig(path+'/plots/structural_metrics/contact_number.svg',format='svg',dpi=400)
-    plt.close()
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(CNs,'k-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Contact Number', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/contact_number.svg',format='svg',dpi=400)
+        plt.close()
+
+        # New: plot ellipsoid ratio
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(ellipsoid_ratios,'b-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Ellipsoid Ratio', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/ellipsoid_ratio.svg',format='svg',dpi=400)
+        plt.close()
+
+        # New: plot planarity
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(planarities,'g-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Planarity', fontsize=16)
+        if path!=None:
+            plt.savefig(path+'/plots/structural_metrics/planarity.svg',format='svg',dpi=400)
+        plt.close()
+
+        # Plot max pairwise distance
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(max_pairwise_distances, 'm-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Max Pairwise Distance', fontsize=16)
+        if path is not None:
+            plt.savefig(path+'/plots/structural_metrics/max_pairwise_distance.svg', format='svg', dpi=400)
+        plt.close()
+
+        # Plot bounding box volume
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(bounding_box_volumes, 'c-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Bounding Box Volume', fontsize=16)
+        if path is not None:
+            plt.savefig(path+'/plots/structural_metrics/bounding_box_volume.svg', format='svg', dpi=400)
+        plt.close()
+
+        # Plot mean distance to center of mass
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(mean_distances_to_com, 'y-')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Mean Distance to COM', fontsize=16)
+        if path is not None:
+            plt.savefig(path+'/plots/structural_metrics/mean_distance_to_com.svg', format='svg', dpi=400)
+        plt.close()
+
+        # Plot std pairwise distance
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(std_pairwise_distances, 'orange')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Std Pairwise Distance', fontsize=16)
+        if path is not None:
+            plt.savefig(path+'/plots/structural_metrics/std_pairwise_distance.svg', format='svg', dpi=400)
+        plt.close()
+
+        # Plot max distance to center of mass
+        figure(figsize=(10, 6), dpi=400)
+        plt.plot(max_distances_to_com, 'purple')
+        plt.xlabel('sample number', fontsize=16)
+        plt.ylabel('Max Distance to COM', fontsize=16)
+        if path is not None:
+            plt.savefig(path+'/plots/structural_metrics/max_distance_to_com.svg', format='svg', dpi=400)
+        plt.close()

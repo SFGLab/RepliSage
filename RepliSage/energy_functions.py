@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 import random as rd
-from .preproc import *
+from .utils import *
 
 def preprocessing(bedpe_file: str, region: list, chrom: str, N_beads: int):
     '''
@@ -254,7 +254,7 @@ def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     return int(m_new), int(n_new)
 
 @njit
-def initialize(N_lef, N_lef2, N_beads):
+def initialize(N_lef, N_lef2, N_beads, random_init_spins=True):
     '''
     Random initial condition of the simulation.
     '''
@@ -262,7 +262,10 @@ def initialize(N_lef, N_lef2, N_beads):
     ns = np.full(N_lef + N_lef2, -4, dtype=np.int64)
     for j in range(N_lef):
         ms[j], ns[j] = unbind_bind(N_beads)
-    state = np.random.randint(0, 2, size=N_beads) * 4 - 2
+    if random_init_spins:
+        state = np.random.randint(0, 2, size=N_beads) * 4 - 2
+    else:
+        state = np.zeros(N_beads, dtype=np.int64)
     return ms, ns, state
 
 @njit
@@ -277,13 +280,13 @@ def initialize_J(N_beads, J, ms, ns):
             J[n, m] += 1
     return J
 
-@njit(fastmath=True, cache=True)
+@njit
 def run_energy_minimization(
     N_steps, N_sweep, N_lef, N_lef2, N_beads, MC_step, T,
     L, R, k_norm, fold_norm, fold_norm2, bind_norm,
     rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None,
     potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None,
-    p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False
+    p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False, random_spins=True
 ):
     '''
     Runs a Monte Carlo or simulated annealing energy minimization for a chromatin simulation.
@@ -299,7 +302,7 @@ def run_energy_minimization(
     lef_idx_choices = np.arange(N_lef, dtype=np.int64)
 
     # Initialize LEF positions and Potts spins
-    ms, ns, spins = initialize(N_lef, N_lef2, N_beads)
+    ms, ns, spins = initialize(N_lef, N_lef2, N_beads, random_spins)
     spin_traj = np.zeros((N_beads, N_steps // MC_step), dtype=np.int32)
 
     # Initialize coupling matrix J with current LEF positions

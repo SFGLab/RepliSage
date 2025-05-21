@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 from .common import *
-from numba import njit, prange
-
 
 def simulator(initiation_rate, speed_mean, speed_std):
     '''
@@ -112,7 +110,7 @@ def propagate_forks(t, rep_dna_col, l_forks, r_forks):
 
         # deleting out-of-range forks:
         l_forks = [lf for lf in l_forks if lf[5] != 1]
-        r_forks = [rf for rf in r_forks if lf[5] != 1]
+        r_forks = [rf for rf in r_forks if rf[5] != 1]
 
         # updating forks positions:
         for lf in l_forks:

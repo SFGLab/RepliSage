@@ -3,7 +3,6 @@ from .args_definition import *
 import argparse
 import configparser
 from typing import List
-from sys import stdout
 
 class ArgumentChanger:
     def __init__(self, args):
@@ -116,7 +115,7 @@ def main():
                                t_rep=t_rep, rep_duration=rep_duration, Tstd_factor=Tstd_factor, speed_scale=speed_scale, scale=init_rate_scale)
     sim.run_stochastic_simulation(N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, burnin=burnin, T=T,
                                   f=f, f2=f2, b=b, kappa=kappa, c_rep=c_rep, c_potts1=c_state_field, c_potts2=c_state_interact, 
-                                  rw=rw, p_rew= p_rew,
+                                  rw=rw, p_rew= p_rew, random_spins=random_spins,
                                   rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
         sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
@@ -131,7 +130,7 @@ def main():
         raise ValueError("\n\033[91mError: You did not specify a correct simulation type. Please use 'MD' or 'EM'.\033[0m")
     
     if save_plots:
-        print('\nPloting stuff...') 
+        print('\nPloting stuff...')
         sim.show_plots()
         if args.SIMULATION_TYPE is not None: sim.compute_structure_metrics()
         print('Done!')
@@ -144,7 +143,7 @@ def main():
         print('Done')
 
     # Heatmap Visualization
-    if args.VIZ_HEATS and args.SIMULATION_TYPE is not None:
+    if viz_heats and (args.SIMULATION_TYPE is not None):
         print('\nMaking averaged heatmap plots...')
         if sim.rep_frac is None:
             print('Replication fraction is None, generating only the combined heatmap...')
