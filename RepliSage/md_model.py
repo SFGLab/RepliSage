@@ -54,7 +54,7 @@ class MD_MODEL:
             return 'AR', i-(self.t_rep+self.rep_duration)//self.step+1
         return rep_per
 
-    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=100,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin, integrator_step=10.0 * mm.unit.femtosecond, ff_path='forcefields/classic_sm_ff.xml'):
+    def run_pipeline(self,init_struct='rw',tol=1.0,sim_step=100,reporters=False,mode='MD',integrator_mode='langevin', p_ev=0.01, md_temperature=310*mm.unit.kelvin, integrator_step=10.0 * mm.unit.femtosecond, ff_path='forcefields/classic_sm_ff.xml', plot_energy=True):
         '''
         This is the basic function that runs the molecular simulation pipeline.
 
@@ -62,7 +62,10 @@ class MD_MODEL:
         run_MD (bool): True if user wants to run molecular simulation (not only energy minimization).
         sim_step (int): the simulation step of Langevin integrator.
         write_files (bool): True if the user wants to save the structures that determine the simulation ensemble.
+        plot_energy (bool): If True, saves a plot of kinetic/potential energy and temperature over time.
         '''
+        import matplotlib.pyplot as plt
+
         self.p_ev = p_ev
         # Define initial structure
         print('\nStep #3: Run MD model for 3D structure simulation...')
@@ -108,24 +111,25 @@ class MD_MODEL:
         elapsed = end - start
         print(f'Energy minimization finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
         
-
         # --- Separation time tracking ---
         separation_started = False
         fully_separated_step = None
         # --- Calculate separation threshold dynamically based on ellipsoid axes ---
-        # Assume each polymer occupies an ellipsoid with axes proportional to the polymer's size
-        # Use the largest axis (major axis) as the threshold for separation
-        # Estimate the major axis as 2 * sqrt(5/3) * Rg, where Rg is the radius of gyration for a random walk
-        # For a random walk: Rg^2 = (N_beads * b^2) / 6, with b ~ 0.1 nm (bond length)
         b = 0.1  # nanometers, typical bond length
         Rg = np.sqrt(self.N_beads * b**2 / 6)
         major_axis = 2 * np.sqrt(5/3) * Rg  # major axis of ellipsoid
         separation_threshold = major_axis
-        print(f"Separation threshold set to {separation_threshold:.2f} nm based on ellipsoid major axis.")
-
         print(f'\nCreating ensembles ({mode} mode)...')
+        print(f"\033[96mSeparation threshold set to {separation_threshold:.2f} nm based on ellipsoid major axis.\033[0m")
         start = time.time()
         pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
+
+        # --- Energy and temperature tracking ---
+        energies = []
+        kinetic_energies = []
+        temperatures = []
+        time_points = []
+
         for i in range(self.burnin,self.N_steps):
             # Compute replicated DNA
             rep_per = self.compute_rep(i)
@@ -152,13 +156,30 @@ class MD_MODEL:
                 separation_started = True  # Mark that separation phase has started
 
             # Save structure
-            self.state = self.simulation.context.getState(getPositions=True)
+            self.state = self.simulation.context.getState(getPositions=True, getVelocities=True, getEnergy=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
             
+            # --- Track energies and temperature ---
+            potential = self.state.getPotentialEnergy().value_in_unit(mm.unit.kilojoule_per_mole)
+            kinetic = self.state.getKineticEnergy().value_in_unit(mm.unit.kilojoule_per_mole)
+            kinetic_energies.append(kinetic)
+            energies.append(potential)
+            # Temperature: T = 2*KE/(N_df*kB)
+            # Compute temperature manually if velocities are present
+            if self.state.getVelocities() is not None:
+                kB = mm.unit.BOLTZMANN_CONSTANT_kB * mm.unit.AVOGADRO_CONSTANT_NA  # J/mol/K
+                kB = kB.value_in_unit(mm.unit.kilojoule_per_mole / mm.unit.kelvin)
+                num_particles = 2*self.N_beads if self.run_repli else self.N_beads
+                N_df = 3 * num_particles  # degrees of freedom (no constraints assumed)
+                temp = 2 * kinetic / (N_df * kB)
+            else:
+                temp = np.nan
+            temperatures.append(temp)
+            time_points.append((i-self.burnin+1)*sim_step*integrator_step.value_in_unit(mm.unit.picosecond))
+
             # --- Check for full separation ---
             if self.run_repli and separation_started and fully_separated_step is None:
                 positions = self.state.getPositions(asNumpy=True).value_in_unit(mm.unit.nanometer)
-                # Compute center of mass for each polymer
                 com1 = np.mean(positions[:self.N_beads], axis=0)
                 com2 = np.mean(positions[self.N_beads:2*self.N_beads], axis=0)
                 distance = np.linalg.norm(com1 - com2)
@@ -181,6 +202,32 @@ class MD_MODEL:
                 print("\033[91mPolymers did not fully separate during the simulation. Consider to run more simulation steps.\033[0m")
         
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
+
+        # --- Plot energies and temperature ---
+        if plot_energy:
+            # Plot Potential and Kinetic Energy
+            plt.figure(figsize=(10,6))
+            plt.plot(time_points, energies, label='Potential Energy')
+            plt.plot(time_points, kinetic_energies, label='Kinetic Energy')
+            plt.xlabel('Time (ps)')
+            plt.ylabel('Energy (kJ/mol)')
+            plt.legend()
+            plt.title('Potential and Kinetic Energy vs Time')
+            plt.tight_layout()
+            plt.savefig(self.out_path+'/plots/md_simulation/energy_vs_time.png')
+            plt.savefig(self.out_path+'/plots/md_simulation/energy_vs_time.svg')
+            plt.close()
+
+            # Plot Temperature
+            plt.figure(figsize=(10,6))
+            plt.plot(time_points, temperatures, label='Temperature')
+            plt.xlabel('Time (ps)')
+            plt.ylabel('Temperature (K)')
+            plt.title('Temperature vs Time')
+            plt.tight_layout()
+            plt.savefig(self.out_path+'/plots/md_simulation/temperature_vs_time.png')
+            plt.savefig(self.out_path+'/plots/md_simulation/temperature_vs_time.svg')
+            plt.close()
 
         return fully_separated_step
 

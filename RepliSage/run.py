@@ -122,7 +122,7 @@ def main():
                        integrator_mode=args.INTEGRATOR_TYPE, integrator_step=args.INTEGRATOR_STEP, 
                        p_ev=args.EV_P, sim_step=args.SIM_STEP, tol=args.TOLERANCE, 
                        md_temperature=args.SIM_TEMP, ff_path=args.FORCEFIELD_PATH,
-                       reporters=args.DCD_REPORTER)
+                       reporters=args.DCD_REPORTER, plots=save_plots)
         print("\033[92mCongratulations RepliSage simulation just finished! :)\033[0m")
     elif args.SIMULATION_TYPE is None:
         print("\n\033[93mWarning: SIMULATION_TYPE was not specified, so there will not be a 3D structure ensemble.\033[0m")

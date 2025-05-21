@@ -2,6 +2,8 @@
 ########### CREATOR: SEBASTIAN KORSAK, WARSAW 2022 ######################
 #########################################################################
 
+import matplotlib
+matplotlib.use('Agg')  # Use a non-interactive backend for thread safety
 from matplotlib.pyplot import figure
 import matplotlib.pyplot as plt
 import os
@@ -90,6 +92,7 @@ def make_folder(folder_name):
         'plots/MCMC_diagnostics', 
         'plots/structural_metrics', 
         'plots/graph_metrics',
+        'plots/md_simulation',
         'plots/replication_simulation', 
         'metadata/energy_factors',
         'metadata/MCMC_output',

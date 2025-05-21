@@ -143,12 +143,12 @@ class StochasticSimulation:
         print("Calculating metrics from 3D structures...")
         compute_metrics_for_ensemble(self.out_path+'/ensemble',duplicated_chain=True,path=self.out_path)
 
-    def run_openmm(self,platform='CPU',init_struct='rw',mode='EM',integrator_mode='langevin',integrator_step=10.0 * mm.unit.femtosecond,tol=1.0,sim_step=10000,p_ev=0.01,reporters=False, md_temperature=310*mm.unit.kelvin, ff_path='RepliSage/forcefields/classic_sm_ff.xml'):
+    def run_openmm(self, platform='CPU', init_struct='rw', mode='EM', integrator_mode='langevin', integrator_step=10.0 * mm.unit.femtosecond, tol=1.0, sim_step=10000, p_ev=0.01, reporters=False, md_temperature=310*mm.unit.kelvin, ff_path='RepliSage/forcefields/classic_sm_ff.xml', plots=False):
         '''
         Run OpenMM energy minimization.
         '''
-        md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
-        t_sep = md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature,ff_path=ff_path,integrator_step=integrator_step,tol=tol,reporters=reporters,sim_step=sim_step)
+        md = MD_MODEL(self.Ms, self.Ns, self.N_beads, self.burnin, self.MC_step, self.out_path,platform, self.rep_frac, self.t_rep, self.spin_traj)
+        t_sep = md.run_pipeline(init_struct, mode=mode, integrator_mode=integrator_mode, p_ev=p_ev, md_temperature=md_temperature, ff_path=ff_path, integrator_step=integrator_step, tol=tol, reporters=reporters, sim_step=sim_step, plot_energy=plots)
         return t_sep
 
 def main():

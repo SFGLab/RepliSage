@@ -87,7 +87,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns-ms+1e-5))
+    folding = np.sum(np.log(ns-ms+1e-3))
     return fold_norm * folding
 
 @njit
@@ -143,7 +143,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm*(np.log(n_new-m_new+1e-5)-np.log(ns[idx]-ms[idx]+1e-5))
+    return fold_norm*(np.log(n_new-m_new+1e-3)-np.log(ns[idx]-ms[idx]+1e-3))
 
 @njit
 def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
