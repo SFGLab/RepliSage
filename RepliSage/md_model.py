@@ -108,9 +108,6 @@ class MD_MODEL:
         elapsed = end - start
         print(f'Energy minimization finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
         
-        print(f'\nCreating ensembles ({mode} mode)...')
-        start = time.time()
-        pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
 
         # --- Separation time tracking ---
         separation_started = False
@@ -126,6 +123,9 @@ class MD_MODEL:
         separation_threshold = major_axis
         print(f"Separation threshold set to {separation_threshold:.2f} nm based on ellipsoid major axis.")
 
+        print(f'\nCreating ensembles ({mode} mode)...')
+        start = time.time()
+        pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
         for i in range(self.burnin,self.N_steps):
             # Compute replicated DNA
             rep_per = self.compute_rep(i)
@@ -164,7 +164,6 @@ class MD_MODEL:
                 distance = np.linalg.norm(com1 - com2)
                 if distance > separation_threshold and fully_separated_step is None:
                     fully_separated_step = i
-                    print(f"\033[94mPolymers fully separated at step {i} (distance: {distance:.2f} nm)\033[0m")
 
             # Update progress-bar
             pbar.update(1)
@@ -172,15 +171,17 @@ class MD_MODEL:
         if not reporters: pbar.close()
         end = time.time()
         elapsed = end - start
-        print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
-        print('Energy minimization done <3')
-
+        
         # --- Report separation time ---
         if self.run_repli:
             if fully_separated_step is not None:
-                print(f"\033[92mTime (in N_steps units) when polymers are fully separated: {fully_separated_step}\033[0m")
+                print(f"\033[94mPolymers fully separated at step {fully_separated_step} (distance: {distance:.2f} nm)\033[0m")
             else:
-                print("\033[91mPolymers did not fully separate during the simulation.\033[0m")
+                print("\033[91mPolymers did not fully separate during the simulation. Consider to run more simulation steps.\033[0m")
+        
+        print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
+        print('Energy minimization done <3')
+
         return fully_separated_step
 
     def change_ev(self):
