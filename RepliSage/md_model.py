@@ -111,6 +111,21 @@ class MD_MODEL:
         print(f'\nCreating ensembles ({mode} mode)...')
         start = time.time()
         pbar = tqdm(total=self.N_steps-self.burnin, desc='Progress of Simulation.')
+
+        # --- Separation time tracking ---
+        separation_started = False
+        fully_separated_step = None
+        # --- Calculate separation threshold dynamically based on ellipsoid axes ---
+        # Assume each polymer occupies an ellipsoid with axes proportional to the polymer's size
+        # Use the largest axis (major axis) as the threshold for separation
+        # Estimate the major axis as 2 * sqrt(5/3) * Rg, where Rg is the radius of gyration for a random walk
+        # For a random walk: Rg^2 = (N_beads * b^2) / 6, with b ~ 0.1 nm (bond length)
+        b = 0.1  # nanometers, typical bond length
+        Rg = np.sqrt(self.N_beads * b**2 / 6)
+        major_axis = 2 * np.sqrt(5/3) * Rg  # major axis of ellipsoid
+        separation_threshold = major_axis
+        print(f"Separation threshold set to {separation_threshold:.2f} nm based on ellipsoid major axis.")
+
         for i in range(self.burnin,self.N_steps):
             # Compute replicated DNA
             rep_per = self.compute_rep(i)
@@ -131,12 +146,26 @@ class MD_MODEL:
                 raise InterruptedError('Mode can be only EM or MD.')
             label, idx = self.add_label(i)
 
-            if i*self.step==self.t_rep+self.rep_duration: self.change_pull_force()
+            # Start pulling force at the right time
+            if i*self.step==self.t_rep+self.rep_duration: 
+                self.change_pull_force()
+                separation_started = True  # Mark that separation phase has started
 
             # Save structure
             self.state = self.simulation.context.getState(getPositions=True)
             PDBxFile.writeFile(pdb.topology, self.state.getPositions(), open(self.out_path+f'/ensemble/ensemble_{i-self.burnin+1}_{label}.cif', 'w'))
             
+            # --- Check for full separation ---
+            if self.run_repli and separation_started and fully_separated_step is None:
+                positions = self.state.getPositions(asNumpy=True).value_in_unit(mm.unit.nanometer)
+                # Compute center of mass for each polymer
+                com1 = np.mean(positions[:self.N_beads], axis=0)
+                com2 = np.mean(positions[self.N_beads:2*self.N_beads], axis=0)
+                distance = np.linalg.norm(com1 - com2)
+                if distance > separation_threshold and fully_separated_step is None:
+                    fully_separated_step = i
+                    print(f"\033[94mPolymers fully separated at step {i} (distance: {distance:.2f} nm)\033[0m")
+
             # Update progress-bar
             pbar.update(1)
             pbar.set_description(f'Percentage of replicated dna {rep_per:.1f}%')
@@ -145,6 +174,14 @@ class MD_MODEL:
         elapsed = end - start
         print(f'Computation finished succesfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and  {elapsed%60:.0f} seconds.')
         print('Energy minimization done <3')
+
+        # --- Report separation time ---
+        if self.run_repli:
+            if fully_separated_step is not None:
+                print(f"\033[92mTime (in N_steps units) when polymers are fully separated: {fully_separated_step}\033[0m")
+            else:
+                print("\033[91mPolymers did not fully separate during the simulation.\033[0m")
+        return fully_separated_step
 
     def change_ev(self):
         '''

@@ -118,7 +118,7 @@ def main():
                                   rw=rw, p_rew= p_rew, random_spins=random_spins,
                                   rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
-        sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
+        time_of_polymer_separation = sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
                        integrator_mode=args.INTEGRATOR_TYPE, integrator_step=args.INTEGRATOR_STEP, 
                        p_ev=args.EV_P, sim_step=args.SIM_STEP, tol=args.TOLERANCE, 
                        md_temperature=args.SIM_TEMP, ff_path=args.FORCEFIELD_PATH,

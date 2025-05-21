@@ -148,7 +148,8 @@ class StochasticSimulation:
         Run OpenMM energy minimization.
         '''
         md = MD_MODEL(self.Ms,self.Ns,self.N_beads,self.burnin,self.MC_step,self.out_path,platform,self.rep_frac,self.t_rep,self.spin_traj)
-        md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature,ff_path=ff_path,integrator_step=integrator_step,tol=tol,reporters=reporters,sim_step=sim_step)
+        t_sep = md.run_pipeline(init_struct,mode=mode,integrator_mode=integrator_mode,p_ev=p_ev,md_temperature=md_temperature,ff_path=ff_path,integrator_step=integrator_step,tol=tol,reporters=reporters,sim_step=sim_step)
+        return t_sep
 
 def main():
     # Set parameters
