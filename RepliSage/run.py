@@ -21,7 +21,7 @@ class ArgumentChanger:
         if self.args.REP_WITH_STRESS:
             self.set_arg('REP_T_STD_FACTOR', 0.2)
             self.set_arg('REP_SPEED_SCALE', 5.0)
-            self.set_arg('REP_INIT_RATE_SCALE', 5.0)
+            self.set_arg('REP_INIT_RATE_SCALE', 2.0)
             print("\033[92mArguments changed because REP_WITH_STRESS is True:\033[0m")
             print(f"\033[92mREP_T_STD_FACTOR: {self.args.REP_T_STD_FACTOR}\033[0m")
             print(f"\033[92mREP_SPEED_SCALE: {self.args.REP_SPEED_SCALE}\033[0m")
