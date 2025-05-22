@@ -508,3 +508,4 @@ def get_avg_heatmap(path, N1, N2):
     plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.png', format='png', dpi=200)
     plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
     plt.close()
+    return avg_heat

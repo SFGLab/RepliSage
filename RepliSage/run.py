@@ -149,14 +149,12 @@ def main():
             print('Replication fraction is None, generating only the combined heatmap...')
             get_avg_heatmap(args.OUT_PATH, 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
         else:
-            print('Before replication...')
-            get_avg_heatmap(args.OUT_PATH, 1, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1)
-            print('During replication...')
-            get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
-            print('After replication...')
-            get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
-            print('And all of them together...')
-            get_avg_heatmap(args.OUT_PATH, 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
+            print('G1 phase heatmap...')
+            h_g1 = get_avg_heatmap(args.OUT_PATH, 1, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1)
+            print('S phase heatmap...')
+            h_s = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
+            print('G2M phase heatmap...')
+            h_g2m = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
         print('Done!')
 
 if __name__=='__main__':
