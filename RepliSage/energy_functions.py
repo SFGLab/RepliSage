@@ -321,7 +321,7 @@ def run_energy_minimization(
     Ms[:, 0], Ns[:, 0] = ms, ns
 
     # Precompute reciprocal for replication duration
-    inv_rep_duration = 1.0 / rep_duration if rep_duration != np.inf else 0.0
+    inv_rep_duration = 1.0 / rep_duration if rep_duration != np.inf or rep_duration!=0 else 0.0
 
     # Progress bar setup
     last_percent = -1

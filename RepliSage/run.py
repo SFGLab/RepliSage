@@ -129,18 +129,18 @@ def main():
     else:
         raise ValueError("\n\033[91mError: You did not specify a correct simulation type. Please use 'MD' or 'EM'.\033[0m")
     
-    if save_plots:
-        print('\nPloting stuff...')
-        sim.show_plots()
-        if args.SIMULATION_TYPE is not None: sim.compute_structure_metrics()
-        print('Done!')
-    
     # Save Parameters
     if save_MDT:
         print('\nCreating metadata...')
         params = {k: v for k, v in locals().items() if k not in ['args','sim']} 
         save_parameters(out_path+'/metadata/params.txt',**params)
         print('Done')
+
+    if save_plots:
+        print('\nPloting stuff...')
+        sim.show_plots()
+        if args.SIMULATION_TYPE is not None: sim.compute_structure_metrics()
+        print('Done!')
 
     # Heatmap Visualization
     if viz_heats and (args.SIMULATION_TYPE is not None):

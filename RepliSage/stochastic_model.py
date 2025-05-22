@@ -107,9 +107,9 @@ class StochasticSimulation:
         print(f"\033[95mPotts energy in G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
         print(f"\033[95mPotts energy in S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
         print(f"\033[95mPotts energy in G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in G1 phase: {(self.Ns[g1_start:s_start]-self.Ms[g1_start:s_start]).mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in S phase: {(self.Ns[s_start:s_end]-self.Ms[s_start:s_end]).mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in G2 phase: {(self.Ns[s_end:]-self.Ms[s_end:]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in G1 phase: {(self.Ns[:,g1_start:s_start]-self.Ms[:,g1_start:s_start]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in S phase: {(self.Ns[:,s_start:s_end]-self.Ms[:,s_start:s_end]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length in G2 phase: {(self.Ns[:,s_end:]-self.Ms[:,s_end:]).mean():.2f}\033[0m")
         
         if save_MDT:
             np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)
