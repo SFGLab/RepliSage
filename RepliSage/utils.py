@@ -34,6 +34,8 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     # Read file and select the region of interest
     df = pd.read_csv(bedpe_file,sep='\t',header=None)
     df = df[(df[1]>=region[0])&(df[2]>=region[0])&(df[4]>=region[0])&(df[5]>=region[0])&(df[5]<region[1])&(df[4]<region[1])&(df[1]<region[1])&(df[2]<region[1])&(df[0]==chrom)].reset_index(drop=True)
+    if df.empty:
+        raise ValueError("\033[91mThe selected region or chromosome is invalid: the final set does not contain any loops.\033[0m")
 
     # Convert hic coords into simulation beads
     resolution = (region[1]-region[0])//N_beads
@@ -48,23 +50,31 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
 
     # Compute the matrix
     distances = list()
-    J = np.zeros((N_beads,N_beads), dtype=np.float64)
-    L, R = np.zeros(N_beads, dtype=np.float64),np.zeros(N_beads, dtype=np.float64)
+    J = np.zeros((N_beads, N_beads), dtype=np.float64)
+    L, R = np.zeros(N_beads, dtype=np.float64), np.zeros(N_beads, dtype=np.float64)
     for i in range(len(df)):
-        x, y = min((df[1][i]+df[2][i])//2,N_beads-1), min((df[4][i]+df[5][i])//2,N_beads-1)
-        distances.append(distance_point_line(x,y))
-        J[x,y] = 0
-        J[y,x] = 0
+        x, y = min((df[1][i] + df[2][i]) // 2, N_beads - 1), min((df[4][i] + df[5][i]) // 2, N_beads - 1)
+        distances.append(distance_point_line(x, y))
+        J[x, y] = 0
+        J[y, x] = 0
+        strength = df[6][i]
+        # If strength is None or negative, skip adding signal
+        if pd.isna(strength) or strength is None or strength < 0:
+            continue
         if has_col_7_8:
-            if df[7][i]>=0: L[x] += df[6][i]*(1-df[7][i])
-            if df[8][i]>=0: L[y] += df[6][i]*(1-df[8][i])
-            if df[7][i]>=0: R[x] += df[6][i]*df[7][i]
-            if df[8][i]>=0: R[y] += df[6][i]*df[8][i]
+            if df[7][i] >= 0:
+                L[x] += strength * (1 - df[7][i])
+            if df[8][i] >= 0:
+                L[y] += strength * (1 - df[8][i])
+            if df[7][i] >= 0:
+                R[x] += strength * df[7][i]
+            if df[8][i] >= 0:
+                R[y] += strength * df[8][i]
         else:
-            L[x] += df[6][i]
-            L[y] += df[6][i]
-            R[x] += df[6][i]
-            R[y] += df[6][i]
+            L[x] += strength
+            L[y] += strength
+            R[x] += strength
+            R[y] += strength
     
     # Normalize (if neccesary): it means to convert values to probabilities
     if normalization:

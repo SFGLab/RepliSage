@@ -37,7 +37,7 @@ def main():
 
     for chrom, size in chromosome_sizes.items():
         n_beads = math.ceil(size / resolution)
-
+        
         # Load config
         config = configparser.ConfigParser()
         config.read("config.ini")
@@ -49,7 +49,7 @@ def main():
         config['Main']['N_BEADS'] = str(n_beads)
         config['Main']['N_LEF'] = str(n_beads//10)
         config['Main']['N_LEF2'] = str(n_beads//20)
-        config['Main']['CHROM'] = chrom
+        config['Main']['CHROM'] = 'chr'+chrom
         config['Main']['REGION_START'] = str(0)
         config['Main']['REGION_END'] = str(size)
         config['Main']['OUT_PATH'] = f'tmp/chrom{chrom}_ht0'

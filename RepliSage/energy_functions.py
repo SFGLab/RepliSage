@@ -70,14 +70,13 @@ def E_rep(f_rep, ms, ns, t, rep_norm):
     return rep_norm * E_penalty
 
 @njit
-def E_cross(ms, ns, k_norm, cohesin_blocks_condensin=False):
+def E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin=False):
     '''
     The crossing energy.
     '''
     crossing = 0.0
-    N_lef = len(ms)
-    for i in range(N_lef):
-        for j in range(i + 1, N_lef):
+    for i in range(N_lef+N_lef2):
+        for j in range(i + 1, N_lef+N_lef2):
             if cohesin_blocks_condensin or (i < N_lef and j < N_lef) or (i >= N_lef and j >= N_lef):
                 crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
     return k_norm * crossing
@@ -120,7 +119,7 @@ def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_nor
     '''
     The total energy.
     '''
-    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, k_norm, cohesin_blocks_condensin) + E_fold(ms, ns, fold_norm)
+    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin) + E_fold(ms, ns, fold_norm)
     if fold_norm2 != 0: 
         energy += E_fold(ms[N_lef:N_lef + N_lef2], ns[N_lef:N_lef + N_lef2], fold_norm2)
     if rep_norm != 0.0 and f_rep is not None: 
@@ -154,14 +153,13 @@ def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
     return rep_norm * dE_rep
 
 @njit
-def get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin=False):
+def get_dE_cross(ms, ns, m_new, n_new, idx, N_lef, N_lef2, k_norm, cohesin_blocks_condensin=False):
     '''
     Energy difference for crossing energy.
     '''
     K1, K2 = 0, 0
-    N_lef = len(ms)
     
-    for i in range(N_lef):
+    for i in range(N_lef+N_lef2):
         if i != idx:
             if cohesin_blocks_condensin or (idx < N_lef and i < N_lef) or (idx >= N_lef and i >= N_lef):
                 K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
@@ -199,7 +197,7 @@ def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_nor
     else:
         dE += get_dE_fold(fold_norm2, ms[N_lef:N_lef+N_lef2], ns[N_lef:N_lef+N_lef2], m_new, n_new, idx - N_lef)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
-    dE += get_dE_cross(ms, ns, m_new, n_new, idx, k_norm, cohesin_blocks_condensin)
+    dE += get_dE_cross(ms, ns, m_new, n_new, idx, N_lef, N_lef2, k_norm, cohesin_blocks_condensin)
     
     if rep_norm > 0.0 and f_rep is not None:
         dE += get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx)
