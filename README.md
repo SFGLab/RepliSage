@@ -229,7 +229,7 @@ You can define these parameters based on the table of simulation parameters.
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
-| SC_REPT_PATH            | str       | `defailt_rept_path` | Path to the single cell replication timing data file.                      |
+| SC_REPT_PATH            | str       | `default_rept_path` | Path to the single cell replication timing data file.                      |
 | REPT_PATH               | str       | None            | Path to the replication timing data file. If specified, it does not take `SC_REPT_PATH` into account.  |
 | REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
 | REGION_END              | int       | None            | End position of the genomic region to simulate.                            |
@@ -276,7 +276,7 @@ You can define these parameters based on the table of simulation parameters.
 | DCD_REPORTER           | bool      | False           | Enables saving of molecular dynamics trajectories in DCD format.           |
 | INTGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
 | INTEGRATOR_STEP         | Quantity  | 10 femtosecond  | Time step for the molecular dynamics integrator.                           |
-| FORCEFIELD_PATH         | str       | default_xml_path| Path to the force field XML file.                                          |
+| FORCEFIELD_PATH         | str       | `default_xml_path`| Path to the force field XML file.                                          |
 | EV_P                    | float     | 0.01            | Excluded volume parameter for molecular dynamics.                          |
 | TOLERANCE               | float     | 1.0             | Tolerance for energy minimization.                                         |
 | SIM_TEMP                | Quantity  | 310 kelvin      | Temperature for molecular dynamics simulation.                             |
