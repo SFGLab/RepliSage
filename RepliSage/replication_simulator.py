@@ -17,6 +17,8 @@ def simulator(initiation_rate, speed_mean, speed_std):
     r_forks_mat = r_forks_mat_col = np.zeros((L, 1), dtype=np.int64)
     l_forks, r_forks = np.ones((1, 6)), np.ones((1,6))
 
+    activated_origins = set()
+
     # Fire randomly origins and propagate forks till dna will be fully replicated
     while not dna_is_replicated:
         # propagate the forks from the previous column:
@@ -30,6 +32,7 @@ def simulator(initiation_rate, speed_mean, speed_std):
                 v = np.abs(np.random.normal(speed_mean, speed_std, 1)[0]/T_orig)
                 l_forks = np.vstack((l_forks, [init, v, t, init, init, 0])) # start, v, t0, pos, new_pos, to_del
                 r_forks = np.vstack((l_forks, [init, v, t, init, init, 0]))
+                activated_origins.add(init)
         rep_dna_col[initiate_forks] = 1
 
         # Update replicated_dna and forks matrices:
@@ -51,6 +54,10 @@ def simulator(initiation_rate, speed_mean, speed_std):
     l_forks_mat = rescale_matrix(l_forks_mat, T_orig, fork_mat=True)
     r_forks_mat = rescale_matrix(r_forks_mat, T_orig, fork_mat=True)
     rep_fract = [np.mean(replicated_dna[:, i]) for i in range(replicated_dna.shape[1])]
+
+    num_activated = len(activated_origins)
+    proportion = num_activated / L
+    print(f"\033[94m{proportion:.2%} of origins were fired ({num_activated} out of {L} simulation beads)\033[0m")
 
     return replicated_dna, l_forks_mat, r_forks_mat, T_final, rep_fract
 
