@@ -112,6 +112,7 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
         plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length.png', format='png', dpi=200)
         plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length.svg', format='svg', dpi=200)
     plt.close()
+
     # Violin plots for each phase
     # G1: [0, S_time), S: [S_time, G2_time), G2: [G2_time, end)
     g1 = Ls[:, :S_time].flatten()
@@ -123,9 +124,8 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
 
     plt.figure(figsize=(8, 6), dpi=200)
     parts = plt.violinplot(data, showmeans=True, showmedians=True)
-    plt.yscale('log')
     plt.xticks([1, 2, 3], labels, fontsize=14)
-    plt.ylabel('Loop Length (log)', fontsize=16)
+    plt.ylabel('Loop Length', fontsize=16)
     plt.title('Loop Length Distribution by Cell Cycle Phase', fontsize=16)
     plt.grid(True, axis='y')
     if out_path:
