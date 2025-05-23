@@ -53,7 +53,7 @@ class StochasticSimulation:
         
         # Import loop data
         print('\nStep #2: Running RepliSage...')
-        self.L, self.R, self.J, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
+        self.L, self.R, _, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
         self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
         self.N_lef2 = N_lef2
 
@@ -67,7 +67,7 @@ class StochasticSimulation:
         bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e5
         rep_norm = c_rep*1e5
         potts_norm1, potts_norm2 = -c_potts1, -c_potts2
-        self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0) and np.all(self.J!=None)
+        self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0)
         
         # Running the simulation
         print('This may take some time...')
@@ -79,7 +79,7 @@ class StochasticSimulation:
             L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
             bind_norm=bind_norm, rep_norm=rep_norm,
             f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
-            h=self.h, J=self.J, rw=rw, rep_fork_organizers=rep_fork_organizers,
+            h=self.h, rw=rw, rep_fork_organizers=rep_fork_organizers,
             cohesin_blocks_condensin=cohesin_blocks_condensin, random_spins=random_spins)
         end = time.time()
         elapsed = end - start
@@ -126,7 +126,7 @@ class StochasticSimulation:
         '''
         Draw plots.
         '''
-        print("Calculainge MCMC metrics...")
+        print("Calculating MCMC metrics...")
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=10*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
         print("Calculating graph metrics...")

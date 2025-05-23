@@ -267,10 +267,11 @@ def initialize(N_lef, N_lef2, N_beads, random_init_spins=True):
     return ms, ns, state
 
 @njit
-def initialize_J(N_beads, J, ms, ns):
+def initialize_J(N_beads, ms, ns):
+    J = np.zeros((N_beads, N_beads), dtype=np.int64)
     for i in range(N_beads - 1):
-        J[i, i + 1] += 1
-        J[i + 1, i] += 1
+        J[i, i + 1] = 1
+        J[i + 1, i] = 1
     for idx in range(len(ms)):
         m, n = ms[idx], ns[idx]
         if m >= 0 and n >= 0:  # Ensure valid indices
@@ -283,7 +284,7 @@ def run_energy_minimization(
     N_steps, N_sweep, N_lef, N_lef2, N_beads, MC_step, T,
     L, R, k_norm, fold_norm, fold_norm2, bind_norm,
     rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None,
-    potts_norm1=0.0, potts_norm2=0.0, J=None, h=None, rw=True, spins=None,
+    potts_norm1=0.0, potts_norm2=0.0, h=None, rw=True, spins=None,
     p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False, random_spins=True
 ):
     '''
@@ -304,7 +305,7 @@ def run_energy_minimization(
     spin_traj = np.zeros((N_beads, N_steps // MC_step), dtype=np.int32)
 
     # Initialize coupling matrix J with current LEF positions
-    J = initialize_J(N_beads, J, ms, ns)
+    J = initialize_J(N_beads, ms, ns)
 
     # Compute initial energy
     E = get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, 0, f_rep, spins, J, h, ht, potts_norm1, potts_norm2, rep_fork_organizers, cohesin_blocks_condensin)
