@@ -16,10 +16,9 @@ class ArgumentChanger:
             self.args.get_arg(name).val = value
         except AttributeError:
             print(f"\033[93mWarning: Argument '{name}' not found in args object.\033[0m")
-
+    
     def convenient_argument_changer(self):
         if self.args.REP_WITH_STRESS:
-            self.set_arg('REP_T_STD_FACTOR', 0.2)
             self.set_arg('REP_SPEED_SCALE', 5.0)
             self.set_arg('REP_INIT_RATE_SCALE', 2.0)
             print("\033[92mArguments changed because REP_WITH_STRESS is True:\033[0m")

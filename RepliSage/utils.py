@@ -471,41 +471,60 @@ def get_stats(ms,ns,N_beads):
 
 def get_avg_heatmap(path, N1, N2):
     import concurrent.futures
-
     def process_heat(i):
         file_pattern = path + f'/ensemble/ensemble_{i}_*.cif'
         file_list = glob.glob(file_pattern)
         if not file_list:
+            print(f"Warning: No file found for index {i}")
             return None
-        V = get_coordinates_cif(file_list[0])
-        N_beads = len(V) // 2
-        V = V[:N_beads]
-        heat = distance.cdist(V, V, 'euclidean')
-        return 1 / heat
+        try:
+            V = get_coordinates_cif(file_list[0])
+            N_beads = len(V) // 2
+            V = V[:N_beads]
+            heat = distance.cdist(V, V, 'euclidean')
+            return 1 / heat
+        except Exception as e:
+            print(f"Error processing {file_list[0]}: {e}")
+            return None
 
     # Get N_beads from the first file
     file_pattern = path + f'/ensemble/ensemble_{N1}_*.cif'
     file_list = glob.glob(file_pattern)
     if not file_list:
-        raise FileNotFoundError(f"No .cif files found for ensemble_{N1}_*.cif")
-    V = get_coordinates_cif(file_list[0])
-    N_beads = len(V) // 2
-    avg_heat = np.zeros((N_beads, N_beads))
-    
+        print(f"Warning: No .cif files found for ensemble_{N1}_*.cif, using default N_beads=0")
+        N_beads = 0
+        avg_heat = None
+    else:
+        V = get_coordinates_cif(file_list[0])
+        N_beads = len(V) // 2
+        avg_heat = np.zeros((N_beads, N_beads))
+    count = 0
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(tqdm(executor.map(process_heat, range(N1, N2)), total=N2-N1))
-    valid_results = [r for r in results if r is not None]
-    if not valid_results:
-        raise RuntimeError("No valid heatmaps were computed.")
-    for heat in valid_results:
-        avg_heat += heat
+    for heat in results:
+        if heat is not None:
+            if avg_heat is None:
+                N_beads = heat.shape[0]
+                avg_heat = np.zeros((N_beads, N_beads))
+            avg_heat += heat
+            count += 1
 
-    avg_heat = avg_heat / len(valid_results)
+    if count == 0 or avg_heat is None:
+        print("Warning: No valid heatmaps were computed. Saving empty array.")
+        avg_heat = np.zeros((N_beads, N_beads))
+    else:
+        avg_heat = avg_heat / count
+
     np.save(path + f'/metadata/structural_metrics/heatmap_{N1}_{N2}.npy', avg_heat)
 
-    figure(figsize=(20, 20))
-    plt.imshow(avg_heat, cmap='Reds', vmax=0.2, aspect='auto')
-    plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.png', format='png', dpi=200)
-    plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
-    plt.close()
+    try:
+        figure(figsize=(20, 20))
+        plt.imshow(avg_heat, cmap='Reds', vmax=0.2, aspect='auto')
+        plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.png', format='png', dpi=200)
+        plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
+        plt.close()
+    except Exception as e:
+        print(f"Plotting failed: {e}")
+
     return avg_heat
