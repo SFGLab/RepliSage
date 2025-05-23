@@ -53,12 +53,30 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
     plt.ylabel('Proportion',fontsize=16)
     plt.legend()
 
-    # Vertical line at x = 123
-    plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
-    plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
+    plt.axvline(x=S_time, color='red', linestyle='--', label='S phase')
+    plt.axvline(x=G2_time, color='red', linestyle='--', label='G2 phase')
     plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.png',format='png',dpi=200)
     plt.savefig(out_path+'/plots/graph_metrics/same_diff_sign.svg',format='svg',dpi=200)
     plt.grid(True)
+    plt.close()
+
+    # Violin plot for distribution of same_sign_fraction during different phases
+    g1 = same_sign_fraction[:S_time]
+    s = same_sign_fraction[S_time:G2_time]
+    g2 = same_sign_fraction[G2_time:]
+
+    data = [g1, s, g2]
+    labels = ['G1', 'S', 'G2']
+
+    plt.figure(figsize=(8, 6), dpi=200)
+    plt.violinplot(data, showmeans=True, showmedians=True)
+    plt.xticks([1, 2, 3], labels, fontsize=14)
+    plt.ylabel('Same Sign Fraction', fontsize=16)
+    plt.title('Distribution of Same Sign Fraction by Cell Cycle Phase', fontsize=16)
+    plt.grid(True, axis='y')
+    if out_path:
+        plt.savefig(out_path + '/plots/graph_metrics/same_sign_fraction_violin.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/graph_metrics/same_sign_fraction_violin.svg', format='svg', dpi=200)
     plt.close()
 
     return same_sign_fraction, diff_sign_fraction
@@ -66,31 +84,53 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
 def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     """
     Plots how the probability distribution changes over columns of matrix Ls using plt.imshow.
+    Also creates violin plots for each cell cycle phase (G1, S, G2).
     
     Parameters:
         Ls (np.ndarray): 2D array where rows represent samples, and columns represent time points.
-        out_path (str, optional): Path to save the heatmap. If None, it will only display the plot.
+        S_time (int): Index where S phase starts.
+        G2_time (int): Index where G2 phase starts.
+        out_path (str, optional): Path to save the plots. If None, it will only display the plot.
     """
-    avg_Ls = np.average(Ls,axis=0)
-    std_Ls = np.std(Ls,axis=0)
+    avg_Ls = np.average(Ls, axis=0)
+    std_Ls = np.std(Ls, axis=0)
     sem_Ls = std_Ls / np.sqrt(Ls.shape[0])  # SEM = std / sqrt(N)
     ci95 = 1.96 * sem_Ls
 
-    # Plot
-    plt.figure(figsize=(10, 6),dpi=200)
+    # Line plot with confidence interval
+    plt.figure(figsize=(10, 6), dpi=200)
     x = np.arange(len(avg_Ls))
     plt.plot(x, avg_Ls, label='Average Ls')
     plt.fill_between(x, avg_Ls - ci95, avg_Ls + ci95, alpha=0.2, label='Confidence Interval (95%)')
-    plt.xlabel('MC step',fontsize=16)
-    plt.ylabel('Average Loop Length',fontsize=16)
+    plt.xlabel('MC step', fontsize=16)
+    plt.ylabel('Average Loop Length', fontsize=16)
     plt.legend()
-    plt.axvline(x=S_time, color='red', linestyle='--', label='x = 123')
-    plt.axvline(x=G2_time, color='red', linestyle='--', label='x = 123')
-
-    # plt.title('Average Ls with 95% Confidence Interval',fontsize=16)
-    plt.savefig(out_path+'/plots/MCMC_diagnostics/loop_length.png',format='svg',dpi=200)
-    plt.savefig(out_path+'/plots/MCMC_diagnostics/loop_length.svg',format='svg',dpi=200)
+    plt.axvline(x=S_time, color='red', linestyle='--', label='S phase')
+    plt.axvline(x=G2_time, color='red', linestyle='--', label='G2 phase')
     plt.grid(True)
+    if out_path:
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length.svg', format='svg', dpi=200)
+    plt.close()
+    # Violin plots for each phase
+    # G1: [0, S_time), S: [S_time, G2_time), G2: [G2_time, end)
+    g1 = Ls[:, :S_time].flatten()
+    s = Ls[:, S_time:G2_time].flatten()
+    g2 = Ls[:, G2_time:].flatten()
+
+    data = [g1, s, g2]
+    labels = ['G1', 'S', 'G2']
+
+    plt.figure(figsize=(8, 6), dpi=200)
+    parts = plt.violinplot(data, showmeans=True, showmedians=True)
+    plt.yscale('log')
+    plt.xticks([1, 2, 3], labels, fontsize=14)
+    plt.ylabel('Loop Length (log)', fontsize=16)
+    plt.title('Loop Length Distribution by Cell Cycle Phase', fontsize=16)
+    plt.grid(True, axis='y')
+    if out_path:
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_violin.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_violin.svg', format='svg', dpi=200)
     plt.close()
 
 def coh_traj_plot(ms, ns, N_beads, path, jump_threshold=200, min_stable_time=10):

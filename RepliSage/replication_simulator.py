@@ -19,6 +19,9 @@ def simulator(initiation_rate, speed_mean, speed_std):
 
     activated_origins = set()
 
+    # Identify potential origins: any position with nonzero initiation rate at any time
+    potential_origins = set(np.where(np.any(initiation_rate > 0, axis=1))[0])
+
     # Fire randomly origins and propagate forks till dna will be fully replicated
     while not dna_is_replicated:
         # propagate the forks from the previous column:
@@ -56,8 +59,12 @@ def simulator(initiation_rate, speed_mean, speed_std):
     rep_fract = [np.mean(replicated_dna[:, i]) for i in range(replicated_dna.shape[1])]
 
     num_activated = len(activated_origins)
-    proportion = num_activated / L
-    print(f"\033[94m{proportion:.2%} of origins were fired ({num_activated} out of {L} simulation beads)\033[0m")
+    num_potential = len(potential_origins)
+    if num_potential > 0:
+        proportion = num_activated / num_potential # 2 because forks propagate in both directions
+        print(f"\033[94m{proportion:.2%} of potential origins were fired ({num_activated} out of {num_potential})\033[0m")
+    else:
+        print("\033[91mNo potential origins found (initiation_rate is zero everywhere)\033[0m")
 
     return replicated_dna, l_forks_mat, r_forks_mat, T_final, rep_fract
 

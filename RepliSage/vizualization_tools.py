@@ -1,7 +1,5 @@
 #pip install imageio[ffmpeg]
 import pyvista as pv
-import imageio_ffmpeg  # Ensures ffmpeg is used
-import imageio
 import numpy as np
 from common import *
 from utils import *
