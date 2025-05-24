@@ -470,24 +470,10 @@ def get_stats(ms,ns,N_beads):
     return f, f_std, F, FC
 
 def get_avg_heatmap(path, N1, N2):
-    import concurrent.futures
-    def process_heat(i):
-        file_pattern = path + f'/ensemble/ensemble_{i}_*.cif'
-        file_list = glob.glob(file_pattern)
-        if not file_list:
-            print(f"Warning: No file found for index {i}")
-            return None
-        try:
-            V = get_coordinates_cif(file_list[0])
-            N_beads = len(V) // 2
-            V = V[:N_beads]
-            heat = distance.cdist(V, V, 'euclidean')
-            return 1 / heat
-        except Exception as e:
-            print(f"Error processing {file_list[0]}: {e}")
-            return None
-
-    # Get N_beads from the first file
+    """
+    Computes the average heatmap for ensemble .cif files in a memory-efficient way.
+    Processes each file one by one to avoid high memory usage.
+    """
     file_pattern = path + f'/ensemble/ensemble_{N1}_*.cif'
     file_list = glob.glob(file_pattern)
     if not file_list:
@@ -497,22 +483,34 @@ def get_avg_heatmap(path, N1, N2):
     else:
         V = get_coordinates_cif(file_list[0])
         N_beads = len(V) // 2
-        avg_heat = np.zeros((N_beads, N_beads))
+        avg_heat = np.zeros((N_beads, N_beads), dtype=np.float32)
     count = 0
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(tqdm(executor.map(process_heat, range(N1, N2)), total=N2-N1))
-    for heat in results:
-        if heat is not None:
-            if avg_heat is None:
-                N_beads = heat.shape[0]
-                avg_heat = np.zeros((N_beads, N_beads))
+    for i in tqdm(range(N1, N2)):
+        file_pattern = path + f'/ensemble/ensemble_{i}_*.cif'
+        file_list = glob.glob(file_pattern)
+        if not file_list:
+            print(f"Warning: No file found for index {i}")
+            continue
+        try:
+            V = get_coordinates_cif(file_list[0])
+            N_beads = len(V) // 2
+            V = V[:N_beads]
+            heat = distance.cdist(V, V, 'euclidean')
+            heat = 1 / heat
+            # Avoid inf on diagonal
+            np.fill_diagonal(heat, 0)
+            if avg_heat is None or avg_heat.shape != heat.shape:
+                avg_heat = np.zeros_like(heat, dtype=np.float32)
             avg_heat += heat
             count += 1
+        except Exception as e:
+            print(f"Error processing {file_list[0]}: {e}")
+            continue
 
     if count == 0 or avg_heat is None:
         print("Warning: No valid heatmaps were computed. Saving empty array.")
-        avg_heat = np.zeros((N_beads, N_beads))
+        avg_heat = np.zeros((N_beads, N_beads), dtype=np.float32)
     else:
         avg_heat = avg_heat / count
 
