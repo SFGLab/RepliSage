@@ -249,7 +249,7 @@ You can define these parameters based on the table of simulation parameters.
 | REP_START_TIME          | int       | 50000           | Start time for replication in simulation steps.                            |
 | REP_TIME_DURATION       | int       | 50000           | Duration of the replication process in simulation steps.                   |
 | REP_T_STD_FACTOR        | float     | 0.1             | Standard deviation factor for replication timing.                          |
-| REP_SPEED_SCALE         | float     | 20              | Scaling factor for replication fork speed.                                 |
+| REP_SPEED_SCALE         | float     | 10              | Scaling factor for replication fork speed.                                 |
 | REP_INIT_RATE_SCALE     | float     | 1.0             | Scaling factor for replication initiation rate.                            |
 | N_STEPS                 | int       | 200000          | Total number of simulation steps.                                          |
 | N_SWEEP                 | int       | 1000           | Number of proposed moves per step.                             |

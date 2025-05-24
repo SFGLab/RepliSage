@@ -18,16 +18,6 @@ def preprocessing(bedpe_file: str, region: list, chrom: str, N_beads: int):
     return L, R, J, N_CTCF
 
 @njit
-def closest_opposite(f, m):
-    # Find the indices of the opposite value
-    target_value = f[m]
-    opposite_indices = np.where(f != target_value)[0]  # Indices of opposite value
-
-    # Calculate distances and find the closest one
-    closest_index = opposite_indices[np.argmin(np.abs(opposite_indices - m))]
-    return closest_index
-
-@njit
 def Kappa(mi, ni, mj, nj):
     '''
     Computes the crossing function of LoopSage.
@@ -86,7 +76,7 @@ def E_fold(ms, ns, fold_norm):
     ''''
     The folding energy.
     '''
-    folding = np.sum(np.log(ns-ms+1e-3))
+    folding = np.sum(np.log(ns-ms+1))
     return fold_norm * folding
 
 @njit
@@ -142,7 +132,7 @@ def get_dE_fold(fold_norm,ms,ns,m_new,n_new,idx):
     '''
     Energy difference for folding energy.
     '''
-    return fold_norm*(np.log(n_new-m_new+1e-3)-np.log(ns[idx]-ms[idx]+1e-3))
+    return fold_norm*(np.log(n_new-m_new+1)-np.log(ns[idx]-ms[idx]+1))
 
 @njit
 def get_dE_rep(f_rep, rep_norm, ms, ns, m_new, n_new, t, idx):
@@ -212,43 +202,41 @@ def unbind_bind(N_beads):
     '''
     Rebinding Monte-Carlo step.
     '''
-    m_new = rd.randint(0, N_beads - 4)
-    n_new = m_new + 3  # Ensure n_new - m_new >= 1
+    m_new = rd.randint(0, N_beads - 2)
+    n_new = m_new
     return m_new, n_new
 
-@njit(fastmath=True, cache=True, inline='always')
+@njit
 def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     '''
     Sliding Monte-Carlo step.
     '''
     # Choose random step for sliding
-    choices = np.array([-1, 1], dtype=np.int64)
-    r1 = np.random.choice(choices) if rw else -1
-    r2 = np.random.choice(choices) if rw else 1
-    
+    if n_old>m_old+1:
+        r1 = np.random.choice(np.array([-1, 0, 1], dtype=np.int64)) if rw else -1
+        r2 = np.random.choice(np.array([-1, 0, 1], dtype=np.int64)) if rw else 1
+    else: # In case that it has just binded it has to extrude
+        choices = np.array([-1, 1], dtype=np.int64)
+        r1 = np.random.choice(np.array([-1, 0], dtype=np.int64)) if rw else -1
+        r2 = np.random.choice(np.array([0, 1], dtype=np.int64)) if rw else 1
     m_new = m_old + r1 if m_old + r1 >= 0 else 0
     n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
-
-    # Ensure n_new - m_new is always positive and at least 1
-    if n_new - m_new <= 2:
-        if m_new > 0:
-            m_new -= 1
-        elif n_new < N_beads - 1:
-            n_new += 1
-
+    
     # Handle replication forks only if f is provided
     if f is not None:
-        if f[m_new, t] != f[m_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-            m_new = closest_opposite(f[:, t], m_new)
-        if f[n_new, t] != f[n_old, max(t - 1, 0)] and np.any(f[:, t] == 0):
-            n_new = closest_opposite(f[:, t], n_new)    
+        if f[m_new, t] != f[m_old, max(t - 1, 0)] and n_old>m_old:
+            m_new = m_old+1
+        if f[n_new, t] != f[n_old, max(t - 1, 0)] and n_old>m_old:
+            n_new = n_old-1
+
+    if n_new<m_new: n_new=m_new
     
     # They cannot go further than chromosome boundaries
     if n_new >= N_beads: n_new = N_beads - 1
     if m_new >= N_beads: m_new = N_beads - 1
     if m_new < 0: m_new = 0
     if n_new < 0: n_new = 0
-
+    
     return int(m_new), int(n_new)
 
 @njit
@@ -257,7 +245,7 @@ def initialize(N_lef, N_lef2, N_beads, random_init_spins=True):
     Random initial condition of the simulation.
     '''
     ms = np.full(N_lef + N_lef2, -5, dtype=np.int64)
-    ns = np.full(N_lef + N_lef2, -4, dtype=np.int64)
+    ns = np.full(N_lef + N_lef2, -5, dtype=np.int64)
     for j in range(N_lef):
         ms[j], ns[j] = unbind_bind(N_beads)
     if random_init_spins:
@@ -274,7 +262,7 @@ def initialize_J(N_beads, ms, ns):
         J[i + 1, i] = 1
     for idx in range(len(ms)):
         m, n = ms[idx], ns[idx]
-        if m >= 0 and n >= 0:  # Ensure valid indices
+        if m >= 0 and n >= 0 and n>m:  # Ensure valid indices
             J[m, n] += 1
             J[n, m] += 1
     return J
@@ -375,10 +363,10 @@ def run_energy_minimization(
                 if dE <= 0 or np.exp(-dE / T) > np.random.rand():
                     E += dE
                     # Update J matrix for LEF move
-                    if m_old >= 0:
+                    if m_old >= 0 and n_old>m_old:
                         J[m_old, n_old] -= 1
                         J[n_old, m_old] -= 1
-                    if m_new >= 0:
+                    if m_new >= 0 and n_new>m_new:
                         J[m_new, n_new] += 1
                         J[n_new, m_new] += 1
                     ms[lef_idx], ns[lef_idx] = m_new, n_new
