@@ -48,7 +48,7 @@ def main():
 
         config['Main']['N_BEADS'] = str(n_beads)
         config['Main']['N_LEF'] = str(n_beads//10)
-        config['Main']['N_LEF2'] = str(n_beads//20)
+        config['Main']['N_LEF2'] = str(n_beads//10)
         config['Main']['CHROM'] = 'chr'+chrom
         config['Main']['REGION_START'] = str(0)
         config['Main']['REGION_END'] = str(size)
