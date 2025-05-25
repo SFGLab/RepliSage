@@ -151,15 +151,15 @@ def main():
             get_avg_heatmap(args.OUT_PATH, 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
         else:
             print('G1 phase heatmap...')
-            h_g1 = get_avg_heatmap(args.OUT_PATH, 1, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1)
+            h_g1, _ = get_avg_heatmap(args.OUT_PATH, 1, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1)
             print('S phase heatmap...')
-            h_s = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
+            h_s, _ = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
             print('G2M phase heatmap...')
-            h_g2m = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
+            h_g2m, _ = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
 
             # Calculate average and save as .npy
             avg_heatmap = (h_g1 + h_s + h_g2m) / 3.0
-            np.save(f"{args.OUT_PATH}/metadata/avg_heatmap.npy", avg_heatmap)
+            np.save(f"{args.OUT_PATH}/metadata/structural_metrics/avg_heatmap.npy", avg_heatmap)
             print('Saved average heatmap as avg_heatmap.npy')
         print('Done!')
 
