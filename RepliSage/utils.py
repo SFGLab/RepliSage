@@ -469,21 +469,22 @@ def get_stats(ms,ns,N_beads):
     
     return f, f_std, F, FC
 
-def get_avg_heatmap(path, N1, N2):
+def get_avg_structure_and_heatmap(path, N1, N2):
     """
-    Computes the average heatmap for ensemble .cif files in a memory-efficient way.
-    Processes each file one by one to avoid high memory usage.
+    Computes the average structure (mean coordinates) and standard deviation structure
+    for ensemble .cif files, then calculates the distance matrix (heatmap) for both.
     """
     file_pattern = path + f'/ensemble/ensemble_{N1}_*.cif'
     file_list = glob.glob(file_pattern)
     if not file_list:
         print(f"Warning: No .cif files found for ensemble_{N1}_*.cif, using default N_beads=0")
         N_beads = 0
-        avg_heat = None
+        avg_V = None
+        std_V = None
     else:
         V = get_coordinates_cif(file_list[0])
         N_beads = len(V) // 2
-        avg_heat = np.zeros((N_beads, N_beads), dtype=np.float32)
+        avg_V = []
     count = 0
 
     for i in tqdm(range(N1, N2)):
@@ -496,33 +497,47 @@ def get_avg_heatmap(path, N1, N2):
             V = get_coordinates_cif(file_list[0])
             N_beads = len(V) // 2
             V = V[:N_beads]
-            heat = distance.cdist(V, V, 'euclidean')
-            heat = 1 / heat
-            # Avoid inf on diagonal
-            np.fill_diagonal(heat, 0)
-            if avg_heat is None or avg_heat.shape != heat.shape:
-                avg_heat = np.zeros_like(heat, dtype=np.float32)
-            avg_heat += heat
+            avg_V.append(V)
             count += 1
         except Exception as e:
             print(f"Error processing {file_list[0]}: {e}")
             continue
 
-    if count == 0 or avg_heat is None:
-        print("Warning: No valid heatmaps were computed. Saving empty array.")
-        avg_heat = np.zeros((N_beads, N_beads), dtype=np.float32)
+    if count == 0 or not avg_V:
+        print("Warning: No valid structures were computed. Saving empty arrays.")
+        avg_V = np.zeros((N_beads, 3), dtype=np.float32)
+        std_V = np.zeros((N_beads, 3), dtype=np.float32)
     else:
-        avg_heat = avg_heat / count
+        avg_V = np.array(avg_V)
+        mean_V = np.mean(avg_V, axis=0)
+        std_V = np.std(avg_V, axis=0)
 
-    np.save(path + f'/metadata/structural_metrics/heatmap_{N1}_{N2}.npy', avg_heat)
+    # Save mean and std structures
+    np.save(path + f'/metadata/structural_metrics/mean_structure_{N1}_{N2}.npy', mean_V)
+    np.save(path + f'/metadata/structural_metrics/std_structure_{N1}_{N2}.npy', std_V)
+
+    # Calculate heatmaps for mean and std structures
+    mean_heat = distance.cdist(mean_V, mean_V, 'euclidean')
+    std_heat = distance.cdist(std_V, std_V, 'euclidean')
+
+    np.save(path + f'/metadata/structural_metrics/mean_heatmap_{N1}_{N2}.npy', mean_heat)
+    np.save(path + f'/metadata/structural_metrics/std_heatmap_{N1}_{N2}.npy', std_heat)
 
     try:
         figure(figsize=(20, 20))
-        plt.imshow(avg_heat, cmap='Reds', vmax=0.2, aspect='auto')
-        plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.png', format='png', dpi=200)
-        plt.savefig(path + f'/plots/structural_metrics/heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
+        plt.imshow(mean_heat, cmap='Reds', vmax=0.2, aspect='auto')
+        plt.title('Mean Structure Heatmap')
+        plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.png', format='png', dpi=200)
+        plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
+        plt.close()
+
+        figure(figsize=(20, 20))
+        plt.imshow(std_heat, cmap='Blues', aspect='auto')
+        plt.title('Std Structure Heatmap')
+        plt.savefig(path + f'/plots/structural_metrics/std_heatmap_{N1}_{N2}.png', format='png', dpi=200)
+        plt.savefig(path + f'/plots/structural_metrics/std_heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
         plt.close()
     except Exception as e:
         print(f"Plotting failed: {e}")
 
-    return avg_heat
+    return mean_heat, std_heat
