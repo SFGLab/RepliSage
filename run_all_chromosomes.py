@@ -31,6 +31,7 @@ chromosome_sizes = {
     "Y": 57227415,
 }
 
+config_file = 'config.ini'
 def main():
     resolution_kb = int(input("Enter resolution in kb: "))
     resolution = resolution_kb * 1000
@@ -40,7 +41,7 @@ def main():
         
         # Load config
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read(config_file)
 
         # Ensure section exists
         if 'Main' not in config:
@@ -55,12 +56,12 @@ def main():
         config['Main']['OUT_PATH'] = f'tmp/chrom{chrom}_ht0'
 
         # Write back updated config.ini
-        with open('config.ini', 'w') as configfile:
+        with open(config_file, 'w') as configfile:
             config.write(configfile)
 
         # Run command
         print(f'Running chromosome {chrom} with {n_beads} beads...')
-        subprocess.run(["python", "-m", "RepliSage.run", "-c", "config.ini"])
+        subprocess.run(["python", "-m", "RepliSage.run", "-c", config_file])
 
 if __name__ == "__main__":
     main()
