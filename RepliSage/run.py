@@ -160,7 +160,7 @@ def main():
             # Calculate average and save as .npy
             avg_heatmap = (h_g1 + h_s + h_g2m) / 3.0
             np.save(f"{args.OUT_PATH}/metadata/structural_metrics/avg_heatmap.npy", avg_heatmap)
-            print('Saved average heatmap as avg_heatmap.npy')
+            print('Saved average heatmap (over all phases) as avg_heatmap.npy')
         print('Done!')
 
 if __name__=='__main__':
