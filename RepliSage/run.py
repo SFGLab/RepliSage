@@ -3,6 +3,7 @@ from .args_definition import *
 import argparse
 import configparser
 from typing import List
+import numpy as np
 
 class ArgumentChanger:
     def __init__(self, args):
@@ -155,6 +156,11 @@ def main():
             h_s = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME - args.BURNIN) // args.MC_STEP + 1, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1)
             print('G2M phase heatmap...')
             h_g2m = get_avg_heatmap(args.OUT_PATH, (args.REP_START_TIME + args.REP_TIME_DURATION - args.BURNIN) // args.MC_STEP + 1, (args.N_STEPS - args.BURNIN) // args.MC_STEP + 1)
+
+            # Calculate average and save as .npy
+            avg_heatmap = (h_g1 + h_s + h_g2m) / 3.0
+            np.save(f"{args.OUT_PATH}/metadata/avg_heatmap.npy", avg_heatmap)
+            print('Saved average heatmap as avg_heatmap.npy')
         print('Done!')
 
 if __name__=='__main__':
