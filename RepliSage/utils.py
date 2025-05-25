@@ -469,7 +469,7 @@ def get_stats(ms,ns,N_beads):
     
     return f, f_std, F, FC
 
-def get_avg_structure_and_heatmap(path, N1, N2):
+def get_avg_heatmap(path, N1, N2):
     """
     Computes the average structure (mean coordinates) and standard deviation structure
     for ensemble .cif files, then calculates the distance matrix (heatmap) for both.
