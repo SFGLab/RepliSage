@@ -43,8 +43,8 @@ def main():
         config.read("config.ini")
 
         # Ensure section exists
-        if 'DEFAULT' not in config:
-            config['DEFAULT'] = {}
+        if 'Main' not in config:
+            config['Main'] = {}
 
         config['Main']['N_BEADS'] = str(n_beads)
         config['Main']['N_LEF'] = str(n_beads//10)
