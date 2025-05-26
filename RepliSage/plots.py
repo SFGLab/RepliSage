@@ -135,6 +135,23 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     plt.close()
 
 def coh_traj_plot(ms, ns, N_beads, path, jump_threshold=200, min_stable_time=10):
+    """
+    Plots the trajectories of cohesins as filled regions between their two ends over time.
+
+    Parameters:
+        ms (list of arrays): List where each element is an array of left-end positions of a cohesin over time.
+        ns (list of arrays): List where each element is an array of right-end positions of a cohesin over time.
+        N_beads (int): Total number of beads (simulation sites) in the system.
+        path (str): Directory path where the plots will be saved.
+        jump_threshold (int, optional): Maximum allowed jump (in bead units) between consecutive time points for both ends.
+            If the jump between two consecutive positions exceeds this threshold for either end, that segment is considered a jump and is masked out.
+            Lower values make the criterion for erasing (masking) trajectories more strict (more segments are erased), higher values make it less strict.
+        min_stable_time (int, optional): Minimum number of consecutive time points required for a region to be considered stable and shown.
+            Shorter stable regions (less than this value) are erased (masked out).
+            Higher values make the criterion more strict (only longer stable regions are shown), lower values make it less strict.
+
+    The function highlights only stable, non-jumping regions of cohesin trajectories.
+    """
     print('\nPlotting trajectories of cohesins...')
     start = time.time()
     N_coh = len(ms)
