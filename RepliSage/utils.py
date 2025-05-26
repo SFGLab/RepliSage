@@ -525,14 +525,14 @@ def get_avg_heatmap(path, N1, N2):
 
     try:
         figure(figsize=(20, 20))
-        plt.imshow(mean_heat, cmap='Reds', vmax=0.2, aspect='auto')
+        plt.imshow(mean_heat, cmap='Reds_r', aspect='auto')
         plt.title('Mean Structure Heatmap')
         plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.png', format='png', dpi=200)
         plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
         plt.close()
 
         figure(figsize=(20, 20))
-        plt.imshow(std_heat, cmap='Blues', aspect='auto')
+        plt.imshow(std_heat, cmap='gnuplot2_r', aspect='auto')
         plt.title('Std Structure Heatmap')
         plt.savefig(path + f'/plots/structural_metrics/std_heatmap_{N1}_{N2}.png', format='png', dpi=200)
         plt.savefig(path + f'/plots/structural_metrics/std_heatmap_{N1}_{N2}.svg', format='svg', dpi=200)
