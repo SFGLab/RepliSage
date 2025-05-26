@@ -125,9 +125,8 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     plt.figure(figsize=(8, 6), dpi=200)
     parts = plt.violinplot(data, showmeans=True, showmedians=True)
     plt.xticks([1, 2, 3], labels, fontsize=14)
-    plt.ylabel('Loop Length (log)', fontsize=16)
+    plt.ylabel('Loop Length', fontsize=16)
     plt.title('Loop Length Distribution by Cell Cycle Phase', fontsize=16)
-    plt.yscale('log')  # Set y-axis to logarithmic scale
     plt.grid(True, axis='y', which='both')
     if out_path:
         plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_violin.png', format='png', dpi=200)
