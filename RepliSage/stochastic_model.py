@@ -128,7 +128,7 @@ class StochasticSimulation:
         '''
         print("Calculating MCMC metrics...")
         make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
-        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=10*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//20)
+        coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=30*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//100)
         print("Calculating graph metrics...")
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
