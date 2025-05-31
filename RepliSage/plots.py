@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from tqdm import tqdm
 import time
+from matplotlib.colors import TwoSlopeNorm
 
 def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
     """
@@ -285,10 +286,13 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.close()
 
 def ising_traj_plot(spins, save_path):
-    plt.figure(figsize=(10, 10),dpi=200)
-    plt.imshow(spins, cmap='bwr', aspect='auto')
+    plt.figure(figsize=(10, 10), dpi=200)
+    # Use a diverging colormap that covers -2 (blue), 0 (white), 2 (red) with visible intermediate colors
+    norm = TwoSlopeNorm(vmin=-2, vcenter=0, vmax=2)
+    plt.imshow(spins, cmap='Spectral_r', norm=norm, aspect='auto')
     plt.xlabel('MC step', fontsize=16)
     plt.ylabel('Simulation Beads', fontsize=16)
+    plt.colorbar(label='Spin State')
     plt.savefig(save_path + '/plots/MCMC_diagnostics/potts_traj.png', format='png', dpi=200)
     plt.savefig(save_path + '/plots/MCMC_diagnostics/potts_traj.svg', format='svg', dpi=200)
     plt.close()

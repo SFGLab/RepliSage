@@ -46,7 +46,6 @@ class StochasticSimulation:
                                  "for the resolution of the simulation (number of beads) specified.\033[0m") from e
             self.rep_frac = expand_columns(rep_frac, rep_duration)
             self.h, _ = rep.calculate_ising_parameters()
-            np.save(f'{self.out_path}/metadata/MCMC_output/rep_state.npy',self.rep_frac)
         else:
             self.rep_frac = None
             self.h = np.zeros(self.N_beads)
@@ -64,8 +63,8 @@ class StochasticSimulation:
         # Normalize strengths
         if not self.run_replication: c_rep, c_potts1, c_potts2 = 0.0, 0.0, 0.0
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
-        bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e5
-        rep_norm = c_rep*1e5
+        bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e8
+        rep_norm = c_rep*1e8
         potts_norm1, potts_norm2 = -c_potts1, -c_potts2
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0)
         
