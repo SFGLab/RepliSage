@@ -525,7 +525,7 @@ def get_avg_heatmap(path, N1, N2):
 
     try:
         figure(figsize=(20, 20))
-        plt.imshow(mean_heat, cmap='Reds_r', aspect='auto')
+        plt.imshow(mean_heat, cmap='coolwarm', aspect='auto')
         plt.title('Mean Structure Heatmap')
         plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.png', format='png', dpi=200)
         plt.savefig(path + f'/plots/structural_metrics/mean_heatmap_{N1}_{N2}.svg', format='svg', dpi=200)

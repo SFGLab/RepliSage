@@ -31,6 +31,7 @@ def Kappa(mi, ni, mj, nj):
 
 @njit
 def Rep_Penalty(m, n, f):
+    # Computes penalty for cohesin crossing replication fork boundaries
     r = 0.0
 
     # Only consider valid indices
@@ -82,6 +83,7 @@ def E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin=False):
     crossing = 0.0
     for i in range(N_lef+N_lef2):
         for j in range(i + 1, N_lef+N_lef2):
+            # Only count crossing for allowed pairs
             if cohesin_blocks_condensin or (i < N_lef and j < N_lef) or (i >= N_lef and j >= N_lef):
                 crossing += Kappa(ms[i], ns[i], ms[j], ns[j])
     return k_norm * crossing
@@ -96,6 +98,7 @@ def E_fold(ms, ns, fold_norm):
 
 @njit
 def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers):
+    # Potts model energy calculation
     N_beads = spins.shape[0]
     # Precompute h*spins and ht*spins
     h_dot = 0.0
@@ -166,6 +169,7 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, N_lef, N_lef2, k_norm, cohesin_block
     
     for i in range(N_lef+N_lef2):
         if i != idx:
+            # Only count crossing for allowed pairs
             if cohesin_blocks_condensin or (idx < N_lef and i < N_lef) or (idx >= N_lef and i >= N_lef):
                 K1 += Kappa(ms[idx], ns[idx], ms[i], ns[i])
                 K2 += Kappa(m_new, n_new, ms[i], ns[i])
@@ -173,7 +177,7 @@ def get_dE_cross(ms, ns, m_new, n_new, idx, N_lef, N_lef2, k_norm, cohesin_block
 
 @njit
 def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm2,t,rep_fork_organizers=True):
-    # In case that we change node state
+    # Energy difference for Potts node flip
     dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2+h[spin_idx]*(spin_val-spins[spin_idx])/2*(1-int(rep_fork_organizers))
     if t>0: dE1 += ((np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2)*int(rep_fork_organizers)
     dE2 = np.sum(J[spin_idx, :] * (np.abs(spin_val - spins) - np.abs(spins[spin_idx] - spins)))
@@ -181,6 +185,7 @@ def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm
 
 @njit
 def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,potts_norm2=0.0):
+    # Energy difference for Potts link update
     if m_new>=0 and m_old>=0:
         dE = J[m_new,n_new]*np.abs(spins[m_new]-spins[n_new])-J[m_old,n_old]*np.abs(spins[m_old]-spins[n_old])
     elif m_new<0 and m_old>=0:

@@ -65,7 +65,7 @@ class StochasticSimulation:
         fold_norm, fold_norm2 = -self.N_beads*f/(self.N_lef*np.log(self.N_beads/self.N_lef)), -self.N_beads*f2/(self.N_lef*np.log(self.N_beads/self.N_lef))
         bind_norm, k_norm = -self.N_beads*b/(np.sum(self.L)+np.sum(self.R)), kappa*1e8
         rep_norm = c_rep*1e8
-        potts_norm1, potts_norm2 = -c_potts1, -c_potts2
+        potts_norm1, potts_norm2 = -c_potts1, c_potts2
         self.is_potts = (c_potts1!=0.0 or c_potts2!=0.0)
         
         # Running the simulation
