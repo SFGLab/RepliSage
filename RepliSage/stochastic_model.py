@@ -126,14 +126,14 @@ class StochasticSimulation:
         Draw plots.
         '''
         print("Calculating MCMC metrics...")
-        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.out_path)
+        make_timeplots(self.Es, self.Es_potts, self.Fs, self.Bs, self.mags, self.burnin//self.MC_step, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
         coh_traj_plot(self.Ms, self.Ns, self.N_beads, self.out_path,jump_threshold=30*self.N_beads//self.N_lef,min_stable_time=self.N_steps//self.MC_step//100)
         print("Calculating graph metrics...")
         compute_potts_metrics(self.Ms, self.Ns, self.spin_traj,self.out_path)
         if self.is_potts: ising_traj_plot(self.spin_traj,self.out_path)
         print("Calculating node and link state metrics...")
-        plot_loop_length(self.Ns-self.Ms, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
-        compute_state_proportions_sign_based(self.Ms, self.Ns, self.spin_traj, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
+        plot_loop_length(self.Ns-self.Ms, self.burnin//self.MC_step, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
+        compute_state_proportions_sign_based(self.Ms, self.Ns, self.spin_traj, self.burnin//self.MC_step, self.t_rep//self.MC_step,  (self.t_rep+self.rep_duration)//self.MC_step, self.out_path)
     
     def compute_structure_metrics(self):
         '''

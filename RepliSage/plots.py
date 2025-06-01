@@ -4,8 +4,9 @@ from matplotlib.pyplot import figure
 from tqdm import tqdm
 import time
 from matplotlib.colors import TwoSlopeNorm
+from statsmodels.tsa.stattools import acf
 
-def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=None):
+def compute_state_proportions_sign_based(Ms, Ns, Cs, burnin, S_time, G2_time, out_path=None, max_lag=50):
     """
     Computes the proportion of links where connected nodes are:
     - in the same sign state (both positive or both negative)
@@ -80,9 +81,45 @@ def compute_state_proportions_sign_based(Ms, Ns, Cs, S_time, G2_time, out_path=N
         plt.savefig(out_path + '/plots/graph_metrics/same_sign_fraction_violin.svg', format='svg', dpi=200)
     plt.close()
 
+    # Compute autocorrelations for each phase of same_sign_fraction
+    same_sign_fraction = np.asarray(same_sign_fraction)
+    g1 = same_sign_fraction[burnin:S_time]
+    s = same_sign_fraction[S_time:G2_time]
+    g2 = same_sign_fraction[G2_time:]
+
+    g1_acf = acf(g1, nlags=max_lag, fft=True)
+    s_acf = acf(s, nlags=max_lag, fft=True)
+    g2_acf = acf(g2, nlags=max_lag, fft=True)
+
+    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True, dpi=200)
+    axs[0].bar(np.arange(len(g1_acf)), g1_acf, color='b', alpha=0.6, label='Autocorr')
+    axs[0].plot(np.arange(len(g1_acf)), g1_acf, color='b', linewidth=2, label='Envelope')
+    axs[0].set_title('Same Sign Fraction Autocorrelation (G1 phase)', fontsize=14)
+    axs[0].set_ylabel('Autocorrelation', fontsize=12)
+    axs[0].grid(True)
+
+    axs[1].bar(np.arange(len(s_acf)), s_acf, color='orange', alpha=0.6, label='Autocorr')
+    axs[1].plot(np.arange(len(s_acf)), s_acf, color='orange', linewidth=2, label='Envelope')
+    axs[1].set_title('Same Sign Fraction Autocorrelation (S phase)', fontsize=14)
+    axs[1].set_ylabel('Autocorrelation', fontsize=12)
+    axs[1].grid(True)
+
+    axs[2].bar(np.arange(len(g2_acf)), g2_acf, color='g', alpha=0.6, label='Autocorr')
+    axs[2].plot(np.arange(len(g2_acf)), g2_acf, color='g', linewidth=2, label='Envelope')
+    axs[2].set_title('Same Sign Fraction Autocorrelation (G2 phase)', fontsize=14)
+    axs[2].set_xlabel('Lag', fontsize=12)
+    axs[2].set_ylabel('Autocorrelation', fontsize=12)
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    if out_path:
+        plt.savefig(out_path + '/plots/graph_metrics/same_sign_fraction_autocorr.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/graph_metrics/same_sign_fraction_autocorr.svg', format='svg', dpi=200)
+    plt.close()
+
     return same_sign_fraction, diff_sign_fraction
 
-def plot_loop_length(Ls, S_time, G2_time, out_path=None):
+def plot_loop_length(Ls, burnin, S_time, G2_time, out_path=None, max_lag=50):
     """
     Plots how the probability distribution changes over columns of matrix Ls using plt.imshow.
     Also creates violin plots for each cell cycle phase (G1, S, G2).
@@ -132,6 +169,42 @@ def plot_loop_length(Ls, S_time, G2_time, out_path=None):
     if out_path:
         plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_violin.png', format='png', dpi=200)
         plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_violin.svg', format='svg', dpi=200)
+    plt.close()
+
+    # Compute autocorrelations for average loop length in each phase
+    avg_Ls = np.asarray(avg_Ls)
+    g1_avg = avg_Ls[burnin:S_time]
+    s_avg = avg_Ls[S_time:G2_time]
+    g2_avg = avg_Ls[G2_time:]
+
+    g1_acf = acf(g1_avg, nlags=max_lag, fft=True)
+    s_acf = acf(s_avg, nlags=max_lag, fft=True)
+    g2_acf = acf(g2_avg, nlags=max_lag, fft=True)
+
+    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True, dpi=200)
+    axs[0].bar(np.arange(len(g1_acf)), g1_acf, color='b', alpha=0.6, label='Autocorr')
+    axs[0].plot(np.arange(len(g1_acf)), g1_acf, color='b', linewidth=2, label='Envelope')
+    axs[0].set_title('Average Loop Length Autocorrelation (G1 phase)', fontsize=14)
+    axs[0].set_ylabel('Autocorrelation', fontsize=12)
+    axs[0].grid(True)
+
+    axs[1].bar(np.arange(len(s_acf)), s_acf, color='orange', alpha=0.6, label='Autocorr')
+    axs[1].plot(np.arange(len(s_acf)), s_acf, color='orange', linewidth=2, label='Envelope')
+    axs[1].set_title('Average Loop Length Autocorrelation (S phase)', fontsize=14)
+    axs[1].set_ylabel('Autocorrelation', fontsize=12)
+    axs[1].grid(True)
+
+    axs[2].bar(np.arange(len(g2_acf)), g2_acf, color='g', alpha=0.6, label='Autocorr')
+    axs[2].plot(np.arange(len(g2_acf)), g2_acf, color='g', linewidth=2, label='Envelope')
+    axs[2].set_title('Average Loop Length Autocorrelation (G2 phase)', fontsize=14)
+    axs[2].set_xlabel('Lag', fontsize=12)
+    axs[2].set_ylabel('Autocorrelation', fontsize=12)
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    if out_path:
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_autocorr.png', format='png', dpi=200)
+        plt.savefig(out_path + '/plots/MCMC_diagnostics/loop_length_autocorr.svg', format='svg', dpi=200)
     plt.close()
 
 def coh_traj_plot(ms, ns, N_beads, path, jump_threshold=200, min_stable_time=10):
@@ -206,7 +279,7 @@ def coh_traj_plot(ms, ns, N_beads, path, jump_threshold=200, min_stable_time=10)
     elapsed = end - start
     print(f'Plot created successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')
 
-def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
+def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, G1_end, G2M_end, path=None, max_lag=50):
     figure(figsize=(10, 6), dpi=200)
     # plt.plot(Es, 'black',label='Total Energy')
     plt.plot(Es_potts, 'orange',label='Potts Energy')
@@ -283,6 +356,80 @@ def make_timeplots(Es, Es_potts, Fs, Bs, mags, burnin, path=None):
     plt.savefig(save_path,format='svg',dpi=200)
     save_path = path+'/plots/MCMC_diagnostics/bind_energy.png'
     plt.savefig(save_path,format='png',dpi=200)
+    plt.close()
+
+    # Compute autocorrelations for each phase
+    Fs = np.asarray(Fs)
+    g1_Fs = Fs[burnin:G1_end]
+    s_Fs = Fs[G1_end:G2M_end]
+    g2m_Fs = Fs[G2M_end:]
+
+    g1_acf = acf(g1_Fs, nlags=max_lag, fft=True)
+    s_acf = acf(s_Fs, nlags=max_lag, fft=True)
+    g2m_acf = acf(g2m_Fs, nlags=max_lag, fft=True)
+
+    # Folding Energy Autocorrelation: Barplot with envelope
+    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True, dpi=200)
+    axs[0].bar(np.arange(len(g1_acf)), g1_acf, color='b', alpha=0.6, label='Autocorr')
+    axs[0].plot(np.arange(len(g1_acf)), g1_acf, color='b', linewidth=2, label='Envelope')
+    axs[0].set_title('Folding Energy Autocorrelation (G1 phase)', fontsize=14)
+    axs[0].set_ylabel('Autocorrelation', fontsize=12)
+    axs[0].grid(True)
+
+    axs[1].bar(np.arange(len(s_acf)), s_acf, color='orange', alpha=0.6, label='Autocorr')
+    axs[1].plot(np.arange(len(s_acf)), s_acf, color='orange', linewidth=2, label='Envelope')
+    axs[1].set_title('Folding Energy Autocorrelation (S phase)', fontsize=14)
+    axs[1].set_ylabel('Autocorrelation', fontsize=12)
+    axs[1].grid(True)
+
+    axs[2].bar(np.arange(len(g2m_acf)), g2m_acf, color='g', alpha=0.6, label='Autocorr')
+    axs[2].plot(np.arange(len(g2m_acf)), g2m_acf, color='g', linewidth=2, label='Envelope')
+    axs[2].set_title('Folding Energy Autocorrelation (G2M phase)', fontsize=14)
+    axs[2].set_xlabel('Lag', fontsize=12)
+    axs[2].set_ylabel('Autocorrelation', fontsize=12)
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    if path:
+        plt.savefig(path + '/plots/MCMC_diagnostics/fold_energy_autocorr.png', format='png', dpi=200)
+        plt.savefig(path + '/plots/MCMC_diagnostics/fold_energy_autocorr.svg', format='svg', dpi=200)
+    plt.close()
+
+    # Compute autocorrelations for Potts energy in each phase
+    Es_potts = np.asarray(Es_potts)
+    g1_potts = Es_potts[burnin:G1_end]
+    s_potts = Es_potts[G1_end:G2M_end]
+    g2m_potts = Es_potts[G2M_end:]
+
+    g1_potts_acf = acf(g1_potts, nlags=max_lag, fft=True)
+    s_potts_acf = acf(s_potts, nlags=max_lag, fft=True)
+    g2m_potts_acf = acf(g2m_potts, nlags=max_lag, fft=True)
+
+    # Potts Energy Autocorrelation: Barplot with envelope
+    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True, dpi=200)
+    axs[0].bar(np.arange(len(g1_potts_acf)), g1_potts_acf, color='orange', alpha=0.6, label='Autocorr')
+    axs[0].plot(np.arange(len(g1_potts_acf)), g1_potts_acf, color='orange', linewidth=2, label='Envelope')
+    axs[0].set_title('Potts Energy Autocorrelation (G1 phase)', fontsize=14)
+    axs[0].set_ylabel('Autocorrelation', fontsize=12)
+    axs[0].grid(True)
+
+    axs[1].bar(np.arange(len(s_potts_acf)), s_potts_acf, color='red', alpha=0.6, label='Autocorr')
+    axs[1].plot(np.arange(len(s_potts_acf)), s_potts_acf, color='red', linewidth=2, label='Envelope')
+    axs[1].set_title('Potts Energy Autocorrelation (S phase)', fontsize=14)
+    axs[1].set_ylabel('Autocorrelation', fontsize=12)
+    axs[1].grid(True)
+
+    axs[2].bar(np.arange(len(g2m_potts_acf)), g2m_potts_acf, color='purple', alpha=0.6, label='Autocorr')
+    axs[2].plot(np.arange(len(g2m_potts_acf)), g2m_potts_acf, color='purple', linewidth=2, label='Envelope')
+    axs[2].set_title('Potts Energy Autocorrelation (G2M phase)', fontsize=14)
+    axs[2].set_xlabel('Lag', fontsize=12)
+    axs[2].set_ylabel('Autocorrelation', fontsize=12)
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    if path:
+        plt.savefig(path + '/plots/MCMC_diagnostics/potts_energy_autocorr.png', format='png', dpi=200)
+        plt.savefig(path + '/plots/MCMC_diagnostics/potts_energy_autocorr.svg', format='svg', dpi=200)
     plt.close()
 
 def ising_traj_plot(spins, save_path):

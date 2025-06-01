@@ -328,7 +328,7 @@ def run_energy_minimization(
     Ms = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
     Ns = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
     Ms[:, 0], Ns[:, 0] = ms, ns
-
+    
     # Precompute reciprocal for replication duration
     inv_rep_duration = 1.0 / rep_duration if rep_duration != np.inf or rep_duration!=0 else 0.0
 
