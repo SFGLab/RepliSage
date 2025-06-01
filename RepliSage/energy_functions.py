@@ -114,7 +114,7 @@ def E_potts(spins, J, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers):
     E2 = 0.0
     for i in range(N_beads - 1):
         for j in range(i + 1, N_beads):
-            diff = spins[i] == spins[j]
+            diff = np.abs(spins[i] - spins[j])
             E2 += J[i, j] * diff
 
     return potts_norm1 * E1 + potts_norm2 * E2
@@ -176,17 +176,17 @@ def get_dE_node(spins,spin_idx,spin_val,J,h,ht_new,ht_old,potts_norm1,potts_norm
     # In case that we change node state
     dE1 = h[spin_idx]*(spin_val-spins[spin_idx])/2+h[spin_idx]*(spin_val-spins[spin_idx])/2*(1-int(rep_fork_organizers))
     if t>0: dE1 += ((np.sum(ht_new*spins) - ht_new[spin_idx]*(spins[spin_idx]-spin_val) - np.sum(ht_old*spins))/2)*int(rep_fork_organizers)
-    dE2 = np.sum(J[spin_idx, :] * ((spin_val == spins) - (spins[spin_idx] == spins)))
+    dE2 = np.sum(J[spin_idx, :] * (np.abs(spin_val - spins) - np.abs(spins[spin_idx] - spins)))
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
 @njit
 def get_dE_potts_link(spins,J,m_new,n_new,m_old,n_old,potts_norm2=0.0):
     if m_new>=0 and m_old>=0:
-        dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])-J[m_old,n_old]*(spins[m_old]==spins[n_old])
+        dE = J[m_new,n_new]*np.abs(spins[m_new]-spins[n_new])-J[m_old,n_old]*np.abs(spins[m_old]-spins[n_old])
     elif m_new<0 and m_old>=0:
-        dE = -J[m_old,n_old]*(spins[m_old]==spins[n_old])
+        dE = -J[m_old,n_old]*np.abs(spins[m_old]-spins[n_old])
     elif m_new>=0 and m_old<0:
-        dE = J[m_new,n_new]*(spins[m_new]==spins[n_new])
+        dE = J[m_new,n_new]*np.abs(spins[m_new]-spins[n_new])
     else:
         dE = 0
     return potts_norm2*dE
