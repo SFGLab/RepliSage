@@ -6,7 +6,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='pyRepliSage',  # Package name
-    version='0.2.3',  # Version of the software
+    version='0.2.4',  # Version of the software
 
     description='A stochastic model for the modeling of DNA replication and cell-cycle dynamics.',
     long_description=long_description,
