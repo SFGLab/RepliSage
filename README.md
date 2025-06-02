@@ -67,9 +67,9 @@ Or more easily (do not forget to install it with python 3.10 or higher),
 pip install pyRepliSage
 ```
 
-## 🐳 Running RepliSage with Docker (testing)
+## 🐳 Running RepliSage with Docker
 
-To use RepliSage in a fully containerized and reproducible way, you can build and run it using Docker.
+To use RepliSage in a fully containerized and reproducible way, you can build and run it using Docker. This is a very efficient way when you want to use CUDA.
 
 ### Step 1: Build the Docker Image
 
@@ -84,7 +84,7 @@ docker build -t pyreplisage-cuda .
 Use the following command to run your simulation:
 
 ```bash
-docker run --rm -it \
+docker run --rm -it --gpus all \
   -v "$PWD/config.ini:/app/config.ini:ro" \
   -v "$PWD/tmp:/app/output" \
   -v "$HOME/Data:/home/blackpianocat/Data:ro" \
@@ -95,6 +95,7 @@ docker run --rm -it \
 **What this does:**
 
 * `--rm`: Automatically removes the container after it finishes.
+* `--gpus all`: It detects the gpus of the system.
 * `-it`: Runs with an interactive terminal.
 * `-v "$PWD/config.ini:/app/config.ini:ro"`: Mounts your local `config.ini` as read-only inside the container.
 * `-v "$PWD/tmp:/app/output"`: Maps the `tmp/` directory for outputs.
@@ -107,7 +108,7 @@ You do **not** need to manually stop or clean up anything—the container is tem
 docker rmi pyreplisage-cuda
 ```
 
-(still cuda does not work)
+**Note:** Might be good to install `nvidia-container-toolkit` in your system if you want to use the container with CUDA: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ## How to use?
 The usage is very simple. To run this model you need to specify the parameters and the input data. Then RepliSage can do everything for you. 
