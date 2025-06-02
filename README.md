@@ -79,6 +79,8 @@ Clone the repository and build the image:
 docker build -t pyreplisage-cuda .
 ```
 
+The `Dockerfile` can be found in the GitHub repo of RepliSage.
+
 ### Step 2: Run the Simulation
 
 Use the following command to run your simulation:
@@ -108,7 +110,7 @@ You do **not** need to manually stop or clean up anything—the container is tem
 docker rmi pyreplisage-cuda
 ```
 
-**Note:** Might be good to install `nvidia-container-toolkit` in your system if you want to use the container with CUDA: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+**Note:** Install `nvidia-container-toolkit` in your system if you want to use the container with CUDA: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ## How to use?
 The usage is very simple. To run this model you need to specify the parameters and the input data. Then RepliSage can do everything for you. 
