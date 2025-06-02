@@ -24,7 +24,7 @@ In this equation the first term models the folding of chromatin (how fast a loop
     
 #### Compartmentalization
 
-It is modelled by using a five stats ($s_i\in[-2,-1,0,1,2]$) Potts model 
+It is modelled by using a five state ($s_i\in[-2,-1,0,1,2]$) Potts model 
 
 $$E_{\text{potts}} = C_{p,1} \sum_{k} \left(\dfrac{h_k + h_{t_{r} k}}{2} \right) s_k +C_{p,2}\sum_{i>j} J_{ij}| s_i - s_j |.$$
 
