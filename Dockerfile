@@ -3,7 +3,6 @@ FROM nvidia/cuda:12.3.2-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Python 3.10, dev tools, and extras
-ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     wget curl git build-essential \
