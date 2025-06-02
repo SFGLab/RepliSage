@@ -33,8 +33,10 @@ Thumbs.db
 # Logs
 *.log
 
-# dotenv
+
+# Sensitive or local config (if generated)
 .env
+.env.*
 
 # VSCode
 .vscode/
@@ -55,3 +57,13 @@ config_*.ini
 tmp/
 *result*/
 *output*/
+
+# Docker build cache directories (if used with custom output)
+docker-cache/
+docker-build/
+
+# Compose override files
+docker-compose.override.yml
+
+# If you copy in secrets manually during Docker build
+secrets/

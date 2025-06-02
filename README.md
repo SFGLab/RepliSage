@@ -67,6 +67,48 @@ Or more easily (do not forget to install it with python 3.10 or higher),
 pip install pyRepliSage
 ```
 
+## 🐳 Running RepliSage with Docker (testing)
+
+To use RepliSage in a fully containerized and reproducible way, you can build and run it using Docker.
+
+### Step 1: Build the Docker Image
+
+Clone the repository and build the image:
+
+```bash
+docker build -t pyreplisage-cuda .
+```
+
+### Step 2: Run the Simulation
+
+Use the following command to run your simulation:
+
+```bash
+docker run --rm -it \
+  -v "$PWD/config.ini:/app/config.ini:ro" \
+  -v "$PWD/tmp:/app/output" \
+  -v "$HOME/Data:/home/blackpianocat/Data:ro" \
+  pyreplisage-cuda \
+  python -m RepliSage.run -c /app/config.ini
+```
+
+**What this does:**
+
+* `--rm`: Automatically removes the container after it finishes.
+* `-it`: Runs with an interactive terminal.
+* `-v "$PWD/config.ini:/app/config.ini:ro"`: Mounts your local `config.ini` as read-only inside the container.
+* `-v "$PWD/tmp:/app/output"`: Maps the `tmp/` directory for outputs.
+* `-v "$HOME/Data:/home/blackpianocat/Data:ro"`: Mounts your full data directory so RepliSage can access input files.
+* The final command runs RepliSage with your config file.
+
+You do **not** need to manually stop or clean up anything—the container is temporary and self-destructs after it completes. The image (`pyreplisage-cuda`) remains available on your system and can be deleted anytime using:
+
+```bash
+docker rmi pyreplisage-cuda
+```
+
+(still cuda does not work)
+
 ## How to use?
 The usage is very simple. To run this model you need to specify the parameters and the input data. Then RepliSage can do everything for you. 
 
