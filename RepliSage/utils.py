@@ -471,47 +471,43 @@ def get_stats(ms,ns,N_beads):
 
 def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
     """
-    Computes inverse distance heatmaps for an ensemble of 3D structures.
+    Computes the mean inverse distance heatmap for a set of 3D structures.
 
     Parameters:
     -----------
     path : str
-        Path to the directory containing CIF structure files in /ensemble/.
+        Path to directory containing CIF structures in /ensemble/.
     N1 : int
-        Starting index (inclusive) of ensemble structures to include.
+        Starting index (inclusive) of structure files to include.
     N2 : int
-        Ending index (exclusive) of ensemble structures to include.
+        Ending index (exclusive) of structure files to include.
     method : str
-        Either 'mean_structure' or 'mean_heatmap':
-            - 'mean_structure': computes inverse distance map of the average 3D structure.
-                * Fast and low-memory.
-                * Less accurate for experimental comparison due to nonlinearity of distance.
-            - 'mean_heatmap': accumulates and averages inverse distance maps over structures.
-                * Best match for population-averaged experimental data (e.g., Hi-C, FISH).
-                * Now optimized to be memory-efficient.
+        Either 'mean_heatmap' (default) or 'mean_structure':
+            - 'mean_heatmap': computes the average inverse distance matrix over all structures.
+              Recommended for comparison with experimental data (e.g. Hi-C, FISH).
+            - 'mean_structure': computes the inverse distance matrix of the mean 3D structure.
+              Faster but less biologically realistic.
     epsilon : float
-        Small constant to avoid division by zero.
+        Small value to avoid division by zero in inverse distance.
 
     Returns:
     --------
     mean_heat : np.ndarray
         Averaged inverse distance heatmap.
-    std_heat : np.ndarray
-        Inverse distance heatmap of standard deviation structure.
     """
+
     os.makedirs(path + '/metadata/structural_metrics', exist_ok=True)
     os.makedirs(path + '/plots/structural_metrics', exist_ok=True)
 
-    # Try loading one structure to get N_beads
     first_file = glob.glob(path + f'/ensemble/ensemble_{N1}_*.cif')
     if not first_file:
         print(f"No starting structure found at ensemble_{N1}_*.cif")
-        return None, None
+        return None
+
     V_init = get_coordinates_cif(first_file[0])
     N_beads = len(V_init) // 2
 
     structure_sum = np.zeros((N_beads, 3), dtype=np.float64)
-    structure_sq_sum = np.zeros((N_beads, 3), dtype=np.float64)
     heatmap_sum = np.zeros((N_beads, N_beads), dtype=np.float64)
     count = 0
 
@@ -523,7 +519,6 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
         try:
             V = get_coordinates_cif(file_list[0])[:N_beads]
             structure_sum += V
-            structure_sq_sum += V**2
             count += 1
 
             if method == 'mean_heatmap':
@@ -536,30 +531,19 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
 
     if count == 0:
         print("No valid structures loaded.")
-        return None, None
+        return None
 
-    # Finalize structures
     mean_V = structure_sum / count
-    std_V = np.sqrt(structure_sq_sum / count - mean_V**2)
-
     np.save(path + f'/metadata/structural_metrics/mean_structure_{N1}_{N2}.npy', mean_V)
-    np.save(path + f'/metadata/structural_metrics/std_structure_{N1}_{N2}.npy', std_V)
 
-    # Compute inverse heatmaps
     if method == 'mean_structure':
         D_mean = distance.cdist(mean_V, mean_V, 'euclidean')
         mean_heat = 1.0 / (D_mean + epsilon)
-    else:  # 'mean_heatmap'
+    else:
         mean_heat = heatmap_sum / count
 
-    D_std = distance.cdist(std_V, std_V, 'euclidean')
-    std_heat = 1.0 / (D_std + epsilon)
-
-    # Save heatmaps
     np.save(path + f'/metadata/structural_metrics/mean_inv_heatmap_{N1}_{N2}.npy', mean_heat)
-    np.save(path + f'/metadata/structural_metrics/std_inv_heatmap_{N1}_{N2}.npy', std_heat)
 
-    # Plot
     try:
         figure(figsize=(20, 20))
         plt.imshow(mean_heat, cmap='viridis', aspect='auto')
@@ -568,15 +552,7 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
         plt.savefig(path + f'/plots/structural_metrics/mean_inv_heatmap_{N1}_{N2}.png', dpi=200)
         plt.savefig(path + f'/plots/structural_metrics/mean_inv_heatmap_{N1}_{N2}.svg', dpi=200)
         plt.close()
-
-        figure(figsize=(20, 20))
-        plt.imshow(std_heat, cmap='inferno', aspect='auto')
-        plt.title('STD Inverse Distance Heatmap')
-        plt.colorbar()
-        plt.savefig(path + f'/plots/structural_metrics/std_inv_heatmap_{N1}_{N2}.png', dpi=200)
-        plt.savefig(path + f'/plots/structural_metrics/std_inv_heatmap_{N1}_{N2}.svg', dpi=200)
-        plt.close()
     except Exception as e:
         print(f"Plotting failed: {e}")
 
-    return mean_heat, std_heat
+    return mean_heat
