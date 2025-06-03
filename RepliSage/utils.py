@@ -545,7 +545,7 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
     np.save(path + f'/metadata/structural_metrics/mean_inv_heatmap_{N1}_{N2}.npy', mean_heat)
 
     try:
-        figure(figsize=(15, 10))
+        figure(figsize=(10, 10))
         plt.imshow(mean_heat, cmap='coolwarm', aspect='auto', vmin=np.mean(mean_heat) - np.std(mean_heat), vmax=np.mean(mean_heat) + np.std(mean_heat))
         plt.title('Mean Inverse Distance Heatmap')
         plt.colorbar()
