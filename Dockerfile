@@ -32,4 +32,3 @@ COPY . /app
 
 # Default shell
 CMD ["/bin/bash"]
-
