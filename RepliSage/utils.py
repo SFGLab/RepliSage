@@ -469,7 +469,7 @@ def get_stats(ms,ns,N_beads):
     
     return f, f_std, F, FC
 
-def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1e-6):
+def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0):
     """
     Computes inverse distance heatmaps for an ensemble of 3D structures.
 
