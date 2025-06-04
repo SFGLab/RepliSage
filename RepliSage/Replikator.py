@@ -42,7 +42,7 @@ def sanitize_chr_dataframe(df):
     return df
 
 class Replikator:
-    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None,Tstd_factor=0.1,speed_factor=20,sc=True):
+    def __init__(self,rept_data_path:str,sim_L:int,sim_T:int,chrom:str,coords=None,Tstd_factor=0.1,speed_factor=20,sc=True, out_path=None):
         '''
         Initialization of the data preprocessing.
         ------------------------------------------
@@ -53,6 +53,7 @@ class Replikator:
         chrom: the chromosome of interest
         coords: the region of interest as list [start,end]. It should be a list.
         '''
+        self.out_path = out_path
         self.chrom, self.coords, self.is_region, self.sc = chrom, np.array(coords), np.all(coords!=None), sc
         chrom_nr = int(re.sub(r'\D', '', self.chrom))
         if sc:
@@ -104,13 +105,43 @@ class Replikator:
         self.avg_ft = aft
         self.std_ft = sft
         if self.is_region:
-            N = len(self.avg_fx)
-            self.avg_fx = self.avg_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
-            self.std_fx = self.std_fx[(self.coords[0]*N)//self.chrom_size:self.coords[1]*N//self.chrom_size]
+            starts = self.gen_windows[:, 0]  # vector of bin starts
+            bin_size = starts[1] - starts[0]  # assume regular spacing
+            first_bin_start = starts[0]
+            last_bin_end = self.gen_windows[-1, 1]
+
+            # compute mask
+            mask = (starts >= self.coords[0]) & (starts < self.coords[1])
+            self.avg_fx = self.avg_fx[mask]
+            self.std_fx = self.std_fx[mask]
+
+            # pad left if needed
+            if self.coords[0] < first_bin_start:
+                pad_bins = (first_bin_start - self.coords[0]) // bin_size
+                self.avg_fx = np.concatenate([np.zeros(pad_bins), self.avg_fx])
+                self.std_fx = np.concatenate([np.zeros(pad_bins), self.std_fx])
+
+            # optionally pad right (if region extends beyond last bin)
+            if self.coords[1] > last_bin_end:
+                pad_bins = (self.coords[1] - last_bin_end) // bin_size
+                self.avg_fx = np.concatenate([self.avg_fx, np.zeros(pad_bins)])
+                self.std_fx = np.concatenate([self.std_fx, np.zeros(pad_bins)])
         self.avg_fx = reshape_array(self.avg_fx, self.L)
         self.std_fx = reshape_array(self.std_fx, self.L)
         self.avg_ft = reshape_array(self.avg_ft, self.T)
         self.std_ft = reshape_array(self.std_ft, self.T)
+
+        # Plot avg_fx
+        if self.out_path is not None:
+            plt.figure(figsize=(10, 4))
+            plt.plot(self.avg_fx, lw=1.5)
+            plt.title(f"Replication signal {self.chrom}: {self.coords[0]}-{self.coords[1]}", fontsize=14)
+            plt.xlabel("Genomic bin", fontsize=12)
+            plt.ylabel("Normalized Replication Fraction", fontsize=12)
+            plt.grid(True, linestyle='--', alpha=0.5)
+            plt.tight_layout()
+            plt.savefig(self.out_path+f"/avg_fx_{self.chrom}_{self.coords[0]}_{self.coords[1]}.png", dpi=150)
+            plt.close()
 
     def compute_peaks(self,prominence=0.01):
         '''
@@ -164,18 +195,26 @@ class Replikator:
             p_i = get_p_vector(self.T, m, sig=self.sigma_t)
             self.initiation_rate[ori, :] = p_i
         
-        if viz:
-            plt.figure(figsize=(15, 8),dpi=200)
-            plt.imshow(self.initiation_rate.T,cmap='rainbow',aspect='auto',vmax=np.mean(self.initiation_rate)+np.std(self.initiation_rate))
-            plt.title('Initiation Rate Function',fontsize=24,pad=20)
-            plt.xlabel('Genomic Distance',fontsize=20)
-            plt.ylabel('Pseudo-Time',fontsize=20)
-            plt.xticks([])
-            plt.yticks([])
-            cbar = plt.colorbar()
-            cbar.set_ticks([])  # Removes the tick marks
-            cbar.ax.tick_params(size=0)  # Removes the tick lines
-            plt.show()
+        if viz or self.out_path is not None:
+            plt.figure(figsize=(15, 8), dpi=200)
+            vmax = np.mean(self.initiation_rate) + np.std(self.initiation_rate)
+            im = plt.imshow(self.initiation_rate.T, cmap='rainbow', aspect='auto', vmax=vmax)
+            
+            plt.title('Initiation Rate Function', fontsize=24, pad=20)
+            plt.xlabel('Genomic Distance', fontsize=20)
+            plt.ylabel('Pseudo-Time', fontsize=20)
+            
+            plt.xticks(fontsize=12)
+            plt.yticks(fontsize=12)
+
+            cbar = plt.colorbar(im)
+            cbar.set_label("Initiation Rate", fontsize=16, labelpad=10)
+            cbar.ax.tick_params(labelsize=12)
+
+            plt.gca().invert_yaxis()
+
+            plt.savefig(f"{self.out_path}/initiation_rate_function.png", dpi=200, bbox_inches='tight')
+            plt.close()
         print('Computation Done! <3\n')
 
     def prepare_data(self):
@@ -192,14 +231,14 @@ class Replikator:
         self.compute_slopes()
         self.compute_init_rate()
     
-    def run(self, scale=1, out_path=None):
+    def run(self, scale=1):
         '''
         This function calls replication simulation.
         '''
         self.prepare_data()
         repsim = ReplicationSimulator(self.L, self.T, scale*self.initiation_rate, self.speed_ratio, self.speed_avg)
         self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
-        repsim.visualize_simulation(out_path)
+        repsim.visualize_simulation(self.out_path)
         return self.sim_f, l_forks, r_forks
     
     def calculate_ising_parameters(self):

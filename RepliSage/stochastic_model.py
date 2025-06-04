@@ -36,9 +36,9 @@ class StochasticSimulation:
         # Import replication data
         self.run_replication = rept_path!=None
         if self.run_replication:
-            rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'))
+            rep = Replikator(rept_path,self.N_beads,1000,chrom,region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'), out_path=self.out_path+'/plots/replication_simulation')
             try:
-                rep_frac, _, _ = rep.run(scale=scale, out_path=self.out_path+'/plots/replication_simulation')
+                rep_frac, _, _ = rep.run(scale=scale)
             except Exception as e:
                 raise ValueError("\033[93mSomething went wrong with the replication simulation. "
                                  "Try to re-run it and see what happens. "
