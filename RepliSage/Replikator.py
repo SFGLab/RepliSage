@@ -115,11 +115,6 @@ class Replikator:
             self.avg_fx = self.avg_fx[mask]
             self.std_fx = self.std_fx[mask]
 
-            print("Region:", self.coords[0], "→", self.coords[1])
-            print("Masked bins:", len(self.avg_fx))
-            print("First bin start:", starts[0], "Last bin end:", ends[-1])
-            print("Actual genomic covered range by bins:", starts[mask].min(), "→", ends[mask].max())
-
             # pad left if needed
             if self.coords[0] < first_bin_start:
                 pad_bins = (first_bin_start - self.coords[0]) // bin_size
