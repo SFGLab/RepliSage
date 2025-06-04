@@ -114,7 +114,7 @@ class Replikator:
             mask = (starts >= self.coords[0]) & (starts < self.coords[1])
             self.avg_fx = self.avg_fx[mask]
             self.std_fx = self.std_fx[mask]
-
+            
             # pad left if needed
             if self.coords[0] < first_bin_start:
                 pad_bins = (first_bin_start - self.coords[0]) // bin_size
@@ -176,52 +176,25 @@ class Replikator:
         print('Computing slopes of replication curves...')
 
         avg_slopes, std_slopes = np.zeros(self.L), np.zeros(self.L)
-        all_speeds = []
-
         for i, extr in enumerate(extrema_indices_sorted[:-1]):
             start_idx = extrema_indices_sorted[i]
             end_idx = extrema_indices_sorted[i + 1]
             delta_fx = self.avg_fx[end_idx] - self.avg_fx[start_idx]
-            delta_x = end_idx - start_idx
-
+            delta_x = (end_idx - start_idx)
+            # Avoid division by zero or near-zero to prevent infinite slopes
             if np.isclose(delta_fx, 0):
                 segment_slope = 0.0
                 sigma_slope = 0.0
             else:
                 segment_slope = delta_x / delta_fx
                 sigma_slope = delta_x * np.sqrt(2 * (self.sigma_t / self.T) ** 2) / (delta_fx ** 2)
-
-            scaled_slope = np.abs(segment_slope) * self.speed_factor
-            avg_slopes[extr] = scaled_slope
-            std_slopes[extr] = sigma_slope * self.speed_factor
-
-            if scaled_slope > 0:
-                all_speeds.append(scaled_slope)
-
-        self.speed_avg = np.average(all_speeds)
-        self.speed_std = np.std(all_speeds)
+            avg_slopes[extr] = np.abs(segment_slope)
+            std_slopes[extr] = sigma_slope
+        self.speed_avg = self.speed_factor * np.average(avg_slopes)
+        self.speed_std = self.speed_factor * np.average(std_slopes)
         self.speed_ratio = self.speed_std / self.speed_avg if self.speed_avg != 0 else 0
+        
         print('Done!')
-
-        # Optional visualization
-        if self.out_path is not None:
-            import matplotlib.pyplot as plt
-            import os
-            os.makedirs(self.out_path, exist_ok=True)
-
-            plt.figure(figsize=(8, 5))
-            plt.hist(all_speeds, bins=30, color='steelblue', edgecolor='black', alpha=0.7)
-            plt.axvline(self.speed_avg, color='red', linestyle='--', label=f'Avg = {self.speed_avg:.2f}')
-            plt.axvline(self.speed_avg + self.speed_std, color='orange', linestyle=':', label=f'+1σ = {self.speed_avg + self.speed_std:.2f}')
-            plt.axvline(self.speed_avg - self.speed_std, color='orange', linestyle=':', label=f'-1σ = {self.speed_avg - self.speed_std:.2f}')
-            plt.xlabel('Fork speed (arbitrary units)', fontsize=12)
-            plt.ylabel('Count', fontsize=12)
-            plt.title('Distribution of Replication Fork Speeds', fontsize=14)
-            plt.legend(fontsize=10)
-            plt.grid(True, linestyle='--', alpha=0.5)
-            plt.tight_layout()
-            plt.savefig(os.path.join(self.out_path, "replication_speed_distribution.png"), dpi=200)
-            plt.close()
 
     def compute_init_rate(self,viz=False):
         '''
@@ -237,7 +210,7 @@ class Replikator:
             self.initiation_rate[ori, :] = p_i
         
         if viz or self.out_path is not None:
-            plt.figure(figsize=(18, 8), dpi=200)
+            plt.figure(figsize=(15, 8), dpi=200)
             vmax = np.mean(self.initiation_rate) + np.std(self.initiation_rate)
             im = plt.imshow(self.initiation_rate.T, cmap='rainbow', aspect='auto', vmax=vmax)
             
