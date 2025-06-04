@@ -109,17 +109,16 @@ def min_max_normalize(matrix, Min=0, Max=1):
 
 def reshape_array(input_array, new_dimension, interpolation_kind='cubic'):
     """
-    Reshape the input numpy array by computing averages across windows or interpolation.
+    Reshape the input numpy array to a new dimension via interpolation or averaged downsampling.
 
     Parameters:
-    input_array (numpy.ndarray): Input array of dimension M.
-    new_dimension (int): Desired new dimension N for the reshaped array.
-    interpolation_kind (str): Type of interpolation for upsampling (default: 'cubic').
+        input_array (np.ndarray): 1D array of shape (M,)
+        new_dimension (int): Target length (N)
+        interpolation_kind (str): Interpolation type for upsampling (default: 'cubic')
 
     Returns:
-    numpy.ndarray: Reshaped array of dimension N.
+        np.ndarray: Reshaped array of length N
     """
-    # Validate inputs
     if not isinstance(new_dimension, int) or new_dimension <= 0:
         raise ValueError("new_dimension must be a positive integer.")
     if len(input_array) == 0:
@@ -127,26 +126,26 @@ def reshape_array(input_array, new_dimension, interpolation_kind='cubic'):
 
     input_len = len(input_array)
 
-    # If the dimensions are the same, return the original array
     if new_dimension == input_len:
         return input_array
 
-    # Reshape using averages if downsampling
     if new_dimension < input_len:
-        window_size = input_len // new_dimension
+        # Downsampling: average over equal-width segments
+        edges = np.linspace(0, input_len, new_dimension + 1, endpoint=True).astype(int)
         reshaped_array = np.array([
-            np.mean(input_array[i * window_size : (i + 1) * window_size])
-            if i < new_dimension - 1 else np.mean(input_array[i * window_size:])
+            np.mean(input_array[edges[i]:edges[i+1]]) if edges[i] < edges[i+1]
+            else input_array[edges[i]]
             for i in range(new_dimension)
         ])
     else:
-        # Reshape using spline interpolation if upsampling
-        original_indices = np.linspace(0, input_len - 1, input_len)
-        new_indices = np.linspace(0, input_len - 1, new_dimension)
-        spline_interpolation = interp1d(original_indices, input_array, kind=interpolation_kind)
-        reshaped_array = spline_interpolation(new_indices)
+        # Upsampling: spline interpolation
+        x_old = np.linspace(0, 1, input_len)
+        x_new = np.linspace(0, 1, new_dimension)
+        interpolator = interp1d(x_old, input_array, kind=interpolation_kind)
+        reshaped_array = interpolator(x_new)
 
     return reshaped_array
+
 
 def remove_duplicate_ones(matrix):
     """

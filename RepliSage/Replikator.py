@@ -95,7 +95,7 @@ class Replikator:
     def compute_f(self):
         '''
         Compute the averages and standard deviations across the single cell replication matrix.
-        Here we compute both averages over cell circle time and over spartial dimensions.
+        Here we compute both averages over cell cycle time and over spartial dimensions.
         '''
         afx, sfx, aft, sft = np.average(self.mat,axis=0), np.std(self.mat,axis=0), np.average(self.mat,axis=1), np.std(self.mat,axis=1)
         min_avg, avg_std = np.min(afx[afx>0]), np.average(sfx)
@@ -105,7 +105,7 @@ class Replikator:
         self.avg_ft = aft
         self.std_ft = sft
         if self.is_region:
-            starts = self.gen_windows[:, 0]  # vector of bin starts
+            starts, ends = self.gen_windows[:, 0], self.gen_windows[:, 1]  # vector of bin starts and ends
             bin_size = starts[1] - starts[0]  # assume regular spacing
             first_bin_start = starts[0]
             last_bin_end = self.gen_windows[-1, 1]
@@ -114,6 +114,11 @@ class Replikator:
             mask = (starts >= self.coords[0]) & (starts < self.coords[1])
             self.avg_fx = self.avg_fx[mask]
             self.std_fx = self.std_fx[mask]
+
+            print("Region:", self.coords[0], "→", self.coords[1])
+            print("Masked bins:", len(self.avg_fx))
+            print("First bin start:", starts[0], "Last bin end:", ends[-1])
+            print("Actual genomic covered range by bins:", starts[mask].min(), "→", ends[mask].max())
 
             # pad left if needed
             if self.coords[0] < first_bin_start:
@@ -126,6 +131,9 @@ class Replikator:
                 pad_bins = (self.coords[1] - last_bin_end) // bin_size
                 self.avg_fx = np.concatenate([self.avg_fx, np.zeros(pad_bins)])
                 self.std_fx = np.concatenate([self.std_fx, np.zeros(pad_bins)])
+
+            
+
         self.avg_fx = reshape_array(self.avg_fx, self.L)
         self.std_fx = reshape_array(self.std_fx, self.L)
         self.avg_ft = reshape_array(self.avg_ft, self.T)
