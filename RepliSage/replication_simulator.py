@@ -162,26 +162,40 @@ class ReplicationSimulator:
 
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract
 
-    def visualize_simulation(self,path=None):
-        '''
-        Vizualize the results.
-        '''
-        plt.figure(figsize=(12.6, 6))
-        plt.imshow(self.f.T, cmap='bwr', aspect='auto', origin='lower')
-        plt.colorbar(label='Replication Fraction')
-        plt.title('DNA Replication Simulation')
-        plt.xlabel('DNA position')
-        plt.ylabel('Computational Time')
-        if path!=None:
-            plt.savefig(path+'/rep_simulation.png', dpi=200)
+    def visualize_simulation(self, path=None):
+        """
+        Visualize the DNA replication simulation results.
+        """
+        # 1. Heatmap of simulation matrix
+        plt.figure(figsize=(13, 6))
+        im = plt.imshow(self.f.T, cmap='bwr', aspect='auto', origin='lower')
+        cbar = plt.colorbar(im)
+        cbar.set_label('Replication Fraction', fontsize=14)
+        cbar.ax.tick_params(labelsize=12)
+
+        plt.title('DNA Replication Simulation', fontsize=16, pad=10)
+        plt.xlabel('DNA Position (Genomic bin)', fontsize=14)
+        plt.ylabel('Computational Time', fontsize=14)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.grid(False)
+        plt.tight_layout()
+        if path is not None:
+            plt.savefig(os.path.join(path, 'rep_simulation.png'), dpi=200)
         plt.close()
 
-        plt.figure(figsize=(8, 6))
-        plt.plot(self.rep_fract)
-        plt.xlabel('Time', fontsize=18)
-        plt.ylabel('Replication Fraction', fontsize=18)
-        if path!=None:
-            plt.savefig(path+'/rep_frac.png', dpi=200)
+        # 2. Replication fraction over time
+        plt.figure(figsize=(8, 5))
+        plt.plot(self.rep_fract, lw=2, color='black')
+        plt.xlabel('Time', fontsize=14)
+        plt.ylabel('Replication Fraction', fontsize=14)
+        plt.title('Global Replication Fraction Over Time', fontsize=15)
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.tight_layout()
+        if path is not None:
+            plt.savefig(os.path.join(path, 'rep_frac.png'), dpi=200)
         plt.close()
 
 def run_Ntrials(N_trials, L, T, initiation_rate, speed_ratio, speed_mean=3):
