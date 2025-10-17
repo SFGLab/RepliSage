@@ -357,7 +357,7 @@ class MD_MODEL:
         self.repli_force.addPerBondParameter('D')
         
         if i*self.step<self.t_rep:
-            for i in range(self.N_beads): 
+            for i in range(self.N_beads):
                 self.repli_force.addBond(i, i + self.N_beads, [0.0,5e4])
         elif i*self.step>=self.t_rep and i*self.step<self.t_rep+self.rep_duration:
             rep_dna = self.replicated_dna[:,i*self.step-self.t_rep]

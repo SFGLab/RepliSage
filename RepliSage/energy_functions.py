@@ -44,10 +44,6 @@ def Rep_Penalty(m, n, f):
         if (f[m] == 1 and f[n] == 1) and np.any(f[m:n] == 0):
             r += 1.0
 
-        # Penalize if one end is replicated and the other is not (already covered above)
-        if (f[m] == 1 and f[n] == 0) or (f[m] == 0 and f[n] == 1):
-            r += 1.0
-
         # Additional penalty: both ends unreplicated, but replicated region(s) in between
         if (f[m] == 0 and f[n] == 0) and n > m + 1:
             replicated_in_between = np.sum(f[m+1:n] == 1)
