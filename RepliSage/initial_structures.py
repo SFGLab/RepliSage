@@ -87,7 +87,6 @@ def sphere_surface_structure(N_beads, radius=1):
     V = np.column_stack((x, y, z))
     return V
 
-
 def generate_hilbert_curve(n_points,p=8,n=3,displacement_sigma=0.1,scale=6,viz=False,add_noise=False):
     hilbert_curve = HilbertCurve(p, n)
 
