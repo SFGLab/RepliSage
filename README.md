@@ -319,7 +319,7 @@ You can define these parameters based on the table of simulation parameters.
 | INITIAL_STRUCTURE_TYPE  | str       | rw              | Type of initial structure (e.g., rw for random walk).                      |
 | SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM).                                |
 | DCD_REPORTER           | bool      | False           | Enables saving of molecular dynamics trajectories in DCD format.           |
-| INTGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
+| INTEGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
 | INTEGRATOR_STEP         | Quantity  | 10 femtosecond  | Time step for the molecular dynamics integrator.                           |
 | FORCEFIELD_PATH         | str       | `default_xml_path`| Path to the force field XML file.                                          |
 | EV_P                    | float     | 0.01            | Excluded volume parameter for molecular dynamics.                          |
