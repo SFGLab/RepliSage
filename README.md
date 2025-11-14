@@ -1,11 +1,19 @@
 # RepliSage
 A simulation software for modeling the motion of cohesin during the replication process. This tool explores the interaction between cohesin, or more generally loop extrusion factors (LEFs), with replication forks and chromatin compartmentalization. It employs a sophisticated force-field that integrates MCMC Metropolis and molecular dynamics methodologies. The output is a 3D chromatin trajectory, providing a dynamic visualization of DNA replication and the formation of two identical copies.
 
-![image](https://github.com/user-attachments/assets/703859c1-3e0d-4609-891c-dbce55576331)
-
+<img width="1020" height="676" alt="RepliSage" src="https://github.com/user-attachments/assets/296e8b57-b1a5-4387-86cf-2d0ed515d738" />
 
 ## Simulation pipeline
 RepliSage is composed by three distinct parts:
+
+- **A replication simulation:** it models solely the propagation of replication forks.
+- **A stochastic simulation:** which models the interplay of loop extrusion, replication forks and epiegenetic mark spreading.
+- **A molecular dynamics simulation:** which applies a potential and generates 3D structures.
+
+The pipeline looks like that:
+
+<img width="4862" height="1925" alt="graphical_abstract" src="https://github.com/user-attachments/assets/a6ce88fc-7c99-44ce-8a2b-33e4d048afc4" />
+
 
 ### Replication simulation (Replikator.py)
 
@@ -40,10 +48,6 @@ Therefore, the stochastic simulation integrates the sum of these energies $E = E
 This parts takes as input the states produced by the stochastic simulation and outputs 3D structures by using a potential in OpenMM. The molecular modeling approach assumes two molecular chains, each consisting of $N_{\text{beads}}$ monomers, where $N_{\text{beads}}$ reflects the granularity of the stochastic simulation. The total potential governing the system is expressed as: $$U = U_{\text{bk}} + U_{\text{le}}(t) + U_{\text{rep}}(t) + U_{\text{block}}(t)$$, where each term corresponds to a specific contribution. The backbone potential ($U_{\text{bk}}$) includes strong covalent bonds between consecutive beads, angular forces, and excluded volume effects to maintain chain integrity. The loop-formation potential ($U_{\text{le}}$) is a time-dependent term introducing harmonic bonds to model loop formation. These bonds are weaker than the backbone interactions and act between dynamically changing pairs of beads, $m_i(t)$ and $n_i(t)$. The last term models compartmentalization with block-copolymer potential.
 
 For more details of the implementation, we suggest to our users to read the method paper of RepliSage.
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/a3f5dc42-df41-4ab0-a4d7-4e0ae9b306e3" alt="schema">
-</p>
 
 
 ## Requirements
@@ -404,18 +408,6 @@ This plot shows us a very clear biophysical behavior:
 - After replication, in G2/M phase, condensins come into the game and they extrude loops faster. This means during this phase we excpect a different average loop length in equillibrium.
 
 This is a very good plot, because we can see if there is equilibrium. In the previous example, we can see that the simulation reaches the equilibrium in G2/M phase. However, during G1 phase, maybe we should make more Monte Carlo steps so as to have more ensembles in equilibrium. S phase should always be out of equillibrium, but it is important to have enough steps for this phase as well, because replication forks are considered to be much slower than LEFs. 
-
-#### State Diagram
-Here we have a different type of diagram, which combime node states and link states of ou co-evolutionary network. In this plot, we draw the percentage of links that connect the same node states (you can think of them as epigenetic states or compartments), and the percentage of links that connect different node states.
-
-![image](https://github.com/user-attachments/assets/74ed5c8e-d052-4ecd-aed4-8600fb3e04a1)
-
-What is this diagram showing us
-
-- There is a small increase in links with the same node state during S phase. This is good because, Peano et al. observed similar behavior experimentally.
-- In G2/M phase we have sudden decrease of the links that connect the same node state. This can be because during mitosis, condensins extrude long loops and loop extrusion wins over compartmentalization. In general, this result might be different depending of the parameters of `N_lef2` (number of condensins in G2/M phase) or their folding coefficient.
-
-From this plot we can see that there is equillibrium in node states in each phase (also important).
 
 #### Structural metrics
 Previous two metrics were connected with the states of our graph, but they did not touch at all a very important aspect of modelling: the 3D structure. This is the reason why RepliSage outputs a set of sructural metrics as well. For example,
