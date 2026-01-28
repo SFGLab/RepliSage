@@ -80,7 +80,7 @@ class Replikator:
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
 
-    def preprocess_bigwig(self, bin_size=1000, sigma=100):
+    def preprocess_bigwig(self, bin_size=1000, sigma=10, viz=False):
         """
         Load a BigWig signal, bin it, smooth it.
 
@@ -93,6 +93,8 @@ class Replikator:
 
         sigma : float, default=100
             Standard deviation of the Gaussian kernel, expressed in number of bins.
+        viz : bool, default=False
+            If True, plot the smoothed signal in a professional, wide-format figure.
         """
         # Extract base-pair resolution values
         if self.is_region:
@@ -119,6 +121,16 @@ class Replikator:
         # Reshape it appropriately
         self.avg_fx = reshape_array(signal_smooth, self.L)
         print(f"Succefully preprocessed BigWig data for {self.chrom}.")
+
+        if viz:
+            plt.figure(figsize=(12, 3))  # wide, paper-style
+            plt.plot(self.avg_fx, color="#1f77b4", linewidth=1.5)
+            plt.xlabel("Bin index", fontsize=10)
+            plt.ylabel("Signal intensity", fontsize=10)
+            plt.title(f"{self.chrom} smoothed signal (bin={bin_size}, sigma={sigma})", fontsize=12)
+            plt.grid(True, linestyle="--", alpha=0.3)
+            plt.tight_layout()
+            plt.show()
 
     def process_txt(self):
         self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
@@ -202,7 +214,6 @@ class Replikator:
             plt.tight_layout()
             plt.savefig(f"{self.out_path}/avg_fx_{self.chrom}_{self.coords[0]}_{self.coords[1]}.png", dpi=150)
             plt.close()
-        print('Computed average replication timing curves.')
 
     def compute_peaks(self,prominence=0.01):
         '''

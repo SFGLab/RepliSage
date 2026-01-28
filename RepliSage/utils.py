@@ -3,7 +3,6 @@
 #########################################################################
 
 import matplotlib
-matplotlib.use('Agg')  # Use a non-interactive backend for thread safety
 from matplotlib.pyplot import figure
 import matplotlib.pyplot as plt
 import os

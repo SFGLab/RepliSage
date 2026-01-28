@@ -35,8 +35,9 @@ class StochasticSimulation:
         
         # Import replication data
         self.run_replication = rept_path!=None
+        is_sc = not rept_path.lower().endswith((".txt", ".bw", ".bigwig"))
         if self.run_replication:
-            rep = Replikator(rept_path,self.N_beads,1000,self.chrom,self.region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=not rept_path.endswith('txt'), out_path=self.out_path+'/plots/replication_simulation')
+            rep = Replikator(rept_path,self.N_beads,1000,self.chrom,self.region,Tstd_factor=Tstd_factor,speed_factor=speed_scale,sc=is_sc, out_path=self.out_path+'/plots/replication_simulation')
             try:
                 rep_frac, _, _ = rep.run(scale=scale)
             except Exception as e:

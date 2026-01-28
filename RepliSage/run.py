@@ -103,8 +103,8 @@ def main():
     bedpe_file = args.BEDPE_PATH
     rept_path = args.SC_REPT_PATH if args.REPT_PATH is None else args.REPT_PATH
     if args.REPT_PATH is not None:
-        if not args.REPT_PATH.endswith('.txt'):
-            raise ValueError("\033[91mREPT_PATH must be a .txt file if provided.\033[0m")
+        if not args.REPT_PATH.endswith('.txt') and not args.REPT_PATH.endswith('.bw') and not args.REPT_PATH.endswith('.bigwig') and not args.REPT_PATH.endswith('.bigWig'):
+            raise ValueError("\033[91mREPT_PATH must be a .txt, .bw, .bigwig, or .bigWig file if provided.\033[0m")
         print(f"\033[92mUsing provided REPT_PATH: {rept_path} instead of the built-in single-cell one.\033[0m")
     
     out_path = args.OUT_PATH
