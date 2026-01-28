@@ -80,7 +80,7 @@ class Replikator:
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
 
-    def preprocess_bigwig(self, bin_size=1000, sigma=10, viz=False):
+    def preprocess_bigwig(self, bin_size=1000, sigma=0.0, viz=False):
         """
         Load a BigWig signal, bin it, smooth it.
 
@@ -116,12 +116,13 @@ class Replikator:
         )
 
         # Smooth
-        signal_smooth = gaussian_filter1d(signal_binned, sigma=sigma)
+        signal_smooth = gaussian_filter1d(signal_binned, sigma=sigma) if sigma > 0 else signal_binned
 
         # Reshape it appropriately
         self.avg_fx = reshape_array(signal_smooth, self.L)
+        self.avg_fx = min_max_normalize(self.avg_fx)
         print(f"Succefully preprocessed BigWig data for {self.chrom}.")
-
+        
         if viz:
             plt.figure(figsize=(12, 3))  # wide, paper-style
             plt.plot(self.avg_fx, color="#1f77b4", linewidth=1.5)
@@ -130,7 +131,7 @@ class Replikator:
             plt.title(f"{self.chrom} smoothed signal (bin={bin_size}, sigma={sigma})", fontsize=12)
             plt.grid(True, linestyle="--", alpha=0.3)
             plt.tight_layout()
-            plt.show()
+            plt.close()
 
     def process_txt(self):
         self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
@@ -141,6 +142,7 @@ class Replikator:
             start, end = self.coords[0], self.coords[1]
             self.avg_fx = self.avg_fx[(self.gen_windows >= start) & (self.gen_windows <= end)]
         self.avg_fx = reshape_array(self.avg_fx, self.L)
+        self.avg_fx = min_max_normalize(self.avg_fx)
         print(f"Succefully preprocessed .txt data for {self.chrom}.")
     
     def process_matrix(self):
@@ -255,7 +257,7 @@ class Replikator:
         
         print('Done!')
 
-    def compute_init_rate(self,viz=False):
+    def compute_init_rate(self,viz=True):
         '''
         Estimation of the initiation rate function I(x,t).
         '''
@@ -269,7 +271,7 @@ class Replikator:
             self.initiation_rate[ori, :] = p_i
         
         if viz or self.out_path is not None:
-            plt.figure(figsize=(15, 8), dpi=200)
+            plt.figure(figsize=(15, 8), dpi=100)
             vmax = np.mean(self.initiation_rate) + np.std(self.initiation_rate)
             im = plt.imshow(self.initiation_rate.T, cmap='rainbow', aspect='auto', vmax=vmax)
             
@@ -286,8 +288,8 @@ class Replikator:
 
             plt.gca().invert_yaxis()
 
-            plt.savefig(f"{self.out_path}/initiation_rate_function.png", dpi=200, bbox_inches='tight')
-            plt.close()
+            plt.savefig(f"{self.out_path}/initiation_rate_function.png", dpi=100, bbox_inches='tight')
+            plt.show()
         print('Computation Done! <3\n')
 
     def prepare_data(self):

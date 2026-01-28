@@ -26,7 +26,7 @@ def simulator(initiation_rate, speed_mean, speed_std):
     while not dna_is_replicated:
         # propagate the forks from the previous column:
         rep_dna_col, l_forks, r_forks, l_forks_mat_col, r_forks_mat_col = propagate_forks(t, replicated_dna[:,-1], l_forks, r_forks)
-
+        
         # fire new origins and forks:
         initiate_forks = np.random.rand(L) < initiation_rate[:, t] 
         init_locs = np.nonzero(initiate_forks)[0]
