@@ -1,3 +1,5 @@
+import pyBigWig
+from scipy.ndimage import gaussian_filter1d
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -54,6 +56,7 @@ class Replikator:
         coords: the region of interest as list [start,end]. It should be a list.
         '''
         self.out_path = out_path
+        self.rept_data_path = rept_data_path
         self.chrom, self.coords, self.is_region, self.sc = chrom, np.array(coords), np.all(coords!=None), sc
         chrom_nr = int(re.sub(r'\D', '', self.chrom))
         if sc:
@@ -63,18 +66,61 @@ class Replikator:
             single_cell_cols = [col for col in self.data.columns if col.startswith('SC_')]
             self.mat = self.data[self.data['chromosome'] == chrom_nr][single_cell_cols].T.values
         else:
-            self.data = pd.read_csv(rept_data_path, sep='\t', header=None)
-            self.data = self.data.fillna(0)
-            self.data = sanitize_chr_dataframe(self.data)
-            if not self.data[0].str.startswith('chr').all():
-                self.data[0] = 'chr' + self.data[0].astype(str)
-
+            if rept_data_path.lower().endswith((".txt",)):
+                self.data = pd.read_csv(rept_data_path, sep='\t', header=None)
+                self.data = self.data.fillna(0)
+                self.data = sanitize_chr_dataframe(self.data)
+                if not self.data[0].str.startswith('chr').all():
+                    self.data[0] = 'chr' + self.data[0].astype(str)
+            elif rept_data_path.lower().endswith((".bw", ".bigwig", ".bigWig")):
+                self.data = pyBigWig.open(rept_data_path)
+        
         print('\nStep #0: Preprocessing replication timing data...')
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
 
-    def process_df(self):
+    def preprocess_bigwig(self, bin_size=1000, sigma=100):
+        """
+        Load a BigWig signal, bin it, smooth it.
+
+        Parameters
+        ----------
+        bin_size : int, default=1000
+            Size of genomic bins in base pairs.
+            The raw BigWig signal is averaged within consecutive bins of this size,
+            reducing base-pair resolution to a coarse-grained signal.
+
+        sigma : float, default=100
+            Standard deviation of the Gaussian kernel, expressed in number of bins.
+        """
+        # Extract base-pair resolution values
+        if self.is_region:
+            values = self.data.values(self.chrom, self.coords[0], self.coords[1])
+        else:
+            values = self.data.values(self.chrom)
+        self.data.close()
+
+        # Convert to NumPy and clean NaNs
+        signal = np.asarray(values, dtype=float)
+        signal = np.nan_to_num(signal)
+
+        # Bin the signal (mean per bin)
+        n_bins = len(signal) // bin_size
+        signal_binned = (
+            signal[:n_bins * bin_size]
+            .reshape(n_bins, bin_size)
+            .mean(axis=1)
+        )
+
+        # Smooth
+        signal_smooth = gaussian_filter1d(signal_binned, sigma=sigma)
+
+        # Reshape it appropriately
+        self.avg_fx = reshape_array(signal_smooth, self.L)
+        print(f"Succefully preprocessed BigWig data for {self.chrom}.")
+
+    def process_txt(self):
         self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
         self.gen_windows = self.data[1].values
         self.avg_fx = self.data[2].values
@@ -83,6 +129,7 @@ class Replikator:
             start, end = self.coords[0], self.coords[1]
             self.avg_fx = self.avg_fx[(self.gen_windows >= start) & (self.gen_windows <= end)]
         self.avg_fx = reshape_array(self.avg_fx, self.L)
+        print(f"Succefully preprocessed .txt data for {self.chrom}.")
     
     def process_matrix(self):
         '''
@@ -155,6 +202,7 @@ class Replikator:
             plt.tight_layout()
             plt.savefig(f"{self.out_path}/avg_fx_{self.chrom}_{self.coords[0]}_{self.coords[1]}.png", dpi=150)
             plt.close()
+        print('Computed average replication timing curves.')
 
     def compute_peaks(self,prominence=0.01):
         '''
@@ -239,8 +287,12 @@ class Replikator:
         if self.sc:
             self.process_matrix()
             self.compute_f()
-        else:
+        elif self.rept_data_path.lower().endswith((".txt",)):
             self.process_df()
+        elif self.rept_data_path.lower().endswith((".bw", ".bigwig", ".bigWig")):
+            self.preprocess_bigwig()
+        else:
+            raise ValueError("Unsupported file format. Please provide a .txt or .bigwig file.")
         self.compute_peaks()
         self.compute_slopes()
         self.compute_init_rate()

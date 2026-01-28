@@ -95,17 +95,32 @@ def expand_columns(array, new_columns, repeat=True):
     
     return expanded_array
 
-def min_max_normalize(matrix, Min=0, Max=1):
-    # Calculate the minimum and maximum values of the matrix
-    matrix = np.nan_to_num(matrix)
-    min_val = np.min(matrix)
-    max_val = np.max(matrix)
+def min_max_normalize(x, new_min=0.0, new_max=1.0):
+    """
+    Min-max normalize a 1D array to [new_min, new_max], ignoring NaNs.
+    Returns NaN where input is NaN.
+    """
+    x = np.asarray(x, dtype=float)
+    x_norm = np.full_like(x, np.nan)  # output placeholder
 
-    # Normalize the matrix using the min-max formula
-    normalized_matrix = Min + (Max - Min) * ((matrix - min_val) / (max_val - min_val))
+    finite_mask = np.isfinite(x)
+    if not np.any(finite_mask):
+        return x_norm  # all NaNs
 
-    return normalized_matrix
+    x_finite = x[finite_mask]
+    xmin, xmax = x_finite.min(), x_finite.max()
 
+    # Handle constant array
+    if np.isclose(xmax, xmin):
+        x_norm[finite_mask] = 0.5 * (new_min + new_max)
+    else:
+        # Linear scaling
+        x_norm[finite_mask] = new_min + (x_finite - xmin) * (new_max - new_min) / (xmax - xmin)
+
+    # Clip for safety
+    x_norm[finite_mask] = np.clip(x_norm[finite_mask], new_min, new_max)
+
+    return x_norm
 
 def reshape_array(input_array, new_dimension, interpolation_kind='cubic'):
     """

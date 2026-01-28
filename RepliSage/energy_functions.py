@@ -239,6 +239,7 @@ def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
     
     # Handle replication forks only if f is provided
+    ## This is a condition that assists pushing of replisomes
     if f is not None:
         if f[m_new, t] != f[m_old, max(t - 1, 0)] and n_old>m_old:
             m_new = m_old+1
