@@ -11,6 +11,7 @@ RepliSage is composed by three distinct parts:
 - **A molecular dynamics simulation:** which applies a potential and generates 3D structures.
 
 The pipeline looks like the following,
+
 ![graphical_abstract](https://github.com/user-attachments/assets/a6ce88fc-7c99-44ce-8a2b-33e4d048afc4)
 
 
