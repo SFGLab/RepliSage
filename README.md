@@ -143,7 +143,7 @@ thus it is not required to run any separate compartment caller.
 
 Alternativelly, the user can provide classical averaged replication timing curves in `REPT_PATH`. The truth is that the single-cell experiment does not add any significant information, and thus the user is free to choose the format they prefer.
 
-The averaged replication timing data should be in `txt` format  and look like this,
+The averaged replication timing data should be in `.txt` format  and look like this,
 
 ```txt
 Chr 	 Coordinate 	 Replication Timing 
@@ -164,10 +164,10 @@ Chr 	 Coordinate 	 Replication Timing
 1	115568	0.4698
 ```
 
-#### Loop interactions
-The main assumption of this work is that the process of replication provides information about compartmentalization and epigenetic mark spreading,
-since replication timing is highly correlated with compartmentalization, and compartmentalization itself emerges as a macrostate of many interacting epigenetic domains following block-copolymer physics.
+Alternatively, `REPT_PATH` accepts `.BigWig` format. In this case it assumes Repli-Seq data, and applies logarithmic rescaling so as to fix the scewness of Repli-Seq data. This is probably the most common file format for replication timing data.
 
+#### Loop interactions
+The main assumption of this work is that the process of replication provides information about compartmentalization and epigenetic mark spreading, since replication timing is highly correlated with compartmentalization, and compartmentalization itself emerges as a macrostate of many interacting epigenetic domains following block-copolymer physics.
 
 However, it is important that the user would specify a `.bedpe` file with loops. Therefore, in this case RepliSage follows a similar approach like LoopSage and the `.bedpe` file must be in the following format,
 
@@ -279,7 +279,7 @@ You can define these parameters based on the table of simulation parameters.
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | BEDPE_PATH              | str       | None            | Path to the BEDPE file containing CTCF loop data.                          |
 | SC_REPT_PATH            | str       | `default_rept_path` | Path to the single cell replication timing data file.                      |
-| REPT_PATH               | str       | None            | Path to the replication timing data file. If specified, it does not take `SC_REPT_PATH` into account.  |
+| REPT_PATH               | str       | None            | Path to the replication timing data file. If specified, it does not take `SC_REPT_PATH` into account. It accepts `.txt` or `.BigWig` formats. In case of `.BigWig` it assumes Repli-Seq and applies logarithmic scaling. |
 | REGION_START            | int       | None            | Start position of the genomic region to simulate.                          |
 | REGION_END              | int       | None            | End position of the genomic region to simulate.                            |
 | CHROM                   | str       | None            | Chromosome identifier for the simulation.                                  |

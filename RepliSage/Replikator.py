@@ -80,7 +80,7 @@ class Replikator:
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
 
-    def preprocess_bigwig(self, bin_size=1000, sigma=100.0, viz=False):
+    def preprocess_bigwig(self, bin_size=1000, sigma=200.0, log_norm=True, viz=False):
         """
         Load a BigWig signal, bin it, log-transform it, smooth it.
 
@@ -115,8 +115,8 @@ class Replikator:
             .mean(axis=1)
         )
         # Log-transform
-        log_signal = np.log(signal_binned+1)
-
+        log_signal = np.log(signal_binned+1) if log_norm else signal_binned
+        
         # Smooth
         signal_smooth = gaussian_filter1d(log_signal, sigma=sigma) if sigma > 0 else log_signal
 
