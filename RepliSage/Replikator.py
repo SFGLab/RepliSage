@@ -80,9 +80,9 @@ class Replikator:
         self.sigma_t = self.T*Tstd_factor
         self.speed_factor = speed_factor
 
-    def preprocess_bigwig(self, bin_size=1000, sigma=0.0, viz=False):
+    def preprocess_bigwig(self, bin_size=1000, sigma=100.0, viz=False):
         """
-        Load a BigWig signal, bin it, smooth it.
+        Load a BigWig signal, bin it, log-transform it, smooth it.
 
         Parameters
         ----------
@@ -114,9 +114,11 @@ class Replikator:
             .reshape(n_bins, bin_size)
             .mean(axis=1)
         )
+        # Log-transform
+        log_signal = np.log(signal_binned+1)
 
         # Smooth
-        signal_smooth = gaussian_filter1d(signal_binned, sigma=sigma) if sigma > 0 else signal_binned
+        signal_smooth = gaussian_filter1d(log_signal, sigma=sigma) if sigma > 0 else log_signal
 
         # Reshape it appropriately
         self.avg_fx = reshape_array(signal_smooth, self.L)
@@ -257,7 +259,7 @@ class Replikator:
         
         print('Done!')
 
-    def compute_init_rate(self,viz=True):
+    def compute_init_rate(self,viz=False):
         '''
         Estimation of the initiation rate function I(x,t).
         '''
@@ -289,7 +291,7 @@ class Replikator:
             plt.gca().invert_yaxis()
 
             plt.savefig(f"{self.out_path}/initiation_rate_function.png", dpi=100, bbox_inches='tight')
-            plt.show()
+            plt.close()
         print('Computation Done! <3\n')
 
     def prepare_data(self):
