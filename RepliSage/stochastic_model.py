@@ -73,7 +73,7 @@ class StochasticSimulation:
         print('This may take some time...')
         start = time.time()
         self.N_steps, self.MC_step, self.burnin, self.T = N_steps, MC_step, burnin, T
-        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags, self.acceptance_rate = run_energy_minimization(
+        self.Ms, self.Ns, self.Es, self.Es_potts, self.Fs, self.Bs, self.spin_traj, self.mags, self.acceptance_rate, self.N_viols, self.S_viols = run_energy_minimization(
             N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, T=T, t_rep=self.t_rep, rep_duration=self.rep_duration, p_rew=p_rew,
             N_lef=self.N_lef, N_lef2=self.N_lef2, N_beads=self.N_beads,
             L=self.L, R=self.R, k_norm=k_norm, fold_norm=fold_norm, fold_norm2=fold_norm2,
@@ -101,15 +101,17 @@ class StochasticSimulation:
         g1_start = self.burnin // self.MC_step
         s_start = self.t_rep // self.MC_step
         s_end = (self.t_rep + self.rep_duration) // self.MC_step
-        print(f"\033[95mEnergy in G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
-        print(f"\033[95mEnergy in S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
-        print(f"\033[95mEnergy in G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
-        print(f"\033[95mPotts energy in G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
-        print(f"\033[95mPotts energy in S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
-        print(f"\033[95mPotts energy in G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in G1 phase: {(self.Ns[:,g1_start:s_start]-self.Ms[:,g1_start:s_start]).mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in S phase: {(self.Ns[:,s_start:s_end]-self.Ms[:,s_start:s_end]).mean():.2f}\033[0m")
-        print(f"\033[95mMean loop length in G2 phase: {(self.Ns[:,s_end:]-self.Ms[:,s_end:]).mean():.2f}\033[0m")
+        print(f"\033[95mEnergy during G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[95mEnergy during S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[95mAverage Number of LEF-replisome violations during S phase: {self.N_viols[s_start:s_end].mean():.3f}\033[0m")
+        print(f"\033[95mAverage Strength of LEF-replisome violations during S phase: {self.S_viols[s_start:s_end].mean():.3f}\033[0m")
+        print(f"\033[95mEnergy during G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy during G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy during S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
+        print(f"\033[95mPotts energy during G2 phase: {self.Es_potts[s_end:].mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length during G1 phase: {(self.Ns[:,g1_start:s_start]-self.Ms[:,g1_start:s_start]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length during S phase: {(self.Ns[:,s_start:s_end]-self.Ms[:,s_start:s_end]).mean():.2f}\033[0m")
+        print(f"\033[95mMean loop length during G2 phase: {(self.Ns[:,s_end:]-self.Ms[:,s_end:]).mean():.2f}\033[0m")
         
         if save_MDT:
             np.save(f'{self.out_path}/metadata/MCMC_output/Ms.npy', self.Ms)
@@ -117,10 +119,13 @@ class StochasticSimulation:
             np.save(f'{self.out_path}/metadata/energy_factors/Es.npy', self.Es)
             np.save(f'{self.out_path}/metadata/energy_factors/Fs.npy', self.Fs)
             np.save(f'{self.out_path}/metadata/energy_factors/Bs.npy', self.Bs)
+            np.save(f'{self.out_path}/metadata/MCMC_output/N_viols.npy', self.N_viols[s_start:s_end])
+            np.save(f'{self.out_path}/metadata/MCMC_output/S_viols.npy', self.S_viols[s_start:s_end])
             np.save(f'{self.out_path}/metadata/MCMC_output/loop_lengths.npy', self.Ns-self.Ms)
             np.save(f'{self.out_path}/metadata/energy_factors/Es_potts.npy', self.Es_potts)
             np.save(f'{self.out_path}/metadata/MCMC_output/mags.npy', self.mags)
             np.save(f'{self.out_path}/metadata/MCMC_output/spins.npy', self.spin_traj)
+            np.save(f'{self.out_path}/metadata/MCMC_output/N_viols.npy', self.spin_traj)
     
     def show_plots(self):
         '''

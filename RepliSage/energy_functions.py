@@ -30,10 +30,45 @@ def Kappa(mi, ni, mj, nj):
     return k
 
 @njit
+def violation_check(m, n, f):
+    # Return (violation_flag, violation_strength)
+
+    if m < 0 or n < 0:
+        return 0.0, 0.0
+
+    # Condition 1: cohesin ends in different replication states
+    cond1 = f[m] != f[n]
+
+    # Condition 2: both replicated but unreplicated bead inside
+    cond2 = (f[m] == 1 and f[n] == 1 and np.any(f[m:n] == 0))
+
+    if cond1 or cond2:
+        replicated = np.sum(f[m:n])
+        total = n - m
+        strength = min(replicated, total - replicated)
+        return 1.0, strength
+
+    return 0.0, 0.0
+
+@njit
+def compute_violations(f_rep, ms, ns, t):
+    N_viols = 0.0
+    viol_strength = 0.0
+
+    f = f_rep[:, t]  # avoid slicing repeatedly inside loop
+
+    for i in range(len(ms)):
+        v, s = violation_check(ms[i], ns[i], f)
+        N_viols += v
+        viol_strength += s
+
+    return N_viols, viol_strength/(N_viols+1)
+
+@njit
 def Rep_Penalty(m, n, f):
     # Computes penalty for cohesin crossing replication fork boundaries
     r = 0.0
-
+    
     # Only consider valid indices
     if m >= 0 and n >= 0:
         # Penalize if cohesin crosses a replication fork boundary
@@ -321,7 +356,8 @@ def run_energy_minimization(
     mags = np.zeros(N_steps // MC_step, dtype=np.float64)
     Fs = np.zeros(N_steps // MC_step, dtype=np.float64)
     Bs = np.zeros(N_steps // MC_step, dtype=np.float64)
-    Rs = np.zeros(N_steps // MC_step, dtype=np.float64)
+    N_viols = np.zeros(N_steps // MC_step, dtype=np.float64)
+    S_viols = np.zeros(N_steps // MC_step, dtype=np.float64)
     Ms = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
     Ns = np.zeros((N_lef + N_lef2, N_steps // MC_step), dtype=np.int64)
     Ms[:, 0], Ns[:, 0] = ms, ns
@@ -415,7 +451,9 @@ def run_energy_minimization(
             Fs[idx] = E_fold(ms, ns, fold_norm)
             Bs[idx] = E_bind(L, R, ms, ns, bind_norm)
             if rep_norm != 0.0 and f_rep is not None:
-                Rs[idx] = E_rep(f_rep, ms, ns, rt, rep_norm)
+                n, s = compute_violations(f_rep, ms, ns, rt)
+                N_viols[idx] = n
+                S_viols[idx] = s
 
     acceptance_rate = n_accepted / (N_steps * N_sweep)
-    return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags, acceptance_rate
+    return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags, acceptance_rate, N_viols, S_viols
