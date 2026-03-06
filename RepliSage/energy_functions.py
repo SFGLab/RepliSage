@@ -45,7 +45,7 @@ def violation_check(m, n, f):
     if cond1 or cond2:
         replicated = np.sum(f[m:n])
         total = n - m
-        strength = min(replicated, total - replicated)
+        strength = min(replicated, total - replicated) + 1
         return 1.0, strength
 
     return 0.0, 0.0
@@ -377,22 +377,19 @@ def run_energy_minimization(
             last_percent = percent
 
         # Determine current replication time index (rt)
-        if rep_norm == 0.0 or f_rep is None:
+        if i < t_rep:
             rt = 0
+        elif i >= t_rep and i < t_rep + rep_duration:
+            rt = int(i - t_rep)
         else:
-            if i < t_rep:
-                rt = 0
-            elif i >= t_rep and i < t_rep + rep_duration:
-                rt = int(i - t_rep)
-            else:
-                rt = int(rep_duration) - 1
-            # After replication, allow all LEFs to move
-            if rt == (int(rep_duration) - 1):
-                lef_idx_choices = np.arange(N_lef + N_lef2, dtype=np.int64)
-            # Update time-dependent field ht during replication
-            if rt > 0 and rt < int(rep_duration):
-                mag_field = (1 - 2 * rt * inv_rep_duration)
-                ht += mask * mag_field * f_rep[:, rt]
+            rt = int(rep_duration) - 1
+        # After replication, allow all LEFs to move
+        if rt == (int(rep_duration) - 1):
+            lef_idx_choices = np.arange(N_lef + N_lef2, dtype=np.int64)
+        # Update time-dependent field ht during replication
+        if rt > 0 and rt < int(rep_duration):
+            mag_field = (1 - 2 * rt * inv_rep_duration)
+            ht += mask * mag_field * f_rep[:, rt]
 
         for j in range(N_sweep):
             # With probability p_rew, propose a LEF rewiring move
@@ -450,7 +447,7 @@ def run_energy_minimization(
             Es_potts[idx] = E_potts(spins, J, h, ht, potts_norm1, potts_norm2, rt, rep_fork_organizers)
             Fs[idx] = E_fold(ms, ns, fold_norm)
             Bs[idx] = E_bind(L, R, ms, ns, bind_norm)
-            if rep_norm != 0.0 and f_rep is not None:
+            if f_rep is not None:
                 n, s = compute_violations(f_rep, ms, ns, rt)
                 N_viols[idx] = n
                 S_viols[idx] = s
