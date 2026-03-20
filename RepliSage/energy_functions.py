@@ -32,7 +32,6 @@ def Kappa(mi, ni, mj, nj):
 @njit
 def violation_check(m, n, f):
     # Return (violation_flag, violation_strength)
-
     if m < 0 or n < 0:
         return 0.0, 0.0
 

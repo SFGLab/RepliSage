@@ -104,7 +104,14 @@ class StochasticSimulation:
         print(f"\033[95mEnergy during G1 phase: {self.Es[g1_start:s_start].mean():.2f}\033[0m")
         print(f"\033[95mEnergy during S phase: {self.Es[s_start:s_end].mean():.2f}\033[0m")
         print(f"\033[95mTotal Number of LEF-replisome violations during S phase: {int(self.N_viols[s_start:s_end].sum())}\033[0m")
-        print(f"\033[95mMean LEF-replisome violation strength during S phase: {self.S_viols[s_start:s_end].mean():.2f}\033[0m")
+        vals = self.S_viols[s_start:s_end]
+        non_zero_vals = vals[vals != 0]
+        mean_nonzero = non_zero_vals.mean() if len(non_zero_vals) > 0 else 0
+        min_nonzero = non_zero_vals.min() if len(non_zero_vals) > 0 else 0
+        max_nonzero = non_zero_vals.max() if len(non_zero_vals) > 0 else 0
+        print(f"\033[95mMean LEF-replisome violation strength during S phase (non-zero only): {mean_nonzero:.2f}\033[0m")
+        print(f"\033[95mMax LEF-replisome violation strength during S phase (non-zero only): {max_nonzero:.2f}\033[0m")
+        print(f"\033[95mMin LEF-replisome violation strength during S phase (non-zero only): {min_nonzero:.2f}\033[0m")
         print(f"\033[95mEnergy during G2 phase: {self.Es[s_end:].mean():.2f}\033[0m")
         print(f"\033[95mPotts energy during G1 phase: {self.Es_potts[g1_start:s_start].mean():.2f}\033[0m")
         print(f"\033[95mPotts energy during S phase: {self.Es_potts[s_start:s_end].mean():.2f}\033[0m")
