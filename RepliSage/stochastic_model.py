@@ -132,7 +132,6 @@ class StochasticSimulation:
             np.save(f'{self.out_path}/metadata/energy_factors/Es_potts.npy', self.Es_potts)
             np.save(f'{self.out_path}/metadata/MCMC_output/mags.npy', self.mags)
             np.save(f'{self.out_path}/metadata/MCMC_output/spins.npy', self.spin_traj)
-            np.save(f'{self.out_path}/metadata/MCMC_output/N_viols.npy', self.spin_traj)
     
     def show_plots(self):
         '''
