@@ -257,7 +257,7 @@ def unbind_bind(N_beads):
     return m_new, n_new
 
 @njit
-def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
+def slide(m_old, n_old, N_beads, f=None, t=0, rw=True, push_condition=False):
     '''
     Sliding Monte-Carlo step.
     '''
@@ -272,13 +272,16 @@ def slide(m_old, n_old, N_beads, f=None, t=0, rw=True):
     m_new = m_old + r1 if m_old + r1 >= 0 else 0
     n_new = n_old + r2 if n_old + r2 < N_beads else N_beads - 1
     
-    # Handle replication forks only if f is provided
-    ## This is a condition that assists pushing of replisomes
-    if f is not None:
-        if f[m_new, t] != f[m_old, max(t - 1, 0)] and n_old>m_old:
-            m_new = m_old+1
-        if f[n_new, t] != f[n_old, max(t - 1, 0)] and n_old>m_old:
-            n_new = n_old-1
+    # Handle replication forks only if f is provided.
+    ## This is a condition that assists pushing of replisomes.
+    ## In studies that focus on pobabilistic or partial replisome blocking it is better to be disabled.
+    ## As long it is enabled, we always may have some amount of pushing effect.
+    if push_condition:
+        if f is not None:
+            if f[m_new, t] != f[m_old, max(t - 1, 0)] and n_old>m_old:
+                m_new = m_old+1
+            if f[n_new, t] != f[n_old, max(t - 1, 0)] and n_old>m_old:
+                n_new = n_old-1
 
     if n_new<m_new: n_new=m_new
     
