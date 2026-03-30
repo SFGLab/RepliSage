@@ -56,8 +56,8 @@ class StochasticSimulation:
         self.L, self.R, _, self.N_CTCF = preprocessing(bedpe_file=bedpe_file, region=region, chrom=chrom, N_beads=self.N_beads)
         self.N_lef= 2*self.N_CTCF if N_lef==None else N_lef
         self.N_lef2 = N_lef2
-
-    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False, random_spins=True):
+    
+    def run_stochastic_simulation(self, N_steps, N_sweep, MC_step, burnin, T, f=1.0, f2=0.0, b=1.0, kappa=1.0, c_rep=None, c_potts1=0.0, c_potts2=0.0, rw=True, p_rew=0.5, rep_fork_organizers=True, save_MDT=True, cohesin_blocks_condensin=False, random_spins=True, repfork_push=True):
         '''
         Energy minimization script.
         '''
@@ -80,7 +80,7 @@ class StochasticSimulation:
             bind_norm=bind_norm, rep_norm=rep_norm,
             f_rep=self.rep_frac, potts_norm1=potts_norm1, potts_norm2=potts_norm2,
             h=self.h, rw=rw, rep_fork_organizers=rep_fork_organizers,
-            cohesin_blocks_condensin=cohesin_blocks_condensin, random_spins=random_spins)
+            cohesin_blocks_condensin=cohesin_blocks_condensin, random_spins=random_spins, repfork_push=repfork_push)
         end = time.time()
         elapsed = end - start
         print(f'Computation finished successfully in {elapsed//3600:.0f} hours, {elapsed%3600//60:.0f} minutes and {elapsed%60:.0f} seconds.')

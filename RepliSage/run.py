@@ -97,6 +97,7 @@ def main():
     Tstd_factor, speed_scale, init_rate_scale, p_rew = args.REP_T_STD_FACTOR, args.REP_SPEED_SCALE, args.REP_INIT_RATE_SCALE, args.P_REW
     save_MDT, save_plots, viz_heats = args.SAVE_MDT, args.SAVE_PLOTS, args.VIZ_HEATS
     cohesin_blocks_condensin = args.COHESIN_BLOCKS_CONDENSIN
+    repfork_push = args.REP_FORK_PUSH
     
     # Define data and coordinates
     region, chrom =  [args.REGION_START, args.REGION_END], args.CHROM
@@ -117,7 +118,7 @@ def main():
     sim.run_stochastic_simulation(N_steps=N_steps, N_sweep=N_sweep, MC_step=MC_step, burnin=burnin, T=T,
                                   f=f, f2=f2, b=b, kappa=kappa, c_rep=c_rep, c_potts1=c_state_field, c_potts2=c_state_interact, 
                                   rw=rw, p_rew= p_rew, random_spins=random_spins,
-                                  rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin)
+                                  rep_fork_organizers=rep_fork_organizers, save_MDT=save_MDT, cohesin_blocks_condensin=cohesin_blocks_condensin, repfork_push = repfork_push)
     if args.SIMULATION_TYPE in ['MD', 'EM']:
         time_of_polymer_separation = sim.run_openmm(args.PLATFORM, mode=args.SIMULATION_TYPE, init_struct=args.INITIAL_STRUCTURE_TYPE, 
                        integrator_mode=args.INTEGRATOR_TYPE, integrator_step=args.INTEGRATOR_STEP, 

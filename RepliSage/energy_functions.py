@@ -327,7 +327,7 @@ def run_energy_minimization(
     L, R, k_norm, fold_norm, fold_norm2, bind_norm,
     rep_norm=0.0, t_rep=np.inf, rep_duration=np.inf, f_rep=None,
     potts_norm1=0.0, potts_norm2=0.0, h=None, rw=True, spins=None,
-    p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False, random_spins=True
+    p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False, random_spins=True, repfork_push=True
 ):
     '''
     Runs a Monte Carlo or simulated annealing energy minimization for a chromatin simulation.
@@ -408,7 +408,7 @@ def run_energy_minimization(
                     m_new, n_new = unbind_bind(N_beads)
                 else:
                     # Slide LEF along the polymer
-                    m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, f_rep, rt, rw)
+                    m_new, n_new = slide(ms[lef_idx], ns[lef_idx], N_beads, f_rep, rt, rw, repfork_push)
                 # Compute energy difference for move
                 dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, m_new, n_new, lef_idx, rt, f_rep, spins, J, potts_norm2, cohesin_blocks_condensin)
                 # Metropolis criterion
@@ -453,6 +453,6 @@ def run_energy_minimization(
                 n, s = compute_violations(f_rep, ms, ns, rt)
                 N_viols[idx] = n
                 S_viols[idx] = s
-
+    
     acceptance_rate = n_accepted / (N_steps * N_sweep)
     return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags, acceptance_rate, N_viols, S_viols

@@ -107,15 +107,25 @@ class ListOfArgs(list):
         w += "# This is automatically generated config file.\n"
         w += f"# Generated at: {datetime.datetime.now().isoformat()}\n\n"
         w += "# Notes:\n"
-        w += "# Some fields require units. Units are represented as objects from mm.units module.\n"
-        w += "# Simple units are parsed directly. For example: \n"
-        w += "# HR_R0_PARAM = 0.2 nanometer\n"
-        w += "# But more complex units does not have any more sophisticated parser written, and will fail.'\n"
-        w += "# In such cases the unit is fixed (and noted in comment), so please convert complex units manually if needed.\n"
-        w += "# <float> and <int> types does not require any unit. Quantity require unit.\n\n"
-        w += "# Default values does not mean valid value. In many places it's only a empty field that need to be filled.\n\n"
-        w += "#############################################################################################################\n\n"
 
+        # ============================================================================================
+        # Funky but informative description of the RepliSage model
+        # ============================================================================================
+
+        w += "# RepliSage is a playful but sharp attempt to capture one of the most delicate\n"
+        w += "# dances in the cell: DNA replication coexisting with loop extrusion.\n"
+        w += "# Here, chromatin is a dynamic polymer, constantly reshaped by loop-extruding\n"
+        w += "# factors (LEFs), while replication forks move more slowly and deliberately.\n\n"
+        w += "# The philosophy is minimalistic. Instead of modeling every microscopic detail,\n"
+        w += "# RepliSage assumes that replication forks act as effective barriers to extrusion.\n"
+        w += "# This captures the dominant physics: loops prefer to exist entirely in either\n"
+        w += "# replicated or unreplicated regions.\n\n"
+        w += "# The system is therefore governed by a competition of timescales:\n"
+        w += "#   - Loop extrusion is fast\n"
+        w += "#   - Replication is slower\n"
+        w += "# Whenever they interfere, the configuration pays an energetic cost.\n"
+        w += "#############################################################################################################\n\n"
+        
         w += '[Main]'
         for i in self:
             w += f'; {i.help}, type: {i.type.__name__}, default: {i.default}\n'
@@ -164,6 +174,7 @@ args = ListOfArgs([
     Arg('COHESIN_BLOCKS_CONDENSIN', help="Allow cohesins to block condensins during simulation.", type=bool, default='False', val='False'),
     Arg('RANDOM_INIT_SPINS', help="Use a random initial distribution of spins.", type=bool, default='True', val='True'),
     Arg('P_REW', help="Probability of proposing a rewiring move (LEF move) in the Monte Carlo algorithm.", type=float, default='0.5', val='0.5'),
+    Arg('REP_FORK_PUSH', help="Replication fork pushing, hardcoded in the MC moves. If disabled, the pushing would be implied only from the loss function.", type=bool, default='True', val='True'),
     Arg('REP_FORK_EPIGENETIC_ORGANIZER', help="Model replication forks as epigenetic organizers.", type=bool, default='True', val='True'),
     Arg('REP_START_TIME', help="Time step at which replication starts.", type=int, default='50000', val='50000'),
     Arg('REP_TIME_DURATION', help="Duration of the replication process.", type=int, default='50000', val='50000'),

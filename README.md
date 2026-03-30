@@ -294,6 +294,7 @@ You can define these parameters based on the table of simulation parameters.
 | LEF_RW                  | bool      | True            | Enables random walk for loop extrusion factors (LEFs).                     |
 | LEF_DRIFT               | bool      | False           | Enables drift for loop extrusion factors.                                  |
 | RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial Potts model spin states.                                |
+| REP_FORK_PUSH           | bool       | True           | Effective pushing of replication fork. Not as a parameter in the loss function, but also hard-coded in the model. |
 | REP_WITH_STRESS         | bool      | False           | Enables a helper to set parameters for modeling replication stress. Overrides user-defined REP_T_STD_FACTOR, REP_SPEED_SCALE, and REP_INIT_RATE_SCALE. |
 | REP_START_TIME          | int       | 50000           | Start time for replication in simulation steps.                            |
 | REP_TIME_DURATION       | int       | 50000           | Duration of the replication process in simulation steps.                   |
@@ -321,7 +322,7 @@ You can define these parameters based on the table of simulation parameters.
 | Parameter Name         | Type      | Default Value   | Description                                                                 |
 |-------------------------|-----------|-----------------|----------------------------------------------------------------------------|
 | INITIAL_STRUCTURE_TYPE  | str       | rw              | Type of initial structure (e.g., rw for random walk).                      |
-| SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM).                                |
+| SIMULATION_TYPE         | str       | None            | Type of simulation to run (e.g., MD or EM). If nothing is specified, it does not create 3D structures.     |
 | DCD_REPORTER           | bool      | False           | Enables saving of molecular dynamics trajectories in DCD format.           |
 | INTEGRATOR_TYPE          | str       | langevin        | Type of integrator for molecular dynamics.                                 |
 | INTEGRATOR_STEP         | Quantity  | 10 femtosecond  | Time step for the molecular dynamics integrator.                           |
