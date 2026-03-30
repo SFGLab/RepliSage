@@ -257,7 +257,7 @@ def unbind_bind(N_beads):
     return m_new, n_new
 
 @njit
-def slide(m_old, n_old, N_beads, f=None, t=0, rw=True, push_condition=False):
+def slide(m_old, n_old, N_beads, f=None, t=0, rw=True, push_condition=True):
     '''
     Sliding Monte-Carlo step.
     '''
@@ -453,6 +453,6 @@ def run_energy_minimization(
                 n, s = compute_violations(f_rep, ms, ns, rt)
                 N_viols[idx] = n
                 S_viols[idx] = s
-    
+
     acceptance_rate = n_accepted / (N_steps * N_sweep)
     return Ms, Ns, Es, Es_potts, Fs, Bs, spin_traj, mags, acceptance_rate, N_viols, S_viols
