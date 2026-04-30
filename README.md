@@ -293,7 +293,7 @@ You can define these parameters based on the table of simulation parameters.
 | COHESIN_BLOCKS_CONDENSIN | bool      | False           | Enables a feature where cohesin blocks condensin activity during G2/M phase. |
 | LEF_RW                  | bool      | True            | Enables random walk for loop extrusion factors (LEFs).                     |
 | LEF_DRIFT               | bool      | False           | Enables drift for loop extrusion factors.                                  |
-| RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial Potts model spin states.                                |
+| RANDOM_INIT_SPINS       | bool      | True            | Randomizes initial states of the epigenetic state model .                  |
 | REP_FORK_PUSH           | bool       | True           | Effective pushing of replication fork. Not as a parameter in the loss function, but also hard-coded in the model. |
 | REP_WITH_STRESS         | bool      | False           | Enables a helper to set parameters for modeling replication stress. Overrides user-defined REP_T_STD_FACTOR, REP_SPEED_SCALE, and REP_INIT_RATE_SCALE. |
 | REP_START_TIME          | int       | 50000           | Start time for replication in simulation steps.                            |
@@ -313,8 +313,8 @@ You can define these parameters based on the table of simulation parameters.
 | FOLDING_COEFF           | float     | 1.0             | Coefficient controlling chromatin folding.                                 |
 | FOLDING_COEFF2          | float     | 0.0             | Secondary coefficient for chromatin folding.                               |
 | REP_COEFF               | float     | 1.0             | Coefficient for replication-related energy terms.                          |
-| POTTS_INTERACT_COEFF    | float     | 1.0             | Coefficient for Potts model interaction energy.                            |
-| POTTS_FIELD_COEFF       | float     | 1.0             | Coefficient for Potts model field energy.                                  |
+| EPI_INTERACT_COEFF    | float     | 1.0             | Coefficient for epigenetic node state model interaction energy.                            |
+| EPI_FIELD_COEFF       | float     | 1.0             | Coefficient for epigenetic node states model field energy.                                  |
 | CROSS_COEFF             | float     | 1.0             | Coefficient penalizing LEF crossing.                                       |
 | BIND_COEFF              | float     | 1.0             | Coefficient for LEF binding energy.                                        |
 
