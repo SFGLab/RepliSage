@@ -92,7 +92,7 @@ def main():
     N_beads, N_lef, N_lef2 = args.N_BEADS, args.N_LEF, args.N_LEF2
     N_steps, N_sweep, MC_step, burnin, T, t_rep, rep_duration = args.N_STEPS, args.N_sweep, args.MC_STEP, args.BURNIN, args.T_MC, args.REP_START_TIME, args.REP_TIME_DURATION
     f, f2, b, kappa = args.FOLDING_COEFF, args.FOLDING_COEFF2, args.BIND_COEFF, args.CROSS_COEFF
-    c_state_field, c_state_interact, c_rep = args.POTTS_FIELD_COEFF, args.POTTS_INTERACT_COEFF, args.REP_COEFF
+    c_state_field, c_state_interact, c_rep = args.EPI_FIELD_COEFF, args.EPI_INTERACT_COEFF, args.REP_COEFF
     rw, random_spins, p_rew, rep_fork_organizers = args.LEF_RW, args.RANDOM_INIT_SPINS, args.P_REW, args.REP_FORK_EPIGENETIC_ORGANIZER
     Tstd_factor, speed_scale, init_rate_scale, p_rew = args.REP_T_STD_FACTOR, args.REP_SPEED_SCALE, args.REP_INIT_RATE_SCALE, args.P_REW
     save_MDT, save_plots, viz_heats = args.SAVE_MDT, args.SAVE_PLOTS, args.VIZ_HEATS
