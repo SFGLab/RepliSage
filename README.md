@@ -1,7 +1,9 @@
 # RepliSage
 A simulation software for modeling the motion of cohesin during the replication process. This tool explores the interaction between cohesin, or more generally loop extrusion factors (LEFs), with replication forks and chromatin compartmentalization. It employs a sophisticated force-field that integrates MCMC Metropolis and molecular dynamics methodologies. The output is a 3D chromatin trajectory, providing a dynamic visualization of DNA replication and the formation of two identical copies.
 
-![RepliSage](https://github.com/user-attachments/assets/296e8b57-b1a5-4387-86cf-2d0ed515d738)
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/3b098b9d-75a7-49b4-a102-7bfe62b40032" />
+
+(Sorry for the AI generated logo)
 
 ## Simulation pipeline
 RepliSage is composed by three distinct parts:
