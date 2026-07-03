@@ -422,8 +422,7 @@ These plots show us that during S phase replication forks are detaching the two 
 
 ## Citation
 
-Please cite the preprint of our paper in case of usage of this software
-
+Please cite our papers in case that this software would be useful for your research,
 * Korsak, Sevastianos, et al. "RepliSage: a stochastic graph-based framework for 3D chromatin modeling across the cell cycle." Nucleic Acids Research 54.12 (2026): gkag618. (modelling part)
 * Buka, Karolina, et al. "Improved cohesin HiChIP protocol and bioinformatic analysis for robust detection of chromatin loops and stripes." Communications Biology 8.1 (2025): 437. (data)
 * D. J. Massey and A. Koren, “High-throughput analysis of single human cells reveals the complex nature of dna replication timing control,” Nature Communications, vol. 13, no. 1, p. 2402, 2022. (data)
