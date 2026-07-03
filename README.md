@@ -3,7 +3,6 @@ A simulation software for modeling the motion of cohesin during the replication 
 
 <img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/3b098b9d-75a7-49b4-a102-7bfe62b40032" />
 
-(Sorry for the AI generated logo)
 
 ## Simulation pipeline
 RepliSage is composed by three distinct parts:
