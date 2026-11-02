@@ -10,3 +10,10 @@
 .md-typeset .mermaid .edgeLabel rect { fill: #FFFFFF !important; opacity: 1; }
 .md-typeset img[src$="flow_pipeline.svg"] { width: 70%; }
 .md-typeset img[src$="flow_intuition.svg"] { width: 55%; }
+
+/* sidebar: black page links, royal-red chapter titles (Theory, Implementation, ...) */
+.md-nav--primary .md-nav__item--section > .md-nav__link,
+.md-nav--primary .md-nav__item--section > label.md-nav__link,
+.md-nav__item--section > .md-nav__link { color: #A50F2D; font-weight: 700; }
+.md-nav__link { color: #141414; }
+.md-nav__link--active, .md-nav__link:hover { color: #A50F2D; }
