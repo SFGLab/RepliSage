@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="RepliSage" width="420"></p>
+<p align="center"><img src="docs/logo.png" alt="RepliSage" width="560"></p>
 
 <p align="center">
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-141414?logo=python&logoColor=white&labelColor=A50F2D"></a>

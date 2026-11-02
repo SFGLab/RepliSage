@@ -72,8 +72,8 @@ Forks are slower, more origins fire and timing is noisier, which is what cells u
 | `REP_SPEED_SCALE` | Fork speed scale | 10 |
 | `REP_INIT_RATE_SCALE` | Multiplier of the initiation rate | 1.0 |
 | `REP_WITH_STRESS` | Use the stress values above | False |
-| `REP_START_TIME` | Monte Carlo step where S phase starts | 15000 |
-| `REP_TIME_DURATION` | Length of S phase in Monte Carlo steps | 20000 |
+| `REP_START_TIME` (`--rep-start`) | Monte Carlo step where S phase starts | 15000 |
+| `REP_TIME_DURATION` (`--rep-duration`) | Length of S phase in Monte Carlo steps | 20000 |
 | `BIGWIG_BIN_SIZE` | Bin size for Repli-Seq bigWig (bp) | 1000 |
 | `BIGWIG_SIGMA` | Gaussian smoothing in bins | 200 |
 | `BIGWIG_LOG_NORM` | Log-transform the bigWig signal | True |

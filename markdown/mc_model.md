@@ -107,9 +107,9 @@ The state is recorded every `MC_STEP` steps. The first `BURNIN` steps are discar
 
 | Name | Meaning | Default |
 |---|---|---|
-| `N_STEPS` | Total MC steps | 50000 |
-| `MC_STEP` | Recording interval | 200 |
-| `BURNIN` | Discarded steps | 1000 |
+| `N_STEPS` | Total MC steps (`--n-steps`) | 50000 |
+| `MC_STEP` | Recording interval (`--mc-step`) | 200 |
+| `BURNIN` | Discarded steps (`--burnin`) | 1000 |
 | `N_SWEEP` | Proposals per step | 1000 |
 | `T_MC` | Temperature | 1.5 |
 | `N_LEF` | Number of LEFs (empty = 2 times the number of CTCF sites) | auto |

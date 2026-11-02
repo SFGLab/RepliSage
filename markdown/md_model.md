@@ -84,9 +84,9 @@ Each structure is an mmCIF file with C-alpha-only beads, one chain per DNA copy 
 | `DEVICE` | GPU index | empty |
 | `INITIAL_STRUCTURE_TYPE` | Starting shape | rw |
 | `INTEGRATOR_TYPE` | `langevin` or `brownian` | langevin |
-| `INTEGRATOR_STEP` | Time step | 100 femtosecond |
+| `INTEGRATOR_STEP` (`--md-step-size`) | Time step | 100 femtosecond |
 | `SIM_TEMP` | Temperature | 310 kelvin |
-| `SIM_STEP` | Integrator steps per sampled state (MD mode) | 1000 |
+| `SIM_STEP` (`--md-steps`) | Integrator steps per sampled state (MD mode) | 1000 |
 | `TOLERANCE` | Minimiser tolerance | 1.0 |
 | `EV_P` | Probability that a bead's excluded volume is off | 0.01 |
 | `FORCEFIELD_PATH` | OpenMM XML force field | `src/forcefields/classic_sm_ff.xml` |

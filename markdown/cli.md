@@ -36,6 +36,27 @@ python src/run.py -h    # from the repository root
 
 Options with a dash also accept an underscore: `--rt_file` is the same as `--rt-file`.
 
+## Steps and sampling
+
+Four numbers decide how long a run is and how much of it you keep. They can all be set from the command line.
+
+| Flag | Symbol | Meaning | Default |
+|---|---|---|---|
+| `--n-steps` | $S$ | total Monte Carlo steps | 50000 |
+| `--mc-step` | $\delta$ | one state is recorded every $\delta$ steps (thinning) | 200 |
+| `--burnin` | $B$ | steps discarded at the start | 1000 |
+| `--rep-start`, `--rep-duration` | $t_0$, $d$ | S phase runs from step $t_0$ to $t_0 + d$ | 15000, 20000 |
+| `--md-steps` | $n_{md}$ | MD steps run for every recorded state | 1000 |
+| `--md-step-size` | $\Delta t$ | MD integrator time step | 100 femtosecond |
+
+The number of recorded states, and so of 3D structures, is
+
+$$n = \left\lfloor \frac{S}{\delta} \right\rfloor$$
+
+and the analysis uses the $n - B/\delta$ states after burn-in. For replication to finish inside the run keep $t_0 + d \le S$; the remaining steps are G2/M. The simulated MD time per structure is $n_{md} \, \Delta t$.
+
+Example: `--n-steps 30000 --mc-step 200 --burnin 1000` records 150 states and analyses 145 of them.
+
 ## What switches what on
 
 | You provide | What runs |

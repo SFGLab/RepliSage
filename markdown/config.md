@@ -86,8 +86,8 @@ The second column shows the command-line flag that sets the same thing, if there
 | `rep_t_std_factor` |  | 0.1 | Factor multiplying the standard deviation of the replication timing curve. |
 | `rep_speed_scale` |  | 10 | A scale that quantifies the speed of the replication forks. |
 | `rep_init_rate_scale` |  | 1.0 | Multiplier of the experimentally estimated initiation rate. |
-| `rep_start_time` |  | 15000 | MC step at which replication starts. |
-| `rep_time_duration` |  | 20000 | Duration of replication (in MC steps). |
+| `rep_start_time` | `--rep-start` | 15000 | MC step at which replication starts. |
+| `rep_time_duration` | `--rep-duration` | 20000 | Duration of replication (in MC steps). |
 
 ### Monte Carlo (`[mc]`)
 
@@ -103,8 +103,8 @@ The second column shows the command-line flag that sets the same thing, if there
 | `n_sweep` |  | 1000 | Number of node or link state changes proposed per simulation step. |
 | `n_lef` |  | empty | Number of loop extrusion factors (LEFs). Empty = twice the number of CTCFs. |
 | `n_lef2` |  | 0 | Number of second-family LEFs (different speed). |
-| `mc_step` |  | 200 | Sampling frequency of MC steps (avoids autocorrelation). |
-| `burnin` |  | 1000 | Burn-in period (steps before equilibrium). |
+| `mc_step` | `--mc-step` | 200 | Sampling frequency of MC steps (avoids autocorrelation). |
+| `burnin` | `--burnin` | 1000 | Burn-in period (steps before equilibrium). |
 | `t_mc` |  | 1.5 | Temperature of the stochastic MCMC model. |
 | `folding_coeff` |  | 1.0 | Folding coefficient for the first family of LEFs. |
 | `folding_coeff2` |  | 0.0 | Folding coefficient for the second family of LEFs. |
@@ -123,12 +123,12 @@ The second column shows the command-line flag that sets the same thing, if there
 | `simulation_type` | `--run-md / --md-mode` | empty | EM (many minimizations) or MD (one minimization + dynamics). Empty = no 3D structures. |
 | `dcd_reporter` |  | False | Save a .dcd video of the 3D structure. |
 | `integrator_type` |  | langevin | langevin or brownian. |
-| `integrator_step` |  | 100 femtosecond | Integrator time step (e.g. '100 femtosecond'). |
+| `integrator_step` | `--md-step-size` | 100 femtosecond | Integrator time step (e.g. '100 femtosecond'). |
 | `forcefield_path` |  | built-in file | Path to XML file with the forcefield. |
 | `ev_p` |  | 0.01 | Probability that excluded volume of a bead is randomly disabled. |
 | `tolerance` |  | 1.0 | Stopping tolerance of the energy minimization. |
 | `sim_temp` |  | 310 kelvin | Temperature of the 3D simulation (e.g. '310 kelvin'). |
-| `sim_step` |  | 1000 | MD steps performed each time the loop forces change. |
+| `sim_step` | `--md-steps` | 1000 | MD steps performed each time the loop forces change. |
 
 ### Output (`[output]`)
 
