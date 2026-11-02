@@ -19,3 +19,4 @@ imageio-ffmpeg>=0.5.1
 jupyterlab>=4.2.5
 jupyter_core>=5.7.2
 tqdm
+pyvista>=0.43

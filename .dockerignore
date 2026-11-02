@@ -42,3 +42,4 @@ Thumbs.db
 # Ignore Docker-related outputs
 *.tar
 
+results/

@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RepliSage 3D viewer</title><style>/*CSS*/</style></head><body>
+<header><div class="logo">Repli<b>Sage</b></div><span>3D structure viewer &middot; /*TITLE*/</span></header>
+<main>
+<section class="card"><h3>3D structure</h3><div id="view"><div id="badge"></div><div id="stats"></div><div id="legend3"></div></div>
+<div class="row" id="modes"></div>
+<div class="row"><label><input type="checkbox" id="tLef" checked>LEF anchors &amp; loops</label><label><input type="checkbox" id="tFork" checked>Replication forks</label>
+<label>Tube <input type="range" id="rad" min="2" max="14" value="6" style="width:90px"></label><button id="reset">Reset view</button></div></section>
+<section class="card"><h3>Contact map <small style="color:#777;text-transform:none">(mean over a moving window)</small></h3>
+<canvas id="hm" width="440" height="440"></canvas>
+<div class="row"><label>Window <input type="range" id="win" min="1" max="40" value="8" style="width:130px"><b id="winv">8</b> frames</label>
+<label>Contact radius <input type="range" id="rc" min="15" max="60" value="40" style="width:110px"></label></div>
+<p class="note">Top strip: compartments (red A, blue B). Left strip: replicated DNA (red). Black dots: LEF anchors (loops). Teal lines: replication forks.</p></section>
+</main>
+<main style="padding-top:0;grid-template-columns:1fr"><section class="card"><h3>Trajectory &middot; cell-cycle phase</h3><canvas id="tl"></canvas>
+<div class="row"><button id="play">&#9654; Play</button><select id="speed"><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>x
+<span id="pos" style="color:#555"></span></div>
+<p class="note">Click or drag the bar to move through the trajectory. Colours: <b style="color:#2B6CB0">G1</b> before replication, <b style="color:#A50F2D">S</b> replication, <b style="color:#1B9E8F">G2/M</b> after replication. The curve is the replicated fraction.</p></section></main>
+<script id="data" type="application/json">/*DATA*/</script>
+<script>/*THREE*/</script><script>/*ORBIT*/</script><script>/*APP*/</script></body></html>

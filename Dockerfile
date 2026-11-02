@@ -19,16 +19,14 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 &
 # Set workdir
 WORKDIR /app
 
-# Create virtual environment and install pyRepliSage
+# Copy the repository and install RepliSage (v1.0.0) from it
+COPY . /app
 RUN python -m venv /opt/pyreplisage-env && \
     /opt/pyreplisage-env/bin/pip install --upgrade pip setuptools && \
-    /opt/pyreplisage-env/bin/pip install pyRepliSage
+    /opt/pyreplisage-env/bin/pip install /app
 
 # Activate environment by default
 ENV PATH="/opt/pyreplisage-env/bin:$PATH"
-
-# Copy application files (if any)
-COPY . /app
 
 # Default shell
 CMD ["/bin/bash"]

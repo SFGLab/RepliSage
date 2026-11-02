@@ -28,6 +28,11 @@ Thumbs.db
 *.swp
 *.swo
 *.bak
+*.bak.*
+*.backup
+*.orig
+.bak/
+bak/
 *~
 
 # Logs
@@ -53,10 +58,10 @@ htmlcov/
 # Additional config files
 config_*.ini
 
-# Simulation Results
+# Simulation Results (kept out of git; the folder itself is tracked via .gitkeep)
+results/*
+!results/.gitkeep
 tmp/
-*result*/
-*output*/
 
 # Docker build cache directories (if used with custom output)
 docker-cache/
@@ -67,3 +72,33 @@ docker-compose.override.yml
 
 # If you copy in secrets manually during Docker build
 secrets/
+
+# Generated caches, compiled and local-environment files
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.nbi
+*.nbc
+.numba_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.tox/
+.nox/
+.eggs/
+*.egg
+pip-wheel-metadata/
+.python-version
+.coverage.*
+coverage.xml
+.hypothesis/
+.pytest_cache/
+core
+core.*
+*.core
+*.tmp
+*.pid
+nohup.out
+.Rhistory
+.Rproj.user/

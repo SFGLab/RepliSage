@@ -1,0 +1,43 @@
+site_name: RepliSage
+site_description: Loop extrusion, epigenetic state and DNA replication shaping chromatin in 3D
+site_url: https://sfglab.github.io/RepliSage/
+repo_url: https://github.com/SFGLab/RepliSage
+docs_dir: markdown
+theme:
+  name: material
+  logo: assets/logo.png
+  palette:
+    scheme: default
+    primary: custom
+    accent: custom
+  features: [navigation.sections, navigation.top, search.highlight, content.code.copy, toc.follow]
+extra_css: [assets/extra.css]
+extra_javascript:
+  - assets/mathjax.js
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js
+markdown_extensions:
+  - admonition
+  - tables
+  - toc: {permalink: true}
+  - pymdownx.arithmatex: {generic: true}
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+nav:
+  - Home: README.md
+  - Getting started:
+      - Installation: installation.md
+      - Command line: cli.md
+      - Examples: examples.md
+  - Models:
+      - Pipeline: pipeline.md
+      - Pre-processing: preproc.md
+      - Replication model: replication_model.md
+      - Monte Carlo model: mc_model.md
+      - Molecular dynamics model: md_model.md
+  - Reference:
+      - Configuration: config.md
+      - Analysis: analysis.md
+      - Outputs and visualisation: visualization.md

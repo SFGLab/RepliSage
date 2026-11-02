@@ -1,3 +1,8 @@
 exclude jupies/*
 prune jupies
-exclude *.ini
+prune results
+include src/config.ini
+recursive-include src/data *
+recursive-include src/forcefields *
+recursive-include src/viz3d/assets *
+recursive-include src/viz3d/vendor *
