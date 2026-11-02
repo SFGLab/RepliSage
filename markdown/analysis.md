@@ -22,21 +22,31 @@ Samples of a Markov chain are correlated, so ten thousand samples are not ten th
 
 **Autocorrelation.** For a series $x_t$ with mean $\bar{x}$, the autocorrelation at lag $\tau$ is
 
-$$\rho(\tau) = \frac{\text{cov}(x_t, x_{t+\tau})}{\text{var}(x_t)}$$
+$$\rho(\tau) = \frac{C(\tau)}{C(0)}, \qquad C(\tau) = \big\langle (x_t - \bar{x})(x_{t+\tau} - \bar{x}) \big\rangle$$
+
+where $C(\tau)$ is the autocovariance and $\langle\cdot\rangle$ the average over $t$.
 
 It starts at 1 and should fall to 0 within a few lags.
 
 **Integrated autocorrelation time.**
 
-$$\tau_{\text{int}} = 1 + 2 \sum_{\tau = 1}^{\tau_{\max}} \rho(\tau)$$
+$$\tau_{\mathrm{int}} = 1 + 2 \sum_{\tau = 1}^{\tau_{\max}} \rho(\tau)$$
 
-summed with Geyer's rule (stop at the first pair of lags whose sum is negative). It is the number of samples that count as one independent sample.
+where $\tau_{\max}$ is the lag at which the sum is cut,
+
+chosen with Geyer's rule (stop at the first pair of lags whose sum is negative). $\tau_{\mathrm{int}}$ is the number of samples that count as one independent sample.
 
 **Effective sample size.** With $n$ samples,
 
-$$\text{ESS} = \frac{n}{\tau_{\text{int}}}$$
+$$n_{\mathrm{eff}} = \frac{n}{\tau_{\mathrm{int}}}$$
 
-Aim for at least a few hundred. The Monte Carlo standard error of the mean is $\text{sd} / \sqrt{\text{ESS}}$.
+where $n_{\mathrm{eff}}$ is the effective sample size (ESS).
+
+Aim for at least a few hundred. The Monte Carlo standard error of the mean is
+
+$$\mathrm{MCSE} = \frac{s}{\sqrt{n_{\mathrm{eff}}}}$$
+
+where $s$ is the standard deviation of the series.
 
 **Geweke z-score.** Compares the mean of the first 10 percent of the series with the mean of the last 50 percent, each corrected by its own ESS. If the chain is stationary, $|z|$ stays below about 2. A large value means the series still drifts.
 
@@ -113,7 +123,7 @@ With replication only the first chain is analysed.
 | Function or class | What it does |
 |---|---|
 | `autocorr(x)` | normalised autocorrelation $\rho(\tau)$ by FFT |
-| `iat(x)` | integrated autocorrelation time $\tau_{int}$ (Geyer positive sequence) |
+| `iat(x)` | integrated autocorrelation time $\tau_{\mathrm{int}}$ (Geyer positive sequence) |
 | `ess(x)` | effective sample size $n/\tau_{int}$ |
 | `geweke(x, a, b)` | Geweke $z$ comparing the first fraction `a` with the last fraction `b` |
 | `split_rhat(chains)` | split $\hat R$ |

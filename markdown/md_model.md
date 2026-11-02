@@ -17,7 +17,7 @@ Beads have a mass of a 10 kb chromatin piece. Distances are in nanometres and th
 
 | Force | Form | Purpose |
 |---|---|---|
-| Excluded volume | Repulsive $\left( \dfrac{\epsilon^2 \sigma^2}{r + r_s} \right)^3$ with cutoff 0.2 | Beads do not overlap |
+| Excluded volume | Repulsive $( \frac{\epsilon^2 \sigma^2}{r + r_s} )^3$ with cutoff 0.2 | Beads do not overlap |
 | Bonds | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^5$ | Neighbouring beads stay connected |
 | Stiffness | Harmonic angle around $\pi$, $k = 200$ | Chromatin is not infinitely flexible |
 | Loops | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^4$ between legs $m_k$ and $n_k$ of every bound LEF | Loop extrusion shapes the structure. Updated at every sample |
@@ -56,7 +56,7 @@ At every sampled state, RepliSage does the following:
 
 `MD` mode minimises once at the start and then keeps integrating, so consecutive structures are continuous in time. `EM` mode minimises from scratch each time and is useful for fast, noise-free structures.
 
-The integrator is Langevin (friction $0.1 / \text{fs}$) or Brownian, at the temperature `SIM_TEMP`.
+The integrator is Langevin (friction $0.1 / fs$) or Brownian, at the temperature `SIM_TEMP`.
 
 ## Labels in file names
 

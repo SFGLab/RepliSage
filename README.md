@@ -1,5 +1,16 @@
 <p align="center"><img src="docs/logo.png" alt="RepliSage" width="460"></p>
 
+<p align="center">
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-141414?logo=python&logoColor=white&labelColor=A50F2D"></a>
+<a href="https://openmm.org/"><img alt="OpenMM" src="https://img.shields.io/badge/OpenMM-8.1%2B-141414?labelColor=A50F2D"></a>
+<a href="https://numpy.org/"><img alt="NumPy" src="https://img.shields.io/badge/NumPy-1.26-141414?logo=numpy&logoColor=white&labelColor=A50F2D"></a>
+<a href="https://numba.pydata.org/"><img alt="Numba" src="https://img.shields.io/badge/Numba-0.60%2B-141414?labelColor=A50F2D"></a>
+<a href="https://scipy.org/"><img alt="SciPy" src="https://img.shields.io/badge/SciPy-1.11%2B-141414?logo=scipy&logoColor=white&labelColor=A50F2D"></a>
+<a href="https://matplotlib.org/"><img alt="Matplotlib" src="https://img.shields.io/badge/Matplotlib-3.8%2B-141414?labelColor=A50F2D"></a>
+<a href="https://docs.pytest.org/"><img alt="tested with pytest" src="https://img.shields.io/badge/tested%20with-pytest-141414?logo=pytest&logoColor=white&labelColor=A50F2D"></a>
+<a href="https://github.com/SFGLab/RepliSage/blob/main/LICENSE"><img alt="License GPL v3" src="https://img.shields.io/badge/license-GPL%20v3-141414?labelColor=A50F2D"></a>
+</p>
+
 RepliSage simulates how loop extrusion, epigenetic state and DNA replication shape chromatin in 3D, from G1 through S phase to G2/M. It runs a replication simulation, a Monte Carlo of loop-extruding factors (LEFs) and Potts spins (A/B compartments), and optionally 3D structures with OpenMM. Every run ends with a single `report.html`.
 
 ## Install

@@ -9,47 +9,70 @@ A configuration is $(m_k, n_k)$ for all LEFs plus $(s_i)$ for all beads. The mod
 
 ## Energy
 
-$$E = E_{\text{fold}} + E_{\text{bind}} + E_{\text{cross}} + E_{\text{rep}} + E_{\text{potts}}$$
+The total energy is a sum of five terms:
+
+$$E = E_f + E_b + E_c + E_r + E_s$$
+
+**Symbols used below**
+
+| Symbol | Meaning |
+|---|---|
+| $N$ | number of beads in one chain |
+| $M$ | number of loop extruders (LEFs) |
+| $m_k < n_k$ | bead positions of the left and right leg of LEF $k$ |
+| $L_i$, $R_i$ | CTCF binding potentials of bead $i$ for left and right legs ([pre-processing](preproc.md)) |
+| $r_i \in \{0, 1\}$ | replication state of bead $i$ at the current time: 1 = copied, 0 = not copied |
+| $s_i \in \{-2,\dots,2\}$ | epigenetic (Potts) spin of bead $i$ |
+| $c_f, c_b, \kappa, c_r, c_1, c_2$ | strengths of the terms, set in the config file |
 
 ### Folding: loops want to be large
 
-$$E_{\text{fold}} = c_f \cdot \frac{-N}{M \ln (N / M)} \sum_k \ln (n_k - m_k + 1)$$
+$$E_f = -\,c_f \, \frac{N}{M \ln (N/M)} \sum_{k} \ln (n_k - m_k + 1)$$
 
-Here $M$ is the number of LEFs and $c_f$ is `FOLDING_COEFF` (`FOLDING_COEFF2` for the second family). The logarithm rewards long loops with diminishing returns, and the prefactor keeps the scale independent of $N$ and $M$.
+* $c_f$ is `FOLDING_COEFF` (`FOLDING_COEFF2` for the second family).
+* The logarithm rewards long loops with diminishing returns.
+* The prefactor keeps the scale independent of $N$ and $M$.
 
 ### Binding: legs like CTCF sites
 
-$$E_{\text{bind}} = c_b \cdot \frac{-N}{\sum_i L_i + \sum_i R_i} \sum_k \left( L_{m_k} + R_{n_k} \right)$$
+$$E_b = -\,c_b \, \frac{N}{\sum_i (L_i + R_i)} \sum_{k} \left( L_{m_k} + R_{n_k} \right)$$
 
-with $L$, $R$ the [binding potentials](preproc.md) and $c_b$ = `BIND_COEFF`. A leg sitting on a strong site lowers the energy.
+* $c_b$ is `BIND_COEFF`.
+* A leg sitting on a strong site lowers the energy.
 
 ### Crossing: loops should not cross
 
-$$E_{\text{cross}} = 10^8 c_\kappa \sum_{k < l} K(k, l)$$
+$$E_c = 10^8 \, \kappa \sum_{k < l} K_{kl}$$
 
-$K(k, l)$ is 1 when loops $k$ and $l$ cross ($m_k < m_l < n_k < n_l$ or the mirror case) or share an end, and 0 otherwise. $c_\kappa$ is `CROSS_COEFF`. Only LEFs of the same family interact, unless `COHESIN_BLOCKS_CONDENSIN` is on.
+* $\kappa$ is `CROSS_COEFF`.
+* $K_{kl} = 1$ if loops $k$ and $l$ cross, that is $m_k < m_l < n_k < n_l$ (or the mirror case), or share an end. Otherwise $K_{kl} = 0$.
+* Only LEFs of the same family interact, unless `COHESIN_BLOCKS_CONDENSIN` is on.
 
 ### Replication barrier
 
-When replication is on, a loop must not straddle a replication fork. For each LEF with legs on replicated state $f(m_k)$ and $f(n_k)$ (1 = copied, 0 = not copied) the penalty is
+$$E_r = 10^8 \, c_r \sum_{k} \rho_k$$
 
-$$\rho_k = [f(m_k) \ne f(n_k)] + [f(m_k) = f(n_k) = 1 \text{ and some bead between them is not copied}] + \frac{\text{copied beads inside}}{n_k - m_k} \cdot [f(m_k) = f(n_k) = 0]$$
+* $c_r$ is `REP_COEFF`.
+* $\rho_k$ is the penalty of LEF $k$ for straddling a replication fork:
 
-and
+| Situation of LEF $k$ | $\rho_k$ |
+|---|---|
+| $r_{m_k} \ne r_{n_k}$ (legs on different sides of a fork) | 1 |
+| $r_{m_k} = r_{n_k} = 1$, but a bead between the legs is not copied | 1 |
+| $r_{m_k} = r_{n_k} = 0$ | fraction of copied beads between the legs |
+| otherwise | 0 |
 
-$$E_{\text{rep}} = 10^8 c_{\text{rep}} \sum_k \rho_k$$
-
-with $c_{\text{rep}}$ = `REP_COEFF`. A fork is therefore a soft wall for loops. The default is `REP_COEFF = 0.01`, an energy scale of $10^6$. Version 1.0 used 1.0 (a scale of $10^8$); tests show that anything from $10^3$ to $10^8$ blocks loops equally well, while the huge value only made energy numbers unreadable.
+A fork is therefore a soft wall for loops. The default is `REP_COEFF = 0.01`, an energy scale of $10^6$. Version 1.0 used 1.0 (a scale of $10^8$); tests show that anything from $10^3$ to $10^8$ blocks loops equally well, while the huge value only made energy numbers unreadable.
 
 ### Epigenetic state (Potts) energy
 
 Only active when replication data are given:
 
-$$E_{\text{potts}} = -c_1 \sum_i H_i s_i + c_2 \sum_{i < j} J_{ij} |s_i - s_j|$$
+$$E_s = -\,c_1 \sum_{i} h_i s_i \; + \; c_2 \sum_{i<j} J_{ij} \, |s_i - s_j|$$
 
-* The field $H_i$ comes from replication timing: $h_i = 2 f_i - 1$, so early-replicating beads are pushed to A and late ones to B. With `REP_FORK_EPIGENETIC_ORGANIZER` on, a time-dependent term is added so that a bead gets its field when a fork passes it.
-* The coupling $J_{ij}$ is 1 for neighbouring beads and counts the LEFs that connect $i$ and $j$. Loops therefore pull their two anchors toward the same state, which spreads epigenetic colour along loops.
-* $c_1$ = `EPI_FIELD_COEFF` and $c_2$ = `EPI_INTERACT_COEFF`.
+* $c_1$ is `EPI_FIELD_COEFF` and $c_2$ is `EPI_INTERACT_COEFF`.
+* The field $h_i = 2 f_i - 1$ comes from the replication timing signal $f_i \in [0,1]$ ([replication model](replication_model.md)): early-replicating beads are pushed to A (positive spin), late ones to B. With `REP_FORK_EPIGENETIC_ORGANIZER` on, a time-dependent term is added so that a bead gets its field when a fork passes it.
+* The coupling $J_{ij}$ is 1 for neighbouring beads ($|i-j| = 1$) plus the number of LEFs whose legs sit on $i$ and $j$. Loops therefore pull their two anchors toward the same state.
 
 ## Moves
 
@@ -64,7 +87,7 @@ During S phase, a leg next to a fork is pushed back (`REP_FORK_PUSH`), so forks 
 
 A move changing the energy by $\Delta E$ is accepted with probability
 
-$$\min \left( 1, e^{-\Delta E / T} \right)$$
+$$P_{\text{accept}} = \min\left(1,\, e^{-\Delta E / T}\right)$$
 
 where $T$ is `T_MC`. Lower $T$ gives a more ordered system, higher $T$ a more fluctuating one.
 

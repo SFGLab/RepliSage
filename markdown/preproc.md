@@ -27,11 +27,11 @@ For every loop with strength $w$ and anchors on beads $x$ and $y$, the left pote
 
 Without orientation information:
 
-$$L_x \leftarrow L_x + w, \qquad L_y \leftarrow L_y + w, \qquad R_x \leftarrow R_x + w, \qquad R_y \leftarrow R_y + w$$
+$$\begin{aligned} L_x &\leftarrow L_x + w, & R_x &\leftarrow R_x + w \\ L_y &\leftarrow L_y + w, & R_y &\leftarrow R_y + w \end{aligned}$$
 
 With orientation $o_x, o_y$ in columns 8 and 9:
 
-$$L_x \leftarrow L_x + w (1 - o_x), \qquad R_x \leftarrow R_x + w o_x$$
+$$L_x \leftarrow L_x + w\,(1 - o_x), \qquad R_x \leftarrow R_x + w\,o_x$$
 
 and the same for $y$. In words: a forward-facing CTCF site attracts the left leg of an extruder, a reverse-facing one attracts the right leg.
 

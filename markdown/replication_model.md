@@ -23,13 +23,15 @@ Each bead $i$ is a potential origin. It fires on average at time
 
 $$\mu_i = T (1 - f_i)$$
 
-where $T$ is the number of simulated time points (`REP_SIM_T`). Early beads have a small $\mu_i$ and fire first. The firing time is spread around this mean with standard deviation
+where $T$ is the number of simulated time points (`REP_SIM_T`) and $f_i$ the timing signal. Early beads have a small $\mu_i$ and fire first. The firing time is spread around this mean with standard deviation
 
-$$\sigma_t = T \cdot \text{REP\_T\_STD\_FACTOR}$$
+$$\sigma = \lambda T$$
 
-A larger spread makes timing noisier from cell to cell. The probability density of firing at time $t$ is a Gaussian $g_i(t)$ with mean $\mu_i$ and width $\sigma_t$. Because a bead can only fire if it has not been copied yet, RepliSage converts the density into a discrete hazard (the probability to fire at step $t$ given that it has not fired before):
+where $\lambda$ is `REP_T_STD_FACTOR`.
 
-$$p_i(t) = \frac{g_i(t)}{1 - p_i(t - 1)}$$
+A larger spread makes timing noisier from cell to cell. The probability density of firing at time $t$ is a Gaussian $g_i(t)$ with mean $\mu_i$ and width $\sigma$. Because a bead can only fire if it has not been copied yet, RepliSage converts the density into a discrete hazard (the probability to fire at step $t$ given that it has not fired before):
+
+$$g_i(t) = \frac{1}{\sigma\sqrt{2\pi}} \, e^{-(t-\mu_i)^2 / (2\sigma^2)}, \qquad p_i(t) = \frac{g_i(t)}{1 - p_i(t - 1)}$$
 
 This matrix $p_i(t)$ is the initiation rate shown in the report. It is multiplied by `REP_INIT_RATE_SCALE` before the simulation.
 

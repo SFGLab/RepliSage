@@ -1,5 +1,5 @@
 :root { --md-primary-fg-color: #141414; --md-primary-fg-color--light: #2a2a2a; --md-primary-fg-color--dark: #000;
         --md-accent-fg-color: #A50F2D; --md-typeset-a-color: #A50F2D; }
-.md-header__button.md-logo img { height: 1.6rem; background: #fff; border-radius: 4px; padding: 2px 6px; }
+.md-header__button.md-logo img { height: 1.7rem; }
 .md-typeset h1, .md-typeset h2 { font-weight: 700; }
 .md-typeset table:not([class]) th { background: #141414; color: #fff; }
