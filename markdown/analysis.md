@@ -22,7 +22,9 @@ Samples of a Markov chain are correlated, so ten thousand samples are not ten th
 
 **Autocorrelation.** For a series $x_t$ with mean $\bar{x}$, the autocorrelation at lag $\tau$ is
 
-$$\rho(\tau) = \frac{C(\tau)}{C(0)}, \qquad C(\tau) = \big\langle (x_t - \bar{x})(x_{t+\tau} - \bar{x}) \big\rangle$$
+$$\rho(\tau) = \frac{C(\tau)}{C(0)}$$
+
+$$C(\tau) = \big\langle (x_t - \bar{x})(x_{t+\tau} - \bar{x}) \big\rangle$$
 
 where $C(\tau)$ is the autocovariance and $\langle\cdot\rangle$ the average over $t$.
 

@@ -13,17 +13,23 @@ It runs only when you ask for it (`--run-md true`, or `simulation_type` in the c
 
 ## Forces
 
+In the notation of the paper, the total potential is
+
+$$U = U_{\text{bk}} + U_{\text{ev}} + U_{\text{le}}(t) + U_{\text{rep}}(t) + U_{\text{pull}} + U_{\text{block}}(t)$$
+
+backbone (bonds and stiffness), excluded volume, loops, sister tie, pulling force and compartment attraction. The Langevin temperature is 310 K and is unrelated to the Monte Carlo temperature $T_{\text{mc}}$.
+
 Beads have a mass of a 10 kb chromatin piece. Distances are in nanometres and the typical bond length is $r_0 = 0.1$. All forces below act on every chain.
 
 | Force | Form | Purpose |
 |---|---|---|
-| Excluded volume | Repulsive $( \frac{\epsilon^2 \sigma^2}{r + r_s} )^3$ with cutoff 0.2 | Beads do not overlap |
-| Bonds | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^5$ | Neighbouring beads stay connected |
+| Excluded volume, $U_{\text{ev}}$ | Repulsive $( \frac{\epsilon^2 \sigma^2}{r + r_s} )^3$ with cutoff 0.2 | Beads do not overlap |
+| Bonds, $U_{\text{bk}}$ | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^5$ | Neighbouring beads stay connected |
 | Stiffness | Harmonic angle around $\pi$, $k = 200$ | Chromatin is not infinitely flexible |
-| Loops | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^4$ between legs $m_k$ and $n_k$ of every bound LEF | Loop extrusion shapes the structure. Updated at every sample |
-| Compartments | Gaussian attraction between beads of the same chain and the same spin state | A and B beads cluster separately |
-| Sister tie | Harmonic bond between bead $i$ on chain A and bead $i$ on chain B | Keeps the copies together (see below) |
-| Pulling | Constant force along $x$, opposite on the two chains | Separates the sisters after S phase |
+| Loops, $U_{\text{le}}$ | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^4$ between legs $m_k$ and $n_k$ of every bound LEF | Loop extrusion shapes the structure. Updated at every sample |
+| Compartments, $U_{\text{block}}$ | Gaussian attraction between beads of the same chain and the same spin state | A and B beads cluster separately |
+| Sister tie, $U_{\text{rep}}$ | Harmonic bond between bead $i$ on chain A and bead $i$ on chain B | Keeps the copies together (see below) |
+| Pulling, $U_{\text{pull}}$ | Constant force along $x$, opposite on the two chains | Separates the sisters after S phase |
 
 ### Compartment strength
 

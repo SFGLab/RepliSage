@@ -1,107 +1,106 @@
 # Monte Carlo model
 
-The Monte Carlo (MC) model samples two kinds of objects on a chain of $N$ beads:
+The notation follows the RepliSage paper. A configuration of the system is
 
-* **Loop extruding factors (LEFs).** Each LEF $k$ is a ring with two legs on beads $m_k < n_k$ that form a loop. Legs slide apart (extrusion) and stop at CTCF sites.
-* **Epigenetic states.** Every bead $i$ carries a spin $s_i \in \{-2, -1, 0, 1, 2\}$ (a five-state Potts model). Positive spins give the active A compartment, negative spins the inactive B compartment.
+$$\mathcal{S} = \left(\{(m_i, n_i)\}_{i=1}^{N_{\text{lef}}},\ \{s_k\}_{k=1}^{N_{\text{beads}}}\right)$$
 
-A configuration is $(m_k, n_k)$ for all LEFs plus $(s_i)$ for all beads. The model prefers low-energy configurations and explores them with the Metropolis rule.
+where LEF $i$ has its legs on beads $m_i < n_i$, and bead $k$ has an epigenetic state $s_k \in \{-2,-1,0,1,2\}$ (a five-state Potts model: positive = A, negative = B). The graph $\mathcal{G}$ links neighbouring beads $k, k\pm1$ and the two anchors $m_i, n_i$ of every LEF. States are sampled from a Boltzmann distribution,
+
+$$p(\mathcal{S}) = \frac{1}{\mathcal{Z}} \exp\left(-\frac{\mathcal{H}}{T_{\text{mc}}}\right)$$
+
+with the partition function $\mathcal{Z}$ (a normalisation constant) and the Monte Carlo temperature $T_{\text{mc}}$ (the Boltzmann constant is set to 1). For the intuition, see [the idea in a nutshell](intuition.md).
 
 ## Energy
 
-The total energy is a sum of five terms:
+$$\mathcal{H} = \mathcal{H}_{\text{le}} + \mathcal{H}_{\text{rep}} + \mathcal{H}_{\text{epi}}$$
 
-$$E = E_f + E_b + E_c + E_r + E_s$$
+$$\mathcal{H}_{\text{le}} = \mathcal{H}_{\text{fold}} + \mathcal{H}_{\text{cross}} + \mathcal{H}_{\text{bind}}$$
 
-**Symbols used below**
+Loop extrusion ($\mathcal{H}_{\text{le}}$, as in LoopSage), replication barrier ($\mathcal{H}_{\text{rep}}$) and epigenetic states ($\mathcal{H}_{\text{epi}}$). Each coefficient is written $\mathcal{C}$ (capital, internal) and is built from a user parameter (lowercase, in the config file), see the [notation table](#notation-paper-and-config).
 
-| Symbol | Meaning |
+**Folding: loops want to be large.**
+
+$$\mathcal{H}_{\text{fold}} = \mathcal{C}_{\text{fold}} \sum_{i=1}^{N_{\text{lef}}} \log(n_i - m_i + 1)$$
+
+$$\mathcal{C}_{\text{fold}} = -\frac{N_{\text{beads}} f}{N_{\text{lef}} \log(N_{\text{beads}}/N_{\text{lef}})}$$
+
+**Binding: legs like CTCF sites.** $L(\cdot)$ and $R(\cdot)$ are the binding potentials for left and right legs ([pre-processing](preproc.md)).
+
+$$\mathcal{H}_{\text{bind}} = \mathcal{C}_{\text{bind}} \sum_{i=1}^{N_{\text{lef}}} \left(L(m_i) + R(n_i)\right)$$
+
+$$\mathcal{C}_{\text{bind}} = -\frac{N_{\text{beads}} b}{\sum_k (L_k + R_k)}$$
+
+**Crossing: loops should not cross.** $K = 1$ if two LEFs cross ($m_i < m_j < n_i < n_j$) or share an end, otherwise 0.
+
+$$\mathcal{H}_{\text{cross}} = \mathcal{C}_{\text{cross}} \sum_{i,j} K(m_i,n_i;m_j,n_j)$$
+
+$$\mathcal{C}_{\text{cross}} = \kappa \times 10^8$$
+
+Only LEFs of the same family interact, unless `COHESIN_BLOCKS_CONDENSIN` is on. A second family of $N^{(2)}_{\text{lef}}$ LEFs (condensin) has its own folding coefficient $\mathcal{C}^{(2)}_{\text{fold}}$.
+
+**Replication barrier.** $f_{\text{rep}}(x,t) \in \{0,1\}$ says whether bead $x$ is copied at time $t$ (output of [Replikator](replication_model.md)).
+
+$$\mathcal{H}_{\text{rep}}(t) = \mathcal{C}_{\text{rep}} \sum_{i=1}^{N_{\text{lef}}} \mathcal{R}(m_i, n_i; t)$$
+
+$$\mathcal{C}_{\text{rep}} = c_{\text{rep}} \times 10^8$$
+
+| Situation of LEF $i$ | $\mathcal{R}$ |
 |---|---|
-| $N$ | number of beads in one chain |
-| $M$ | number of loop extruders (LEFs) |
-| $m_k < n_k$ | bead positions of the left and right leg of LEF $k$ |
-| $L_i$, $R_i$ | CTCF binding potentials of bead $i$ for left and right legs ([pre-processing](preproc.md)) |
-| $r_i \in \{0, 1\}$ | replication state of bead $i$ at the current time: 1 = copied, 0 = not copied |
-| $s_i \in \{-2,\dots,2\}$ | epigenetic (Potts) spin of bead $i$ |
-| $c_f, c_b, \kappa, c_r, c_1, c_2$ | strengths of the terms, set in the config file |
-
-### Folding: loops want to be large
-
-$$E_f = -\,c_f \, \frac{N}{M \ln (N/M)} \sum_{k} \ln (n_k - m_k + 1)$$
-
-* $c_f$ is `FOLDING_COEFF` (`FOLDING_COEFF2` for the second family).
-* The logarithm rewards long loops with diminishing returns.
-* The prefactor keeps the scale independent of $N$ and $M$.
-
-### Binding: legs like CTCF sites
-
-$$E_b = -\,c_b \, \frac{N}{\sum_i (L_i + R_i)} \sum_{k} \left( L_{m_k} + R_{n_k} \right)$$
-
-* $c_b$ is `BIND_COEFF`.
-* A leg sitting on a strong site lowers the energy.
-
-### Crossing: loops should not cross
-
-$$E_c = 10^8 \, \kappa \sum_{k < l} K_{kl}$$
-
-* $\kappa$ is `CROSS_COEFF`.
-* $K_{kl} = 1$ if loops $k$ and $l$ cross, that is $m_k < m_l < n_k < n_l$ (or the mirror case), or share an end. Otherwise $K_{kl} = 0$.
-* Only LEFs of the same family interact, unless `COHESIN_BLOCKS_CONDENSIN` is on.
-
-### Replication barrier
-
-$$E_r = 10^8 \, c_r \sum_{k} \rho_k$$
-
-* $c_r$ is `REP_COEFF`.
-* $\rho_k$ is the penalty of LEF $k$ for straddling a replication fork:
-
-| Situation of LEF $k$ | $\rho_k$ |
-|---|---|
-| $r_{m_k} \ne r_{n_k}$ (legs on different sides of a fork) | 1 |
-| $r_{m_k} = r_{n_k} = 1$, but a bead between the legs is not copied | 1 |
-| $r_{m_k} = r_{n_k} = 0$ | fraction of copied beads between the legs |
+| $f_{\text{rep}}(m_i) \ne f_{\text{rep}}(n_i)$ (legs on different sides of a fork) | 1 |
+| both copied, but an uncopied bead lies between the legs | 1 |
+| both uncopied | $\ell_{\text{rep}} / (n_i - m_i)$ |
 | otherwise | 0 |
 
-A fork is therefore a soft wall for loops. The default is `REP_COEFF = 0.01`, an energy scale of $10^6$. Version 1.0 used 1.0 (a scale of $10^8$); tests show that anything from $10^3$ to $10^8$ blocks loops equally well, while the huge value only made energy numbers unreadable.
+Here $\ell_{\text{rep}}$ is the number of copied beads inside the loop. A fork is a *moving barrier*: a large $c_{\text{rep}}$ is a solid wall, a small one lets some LEFs through. The default is `REP_COEFF = 0.01` (a scale of $10^6$); tests show anything from $10^3$ to $10^8$ blocks loops equally well.
 
-### Epigenetic state (Potts) energy
+**Epigenetic states** (Potts-like, active only with replication data):
 
-Only active when replication data are given:
+$$\mathcal{H}_{\text{epi}} = \mathcal{C}_{p,1} \sum_{k=1}^{N_{\text{beads}}} \frac{h_k + h_{t,k}}{2} s_k + \mathcal{C}_{p,2} \sum_{k>l} J_{kl} |s_k - s_l|$$
 
-$$E_s = -\,c_1 \sum_{i} h_i s_i \; + \; c_2 \sum_{i<j} J_{ij} \, |s_i - s_j|$$
+$$\mathcal{C}_{p,1} = -c_{p,1},\ \mathcal{C}_{p,2} = c_{p,2}$$
 
-* $c_1$ is `EPI_FIELD_COEFF` and $c_2$ is `EPI_INTERACT_COEFF`.
-* The field $h_i = 2 f_i - 1$ comes from the replication timing signal $f_i \in [0,1]$ ([replication model](replication_model.md)): early-replicating beads are pushed to A (positive spin), late ones to B. With `REP_FORK_EPIGENETIC_ORGANIZER` on, a time-dependent term is added so that a bead gets its field when a fork passes it.
-* The coupling $J_{ij}$ is 1 for neighbouring beads ($|i-j| = 1$) plus the number of LEFs whose legs sit on $i$ and $j$. Loops therefore pull their two anchors toward the same state.
+* $h_k \in [-1, 1]$ is the **epigenetic field**, from replication timing ($h_k = 2 f_k - 1$ for the timing signal $f_k \in [0,1]$): early replicating beads go to A, late ones to B.
+* $h_{t,k}$ is the **replication-driven field**: it is zero before replication, then each bead receives a one-off contribution when a fork passes it, positive for early and negative for late replication,
 
-## Moves
+$$h_{t,k} = \sum_{t'=0}^{t_r}\left(1 - \frac{2 t'}{T_r}\right)\left(f_{\text{rep}}(k,t') - f_{\text{rep}}(k,t'-1)\right)$$
 
-At each step the sampler proposes `N_SWEEP` changes. Each proposal is either
+with $t_r$ the time since replication started and $T_r$ its total duration. It is switched off with `REP_FORK_EPIGENETIC_ORGANIZER = False`.
+* $J_{kl} = 1$ if beads $k, l$ are neighbours ($l = k \pm 1$) or the two anchors of a LEF, otherwise 0. Beads in different states cost energy, so loops pull their anchors towards one state.
 
-* with probability `P_REW`, a **LEF move**: an unbound LEF binds at a random bead; a bound LEF either unbinds and rebinds or slides each leg by -1, 0 or +1 beads (`LEF_RW`), or
-* otherwise a **spin flip**: a random bead moves to one of the four other states.
+## Moves and the algorithm
 
-During S phase, a leg next to a fork is pushed back (`REP_FORK_PUSH`), so forks sweep loops ahead of them.
+1. Start from random LEF positions and (by default) random states.
+2. Propose a change: with probability `P_REW` a **LEF move** (an unbound LEF binds at a random bead; a bound one rebinds at a random place, or slides by one bead $(m_i, n_i) \to (m_i \pm 1, n_i \pm 1)$), otherwise a **state change** (bead $k$ moves to one of the four other states). During S phase a leg next to a fork is pushed back (`REP_FORK_PUSH`).
+3. Accept if $\Delta\mathcal{H} \le 0$, otherwise with probability $e^{-\Delta\mathcal{H}/T_{\text{mc}}}$. Here $\Delta\mathcal{H} = \Delta\mathcal{H}_{\text{link}} + \Delta\mathcal{H}_{\text{nodes}}$ (links changed by a LEF move, states changed by a flip).
+4. A Monte Carlo step is $N_{\text{sweep}}$ such proposals. Repeat for $N_{\text{steps}}$ steps, record every `MC_STEP` steps, and discard the first `BURNIN` steps. See [analysis](analysis.md) for convergence checks.
 
-## Acceptance
-
-A move changing the energy by $\Delta E$ is accepted with probability
-
-$$P_{\text{accept}} = \min\left(1,\, e^{-\Delta E / T}\right)$$
-
-where $T$ is `T_MC`. Lower $T$ gives a more ordered system, higher $T$ a more fluctuating one.
-
-## Sampling
-
-The state is recorded every `MC_STEP` steps. The first `BURNIN` steps are discarded in the analysis. The [analysis](analysis.md) page explains how to check that the chain has converged.
+Lower $T_{\text{mc}}$ gives a more ordered system, higher $T_{\text{mc}}$ a noisier one. During S phase the energy keeps changing, so the run is out of equilibrium there.
 
 ## Phases
 
 | Phase | Steps | What changes |
 |---|---|---|
 | G1 | before `REP_START_TIME` | No fork; all beads unreplicated |
-| S | `REP_START_TIME` to `REP_START_TIME + REP_TIME_DURATION` | Forks move; replication barrier is active |
-| G2/M | after S | All beads replicated; the final matrix applies |
+| S | `REP_START_TIME` to `REP_START_TIME + REP_TIME_DURATION` | Forks move; replication barrier active |
+| G2/M | after S | All beads replicated; second LEF family may act |
+
+## Notation: paper and config
+
+| Paper | Meaning | Config / flag |
+|---|---|---|
+| $N_{\text{beads}}$ | beads in one chain | `N_BEADS` |
+| $N_{\text{lef}}$, $N^{(2)}_{\text{lef}}$ | LEFs, second family | `N_LEF`, `N_LEF2` |
+| $(m_i, n_i)$ | leg positions of LEF $i$ | |
+| $s_k$ | epigenetic state of bead $k$ | |
+| $T_{\text{mc}}$ | Monte Carlo temperature | `T_MC` |
+| $N_{\text{sweep}}$, $N_{\text{steps}}$ | proposals per step, number of steps | `N_SWEEP`, `N_STEPS` |
+| $f$, $f^{(2)}$ | folding strengths | `FOLDING_COEFF`, `FOLDING_COEFF2` |
+| $b$ | binding strength | `BIND_COEFF` |
+| $\kappa$ | crossing penalty | `CROSS_COEFF` |
+| $c_{\text{rep}}$ | replisome barrier strength (permeability) | `REP_COEFF` |
+| $c_{p,1}$, $c_{p,2}$ | epigenetic field and coupling strength | `EPI_FIELD_COEFF`, `EPI_INTERACT_COEFF` |
+| $f_{\text{rep}}(x,t)$ | replicated (1) or not (0) | replicated-DNA matrix |
+| $T_r$, $t_r$ | duration of replication, time since it started | `REP_TIME_DURATION`, `REP_START_TIME` |
 
 ## Parameters
 

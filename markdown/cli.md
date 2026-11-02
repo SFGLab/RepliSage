@@ -53,7 +53,7 @@ The number of recorded states, and so of 3D structures, is
 
 $$n = \left\lfloor \frac{S}{\delta} \right\rfloor$$
 
-and the analysis uses the $n - B/\delta$ states after burn-in. For replication to finish inside the run keep $t_0 + d \le S$; the remaining steps are G2/M. The simulated MD time per structure is $n_{md} \, \Delta t$.
+and the analysis uses the $n - B/\delta$ states after burn-in. For replication to finish inside the run keep $t_0 + d \le S$; the remaining steps are G2/M. The simulated MD time per structure is $n_{md}  \Delta t$.
 
 Example: `--n-steps 30000 --mc-step 200 --burnin 1000` records 150 states and analyses 145 of them.
 

@@ -31,7 +31,9 @@ $$\begin{aligned} L_x &\leftarrow L_x + w, & R_x &\leftarrow R_x + w \\ L_y &\le
 
 With orientation $o_x, o_y$ in columns 8 and 9:
 
-$$L_x \leftarrow L_x + w\,(1 - o_x), \qquad R_x \leftarrow R_x + w\,o_x$$
+$$L_x \leftarrow L_x + w \cdot (1 - o_x)$$
+
+$$R_x \leftarrow R_x + w \cdot o_x$$
 
 and the same for $y$. In words: a forward-facing CTCF site attracts the left leg of an extruder, a reverse-facing one attracts the right leg.
 

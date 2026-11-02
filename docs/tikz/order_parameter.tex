@@ -1,0 +1,16 @@
+\documentclass[tikz,border=6pt]{standalone}
+\usetikzlibrary{arrows.meta}
+\definecolor{red}{HTML}{A50F2D}\definecolor{ink}{HTML}{141414}\definecolor{gry}{HTML}{8A8A8A}
+\begin{document}
+\begin{tikzpicture}[font=\sffamily\small,>=Stealth]
+\shade[left color=gry!15,right color=red!35] (0,0) rectangle (10,0.7);
+\draw[ink,thick] (0,0) rectangle (10,0.7);
+\draw[->,ink,very thick] (0,-0.4)--(10,-0.4) node[right]{$T_{\mathrm{mc}}$};
+\node[anchor=north,align=center] at (1.2,-0.5) {low $T_{\mathrm{mc}}$\\[-1pt]\scriptsize ordered, long loops};
+\node[anchor=north,align=center] at (8.8,-0.5) {high $T_{\mathrm{mc}}$\\[-1pt]\scriptsize noisy, short loops, less folded};
+\node[red,anchor=south] at (5.1,0.8) {$T^*_{\mathrm{mc}}\approx 1.7\pm 0.3$};
+\node[red,anchor=south,font=\sffamily\scriptsize] at (5.1,1.25) {strongest compaction};
+\draw[red,thick] (4.4,0)--(4.4,0.7);\draw[red,thick] (5.8,0)--(5.8,0.7);
+\node[ink,font=\sffamily\bfseries] at (2.3,0.35) {order parameter};
+\end{tikzpicture}
+\end{document}

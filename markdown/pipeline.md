@@ -39,6 +39,8 @@ Black boxes always run; red-outlined boxes run only when their inputs are presen
 
 ## Time in a replicating run
 
+For what each phase means biologically, see [Scope and goals](scope.md).
+
 A cell cycle is laid out along the Monte Carlo steps. The first steps are burn-in, during which the system relaxes. G1 follows, then S phase from `REP_START_TIME` for `REP_TIME_DURATION` steps, then G2/M.
 
 ```mermaid

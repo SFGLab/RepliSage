@@ -19,25 +19,25 @@ In every case the signal is rescaled to $f_i \in [0, 1]$ along the $N$ beads, wh
 
 ## From timing to initiation
 
-Each bead $i$ is a potential origin. It fires on average at time
+Averaging single-cell timing over cells gives the replication fraction $f(x,t)$, a pseudo-bulk timing curve with mean replication time $\mu(x)$ at position $x$ (bead $i$ in the code). The **initiation rate** $I(x,t)$ is the probability per unit time that an origin at $x$ fires at time $t$. It is assumed Gaussian in time around $\mu(x)$:
 
-$$\mu_i = T (1 - f_i)$$
+$$I(x,t) \propto \exp\left(-\frac{(t - \mu(x))^2}{2\sigma_I^2}\right)$$
 
-where $T$ is the number of simulated time points (`REP_SIM_T`) and $f_i$ the timing signal. Early beads have a small $\mu_i$ and fire first. The firing time is spread around this mean with standard deviation
+with the same $\sigma_I$ everywhere, proportional to the total replication time $T_r$. In the code, $\mu_i = T(1 - f_i)$ with $T$ = `REP_SIM_T`, and $\sigma_I = \lambda T$ with $\lambda$ = `REP_T_STD_FACTOR`. Early beads fire first, and a larger $\sigma_I$ makes timing noisier from cell to cell.
 
-$$\sigma = \lambda T$$
+Because a bead can only fire while it is not yet copied, the Gaussian $g_i(t)$ is turned into a discrete firing probability per step, renormalised as in the paper so that the firing time distribution matches $I(x,t)$:
 
-where $\lambda$ is `REP_T_STD_FACTOR`.
+$$p_i(t) = \frac{g_i(t)}{1 - p_i(t-1)}$$
 
-A larger spread makes timing noisier from cell to cell. The probability density of firing at time $t$ is a Gaussian $g_i(t)$ with mean $\mu_i$ and width $\sigma$. Because a bead can only fire if it has not been copied yet, RepliSage converts the density into a discrete hazard (the probability to fire at step $t$ given that it has not fired before):
+This matrix is multiplied by `REP_INIT_RATE_SCALE` and shown in the report.
 
-$$g_i(t) = \frac{1}{\sigma\sqrt{2\pi}} \, e^{-(t-\mu_i)^2 / (2\sigma^2)}, \qquad p_i(t) = \frac{g_i(t)}{1 - p_i(t - 1)}$$
+## Forks (Replikator)
 
-This matrix $p_i(t)$ is the initiation rate shown in the report. It is multiplied by `REP_INIT_RATE_SCALE` before the simulation.
+At each step every uncopied bead draws a random number and fires if it is below its initiation rate. Not all origins fire: the others are copied passively by forks from neighbours. A fired origin launches two forks (left and right) with a speed $v$ drawn from a normal distribution,
 
-## Forks
+$$p(v) \propto \exp\left(-\frac{(v - \mu_v)^2}{2\sigma_v^2}\right)$$
 
-At every time step each non-replicated bead fires with probability $p_i(t)$. A fired origin launches two forks, one moving left and one moving right. Each fork gets its own speed drawn from a normal distribution with mean set by `REP_SPEED_SCALE`, and moves that many beads per time step. A bead passed by a fork becomes replicated. When a left fork meets a right fork coming from a neighbouring origin, both stop and the stretch between them is marked replicated. The simulation runs until every bead is copied.
+where $\mu_v, \sigma_v$ are estimated from the slopes between consecutive extrema of the timing curve $f$ (`REP_SPEED_SCALE` sets the scale). Each fork then moves $r = v \cdot (t - t_0)$ beads from its origin, fired at $t_0$. Forks stop when they meet, and the run ends when everything is copied. Speed is constant in time, a simplification (see [limitations](limitations.md)). The check of the model is that the average of many runs reproduces the input timing curve.
 
 ## What the model hands over
 

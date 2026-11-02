@@ -3,3 +3,4 @@
 .md-header__button.md-logo img { height: 1.7rem; }
 .md-typeset h1, .md-typeset h2 { font-weight: 700; }
 .md-typeset table:not([class]) th { background: #141414; color: #fff; }
+.md-typeset img[src$=".svg"] { display: block; margin: 1rem auto; width: 92%; max-width: 100%; background: #fff; }
