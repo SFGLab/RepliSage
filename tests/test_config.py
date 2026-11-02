@@ -64,3 +64,11 @@ def test_help_lists_main_options(capsys):
     with pytest.raises(SystemExit): get_config(["-h"])
     out = capsys.readouterr().out
     for k in ("--bedpe-file", "--rt-file", "--run-md", "--with-stress", "--config", "config file"): assert k in out
+
+
+def test_step_flags(tmp_path):
+    """Sampling, S-phase and MD step flags reach the parameters."""
+    a, _ = get_config(["--n-steps", "9000", "--mc-step", "50", "--burnin", "300", "--rep-start", "3000", "--rep-duration", "4000",
+                       "--md-steps", "200", "--md-step-size", "50 femtosecond"])
+    assert (a.N_STEPS, a.MC_STEP, a.BURNIN, a.REP_START_TIME, a.REP_TIME_DURATION, a.SIM_STEP) == (9000, 50, 300, 3000, 4000, 200)
+    assert a.INTEGRATOR_STEP == "50 femtosecond"

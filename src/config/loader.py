@@ -46,6 +46,12 @@ def make_parser():
     opt(g, "--md-mode", choices=["MD", "EM"], help="3D engine: molecular dynamics or repeated energy minimisation")
     opt(g, "--with-stress", action="store_true", help="replication stress: slower forks, more origins (default: off)")
     opt(g, "--n-steps", type=int, metavar="N", help="Monte Carlo steps")
+    opt(g, "--mc-step", type=int, metavar="N", help="record (thin) one MC state every N steps")
+    opt(g, "--burnin", type=int, metavar="N", help="MC steps discarded as burn-in")
+    opt(g, "--rep-start", type=int, metavar="STEP", help="MC step where S phase starts (keep start + duration within --n-steps)")
+    opt(g, "--rep-duration", type=int, metavar="STEPS", help="length of S phase in MC steps")
+    opt(g, "--md-steps", type=int, metavar="N", help="MD steps per recorded MC state")
+    opt(g, "--md-step-size", metavar="TIME", help="MD integrator step, e.g. '100 femtosecond'")
     opt(g, "--n-replicas", type=int, metavar="N", help="independent Monte Carlo replicas")
     opt(g, "--seed", type=int, help="random seed (reproducible runs)")
     g = p.add_argument_group("output and hardware")
@@ -65,6 +71,8 @@ def flags_to_params(ns):
     o = {}
     put = lambda k, v: o.__setitem__(k, v) if v is not None else None
     put("BEDPE_PATH", ns.get("bedpe_file")); put("N_BEADS", ns.get("n_beads")); put("N_STEPS", ns.get("n_steps"))
+    put("MC_STEP", ns.get("mc_step")); put("BURNIN", ns.get("burnin")); put("REP_START_TIME", ns.get("rep_start")); put("REP_TIME_DURATION", ns.get("rep_duration"))
+    put("SIM_STEP", ns.get("md_steps")); put("INTEGRATOR_STEP", ns.get("md_step_size"))
     put("N_REPLICAS", ns.get("n_replicas")); put("SEED", ns.get("seed")); put("OUT_PATH", ns.get("out_path")); put("RUN_NAME", ns.get("run_name"))
     put("PLATFORM", ns.get("platform")); put("N_THREADS", ns.get("threads"))
     if ns.get("region"): o["CHROM"], o["REGION_START"], o["REGION_END"] = ns["region"]

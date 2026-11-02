@@ -20,6 +20,11 @@ python src/run.py -h    # from the repository root
 | run | `--md-mode MD/EM` | Molecular dynamics or repeated energy minimisation |
 | run | `--with-stress` | Replication stress (slower forks, more origins). Off by default |
 | run | `--n-steps N` | Monte Carlo steps |
+| run | `--mc-step N` | Record (thin) one MC state every N steps |
+| run | `--burnin N` | MC steps discarded as burn-in |
+| run | `--rep-start STEP`, `--rep-duration STEPS` | S phase start and length in MC steps (keep their sum within `--n-steps`) |
+| run | `--md-steps N` | MD steps per recorded MC state |
+| run | `--md-step-size TIME` | MD integrator step, for example `"100 femtosecond"` |
 | run | `--n-replicas N` | Independent Monte Carlo replicas |
 | run | `--seed N` | Random seed |
 | output | `--out DIR` | Results root; each run gets its own sub-folder |

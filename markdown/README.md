@@ -7,6 +7,7 @@
 <a href="https://numba.pydata.org/"><img alt="Numba" src="https://img.shields.io/badge/Numba-0.60%2B-141414?labelColor=A50F2D"></a>
 <a href="https://scipy.org/"><img alt="SciPy" src="https://img.shields.io/badge/SciPy-1.11%2B-141414?logo=scipy&logoColor=white&labelColor=A50F2D"></a>
 <a href="https://matplotlib.org/"><img alt="Matplotlib" src="https://img.shields.io/badge/Matplotlib-3.8%2B-141414?labelColor=A50F2D"></a>
+<a href="https://pyvista.org/"><img alt="PyVista" src="https://img.shields.io/badge/PyVista-0.43%2B-141414?labelColor=A50F2D"></a>
 <a href="https://docs.pytest.org/"><img alt="tested with pytest" src="https://img.shields.io/badge/tested%20with-pytest-141414?logo=pytest&logoColor=white&labelColor=A50F2D"></a>
 <a href="https://github.com/SFGLab/RepliSage/blob/main/LICENSE"><img alt="License GPL v3" src="https://img.shields.io/badge/license-GPL%20v3-141414?labelColor=A50F2D"></a>
 </p>
