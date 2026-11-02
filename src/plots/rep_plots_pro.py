@@ -68,6 +68,6 @@ def visualize_simulation(f, rep_fract, path=None):
     if path is None: return
     from .style import apply_style; apply_style()
     fig, ax = plt.subplots(figsize=(9, 5)); im = ax.imshow(f.T, cmap=CMAP_REP, aspect="auto", origin="lower"); ax.grid(False)
-    ax.set_xlabel("Bead"); ax.set_ylabel("Time"); fig.colorbar(im, label="Replicated"); fig.savefig(f"{path}/rep_simulation.png", dpi=200, bbox_inches="tight"); plt.close(fig)
+    ax.set_xlabel("Simulation beads"); ax.set_ylabel("Replication time (simulation steps)"); fig.colorbar(im, label="Replicated"); fig.savefig(f"{path}/rep_simulation.png", dpi=200, bbox_inches="tight"); plt.close(fig)
     fig, ax = plt.subplots(figsize=(6, 4)); ax.plot(rep_fract, color=ROYAL); ax.set_xlabel("Time"); ax.set_ylabel("Replicated fraction")
     fig.savefig(f"{path}/rep_frac.png", dpi=200, bbox_inches="tight"); plt.close(fig)

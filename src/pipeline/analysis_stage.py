@@ -1,6 +1,6 @@
 """Stage: statistics tables, figures, structural metrics, averaged heatmaps and the HTML report of one replica."""
 import numpy as np
-from ..plots.style import FIGS, make_phases, apply_style
+from ..plots.style import FIGS, make_phases, apply_style, set_units
 from ..analysis.tables import (observables, overview_table, convergence_table, phase_table, lef_table, compartment_table,
                                rep_table, has_potts, save_csv)
 from ..analysis.rep_stats import rep_summary
@@ -15,7 +15,7 @@ def statistics(ctx, p, res, rep, ph):
     """Tables (also saved as csv) and the observable series."""
     obs = observables(res, p); conv, diag = convergence_table(obs, ph)
     kb = (ctx.region[1] - ctx.region[0]) / ctx.n_beads / 1e3
-    tables = [overview_table(res, p, ctx.n_ctcf), conv, phase_table(obs, ph), lef_table(res, p, ph, ctx.n_ctcf, kb)]
+    tables = [overview_table(res, p, ctx.n_ctcf, kb), conv, phase_table(obs, ph), lef_table(res, p, ph, ctx.n_ctcf, kb)]
     if rep is not None:
         tables.append(rep_table(rep_summary(rep.rep_frac, rep.input_timing, rep.speed, kb, p.rep_duration)))
         if has_potts(p): tables.append(compartment_table(res, ph))
@@ -38,16 +38,17 @@ def run_analysis(ctx, p, res, out_dir, rep, command=""):
     """Everything derived from one MC replica; returns the report path (or None)."""
     a = ctx.args
     log.step(f"Analysis, figures and report -> {out_dir}")
-    apply_style(a.FIG_DPI); FIGS.clear()
+    apply_style(a.FIG_DPI); FIGS.clear(); set_units(ctx)
     if a.SAVE_MDT: save_parameters(out_dir + '/metadata/params.txt', **a.as_dict())
     ph = make_phases(p, res.Es.shape[0]); obs, tables, diag = statistics(ctx, p, res, rep, ph)
     for t in tables: log.table(t.title, t.rows, t.header)
     save_csv(tables, out_dir + "/metadata/statistics")
+    from ..analysis.mc_stats import diag_segment
+    where = diag_segment(ph)[1]
     if a.SAVE_PLOTS:
-        from ..analysis.mc_stats import diag_segment
-        make_figures(ctx, p, res, out_dir, rep, ph, obs, diag, diag_segment(ph)[1])
+        make_figures(ctx, p, res, out_dir, rep, ph, obs, diag, where)
         if ctx.has_md:
             with log.timer("Structural metrics"): compute_metrics_for_ensemble(out_dir + '/ensemble', duplicated_chain=rep is not None, path=out_dir)
     if a.VIZ_HEATS and ctx.has_md:
         with log.timer("Averaged heatmaps"): heatmaps(ctx, out_dir, rep)
-    return write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command) if a.REPORT else None
+    return write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command, diag, where) if a.REPORT else None

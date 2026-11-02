@@ -68,39 +68,89 @@ def bar_image(tr, t, width, h=90, fps_text=""):
         y = bot - tr.rep.mean(1) * (bot - top - 4) - 2; d.line([((i + .5) * bw, v) for i, v in enumerate(y)], fill="white", width=3)
     x = (t + .5) * bw; d.rectangle([x - 2, top - 5, x + 2, bot + 3], fill=(20, 20, 20)); return np.array(im)
 
+def _smooth(pts, col, k=4):
+    """Cubic-spline the bead path (k points per bead) and interpolate colours along it, for smooth tubes."""
+    from scipy.interpolate import CubicSpline
+    n = len(pts); u = np.linspace(0, n - 1, k * (n - 1) + 1)
+    return CubicSpline(np.arange(n), pts)(u), np.stack([np.interp(u, np.arange(n), col[:, i]) for i in range(3)], 1).astype(np.uint8)
+
+def _light(pl, size, shadows=True):
+    """Soft studio light: key light with shadows, ambient occlusion, anti-aliasing (each step optional)."""
+    import pyvista as pv
+    pl.remove_all_lights(); pl.add_light(pv.Light(position=(3, 4, 5), focal_point=(0, 0, 0), intensity=.9, light_type="scene light"))
+    pl.add_light(pv.Light(position=(-4, -2, 3), intensity=.35, light_type="scene light"))
+    for f in (lambda: pl.enable_anti_aliasing("ssaa"), lambda: pl.enable_ssao(radius=size / 40, bias=.5, kernel_size=128, blur=True), (lambda: pl.enable_shadows()) if shadows else (lambda: None)):
+        try: f()
+        except Exception: pass
+
+def _draw(pl, tr, V, col, fn, r, size, floor=None):
+    """Add tubes (one per chain), LEF anchors / links and forks of frame fn to the plotter."""
+    import pyvista as pv
+    N = tr.n_beads
+    if floor is not None: pl.add_mesh(floor, color="#F3F4F7", ambient=.8, diffuse=.2, specular=0)
+    for c in range(tr.n_chains):
+        pts, cc = _smooth(V[c * N:(c + 1) * N], col[c * N:(c + 1) * N]); M = len(pts)
+        poly = pv.PolyData(pts); poly.lines = np.r_[M, np.arange(M)].astype(np.int_); poly["rgb"] = cc
+        pl.add_mesh(poly.tube(radius=r, n_sides=16), scalars="rgb", rgb=True, smooth_shading=True, specular=.5, specular_power=25, ambient=.25, diffuse=.8)
+        b = V[c * N:(c + 1) * N]
+        if len(tr.lefs[fn]):
+            ap = b[tr.lefs[fn].ravel()]; ch = pv.PolyData(ap); nl = len(ap) // 2
+            ch.lines = np.c_[np.full(nl, 2), np.arange(0, 2 * nl, 2), np.arange(1, 2 * nl, 2)].ravel()
+            pl.add_mesh(ch.tube(radius=r * .35, n_sides=8), color=ROYAL, opacity=.75, smooth_shading=True)
+            pl.add_mesh(pv.PolyData(ap).glyph(geom=pv.Sphere(radius=r * 1.6, theta_resolution=16, phi_resolution=16), scale=False, orient=False), color="#2A2D34", smooth_shading=True, specular=.5)
+        if tr.has_rep:
+            fk = np.flatnonzero(tr.rep[fn][:-1] != tr.rep[fn][1:])
+            if len(fk): pl.add_mesh(pv.PolyData(b[fk]).glyph(geom=pv.Sphere(radius=r * 2.0, theta_resolution=16, phi_resolution=16), scale=False, orient=False), color=TEAL, smooth_shading=True, specular=.6)
+
+def _scene(tr, size, shadows=True):
+    """Plotter with white background, light, and a slightly raised camera; returns (plotter, ext, floor=None)."""
+    import pyvista as pv
+    ext = float(np.linalg.norm(tr.V, axis=2).max()); pl = pv.Plotter(off_screen=True, window_size=(size, size)); pl.set_background("white"); _light(pl, size, shadows)
+    floor = None   # a floor looked heavy on white; shading comes from key light, shadows and ambient occlusion
+    pl.camera_position = [(0, .35 * ext, 3.6 * ext), (0, 0, 0), (0, 1, 0)]
+    return pl, ext, floor
+
+def render_still(tr, f, out_png, mode="sister", size=900, radius=None):
+    """One high-quality picture of frame f (used for the report)."""
+    pl, ext, floor = _scene(tr, size); r = radius or ext / 60; col = bead_rgb(tr, f, mode)
+    _draw(pl, tr, tr.V[f], col, f, r, size, floor); img = pl.screenshot(return_img=True); pl.close()
+    Image.fromarray(img).save(out_png); return out_png
+
+def render_stills(tr, out_png, mode="sister", size=700):
+    """Strip of stills (one per cell-cycle phase present) with phase labels, for the report."""
+    first = {}
+    for f, ph in enumerate(tr.phase): first.setdefault(ph, f)
+    pick = {ph: (f + max(i for i, q in enumerate(tr.phase) if q == ph)) // 2 for ph, f in first.items()}   # middle frame of each phase
+    tmp = []; fnt = ImageFont.truetype("DejaVuSans-Bold.ttf", 26)
+    for ph, f in pick.items():
+        render_still(tr, f, out_png + f".{ph.replace('/', '')}.png", mode, size); im = Image.open(out_png + f".{ph.replace('/', '')}.png").convert("RGB")
+        ImageDraw.Draw(im).text((24, 20), ph, fill=_rgb(PHASE_COL.get(ph, "#7B4FA3")), font=fnt); tmp.append(im)
+    strip = Image.new("RGB", (size * len(tmp), size), "white")
+    for i, im in enumerate(tmp): strip.paste(im, (i * size, 0))
+    strip.save(out_png)
+    import os
+    for ph in pick: os.remove(out_png + f".{ph.replace('/', '')}.png")
+    return out_png
+
 def make_movie(tr, out_base, mode="sister", n_interp=6, fps=24, win=8, size=640, radius=None, gif=True, max_frames=120):
-    """Write out_base.mp4 (and .gif). Frames between structures are linear interpolations."""
-    import pyvista as pv, imageio
-    pv.OFF_SCREEN = True
-    idx = np.unique(np.linspace(0, len(tr.V) - 1, min(max_frames, len(tr.V))).astype(int)); N, C = tr.n_beads, tr.n_chains
-    cm = Contacts(tr, win); r = radius or float(np.percentile(np.linalg.norm(tr.V, axis=2), 98)) / 45
-    pl = pv.Plotter(off_screen=True, window_size=(size, size)); pl.set_background("white"); pl.enable_anti_aliasing("ssaa") if hasattr(pl, "enable_anti_aliasing") else None
-    ext = float(np.percentile(np.linalg.norm(tr.V, axis=2), 98)); pl.camera_position = [(0, 0, ext * 3.4), (0, 0, 0), (0, 1, 0)]
+    """Write out_base.mp4 (and .gif). Coordinates are interpolated with a smooth monotone cubic (PCHIP) and colours are cross-faded."""
+    import imageio
+    from scipy.interpolate import PchipInterpolator
+    idx = np.unique(np.linspace(0, len(tr.V) - 1, min(max_frames, len(tr.V))).astype(int)); K = len(idx)
+    cm = Contacts(tr, win); pl, ext, floor = _scene(tr, size); r = radius or ext / 60
+    path = PchipInterpolator(np.arange(K), tr.V[idx], axis=0) if K > 2 else None
     mp4 = imageio.get_writer(out_base + ".mp4", fps=fps, codec="libx264", quality=8, macro_block_size=2, ffmpeg_log_level="error")
-    hcache = {}; frames = []; total = (len(idx) - 1) * n_interp + 1; k = 0
-    for a in log.progress(range(len(idx)), desc="Rendering movie"):
-        for j in range(n_interp if a < len(idx) - 1 else 1):
-            t = j / n_interp; f0 = idx[a]; f1 = idx[min(a + 1, len(idx) - 1)]; ft = f0 + t * (f1 - f0); fn = f0 if t < .5 else f1
-            V = (1 - t) * tr.V[f0] + t * tr.V[f1]; pl.clear()
-            col = bead_rgb(tr, fn, mode)
-            for c in range(C):
-                pts = V[c * N:(c + 1) * N]; poly = pv.PolyData(pts); poly.lines = np.r_[N, np.arange(N)].astype(np.int_)
-                poly["rgb"] = col[c * N:(c + 1) * N]
-                tube = poly.tube(radius=r, n_sides=12); pl.add_mesh(tube, scalars="rgb", rgb=True, smooth_shading=True, specular=.3)
-                if len(tr.lefs[fn]):
-                    ap = pts[tr.lefs[fn].ravel()]; ch = pv.PolyData(ap); nl = len(ap) // 2
-                    ch.lines = np.c_[np.full(nl, 2), np.arange(0, 2 * nl, 2), np.arange(1, 2 * nl, 2)].ravel()
-                    pl.add_mesh(ch, color=ROYAL, line_width=2, opacity=.8); pl.add_mesh(pv.PolyData(ap), color=BLACK, point_size=size / 55, render_points_as_spheres=True)
-                if tr.has_rep:
-                    fk = np.flatnonzero(tr.rep[fn][:-1] != tr.rep[fn][1:])
-                    if len(fk): pl.add_mesh(pv.PolyData(pts[fk]), color=TEAL, point_size=size / 40, render_points_as_spheres=True)
+    hcache = {}; frames = []; k = 0
+    for a in log.progress(range(K), desc="Rendering movie"):
+        for j in range(n_interp if a < K - 1 else 1):
+            t = j / n_interp; ft = a + t; f0, f1 = idx[a], idx[min(a + 1, K - 1)]; fn = f0 if t < .5 else f1
+            V = path(ft) if path is not None else (1 - t) * tr.V[f0] + t * tr.V[f1]; w = t * t * (3 - 2 * t)
+            col = ((1 - w) * bead_rgb(tr, f0, mode) + w * bead_rgb(tr, f1, mode)).astype(np.uint8); pl.clear(); _draw(pl, tr, V, col, fn, r, size, floor)
             pl.camera.Azimuth(.6)
             left = pl.screenshot(return_img=True)
             if fn not in hcache: hcache.clear(); hcache[fn] = heat_image(tr, cm, int(fn), left.shape[0])
-            right = hcache[fn]
-            frame = np.vstack([np.hstack([left, right]), bar_image(tr, float(np.interp(ft, idx, np.arange(len(idx)))), left.shape[1] * 2)])
-            frame = frame[: frame.shape[0] // 2 * 2, : frame.shape[1] // 2 * 2]
-            mp4.append_data(frame)
+            frame = np.vstack([np.hstack([left, hcache[fn]]), bar_image(tr, ft, left.shape[1] * 2)])
+            frame = frame[: frame.shape[0] // 2 * 2, : frame.shape[1] // 2 * 2]; mp4.append_data(frame)
             if gif and k % 3 == 0: frames.append(Image.fromarray(frame).resize((frame.shape[1] // 2, frame.shape[0] // 2), Image.LANCZOS))
             k += 1
     mp4.close(); pl.close()

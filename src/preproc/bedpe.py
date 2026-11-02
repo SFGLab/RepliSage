@@ -6,6 +6,18 @@ from ..logger import log
 
 # NOTE: the dense N x N coupling matrix J of the old version was never used here
 # (it was always zero); the Potts couplings are now handled sparsely in MC/.
+def load_region(bedpe_file, region, chrom):
+    """Loops of the BEDPE file that lie completely inside the region (bp coordinates)."""
+    df = pd.read_csv(bedpe_file, sep='\t', header=None, comment='#')
+    inside = (df[0] == chrom) & (df[[1, 2, 4, 5]] >= region[0]).all(axis=1) & (df[[1, 2, 4, 5]] < region[1]).all(axis=1)
+    df = df[inside].reset_index(drop=True)
+    if df.empty: raise ValueError("The selected region or chromosome is invalid: the final set does not contain any loops.")
+    return df
+
+MOTIF_FINDER = "https://github.com/BlackPianoCat/motif_finder"
+ORIENT_WARN = ("The BEDPE file has no CTCF orientation (columns 8-9). The model still runs, assuming every orientation blocks LEFs with the same "
+               f"probability, but it is a bit less accurate. To detect CTCF orientation from motifs see {MOTIF_FINDER}")
+
 def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=False,viz=False):
     '''
     Definition of left and right CTCF binding potential.
@@ -21,12 +33,7 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     L (numpy array): left CTCF binding potential.
     R (numpy array): right CTCF binding potential.
     '''
-    # Read file and select the region of interest
-    df = pd.read_csv(bedpe_file,sep='\t',header=None)
-    df = df[(df[1]>=region[0])&(df[2]>=region[0])&(df[4]>=region[0])&(df[5]>=region[0])&(df[5]<region[1])&(df[4]<region[1])&(df[1]<region[1])&(df[2]<region[1])&(df[0]==chrom)].reset_index(drop=True)
-    if df.empty:
-        raise ValueError("The selected region or chromosome is invalid: the final set does not contain any loops.")
-
+    df = load_region(bedpe_file, region, chrom)
     # Convert hic coords into simulation beads
     resolution = (region[1]-region[0])//N_beads
     df[1], df[2], df[4], df[5] = (df[1]-region[0])//resolution, (df[2]-region[0])//resolution, (df[4]-region[0])//resolution, (df[5]-region[0])//resolution
@@ -36,7 +43,7 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     if has_col_7_8:
         log.success("The input bedpe file contains CTCF orientation! It will run taking it into account.")
     else:
-        log.alert("WARNING: The input bedpe file does not contain CTCF orientation and thus it is not taken into account. If you would like to add CTCF orientation check the documentation.")
+        log.alert(ORIENT_WARN)
 
     # Compute the matrix
     distances = list()
@@ -89,6 +96,21 @@ def preprocessing(bedpe_file: str, region: list, chrom: str, N_beads: int):
     return L, R, N_CTCF
 
 def loop_stats(L, R):
-    """Rows for a statistics table of the loop input."""
-    return [("beads", len(L)), ("CTCF sites (L)", int(np.count_nonzero(L))),
-            ("CTCF sites (R)", int(np.count_nonzero(R))), ("sum L", f"{L.sum():.2f}"), ("sum R", f"{R.sum():.2f}")]
+    """Rows for a statistics table of the binding potentials (per bead)."""
+    return [("beads with a left CTCF site", int(np.count_nonzero(L))), ("beads with a right CTCF site", int(np.count_nonzero(R))),
+            ("total left strength", f"{L.sum():.1f}"), ("total right strength", f"{R.sum():.1f}")]
+
+def _q(v, f="{:,.0f}"):
+    """min / median / mean / max of an array as one string."""
+    v = np.asarray(v, float); return " / ".join(f.format(x) for x in (v.min(), np.median(v), v.mean(), v.max()))
+
+def input_stats(bedpe_file, region, chrom, n_beads):
+    """Rows (bp / kb units) describing the loop input inside the modelled region."""
+    df = load_region(bedpe_file, region, chrom); size = region[1] - region[0]; bead = size / n_beads
+    c1, c2 = (df[1] + df[2]) / 2, (df[4] + df[5]) / 2; length = np.abs(c2 - c1) / 1e3; w = df[6].dropna() if df.shape[1] > 6 else pd.Series(dtype=float)
+    rows = [("region", f"{chrom}:{region[0]:,}-{region[1]:,}"), ("region size", f"{size / 1e6:.2f} Mb"), ("bead size", f"{bead / 1e3:.2f} kb ({int(bead):,} bp)"),
+            ("loops in the region", len(df)), ("loop length, kb (min / median / mean / max)", _q(length)),
+            ("loop length, beads (median)", f"{np.median(length) * 1e3 / bead:.1f}"), ("anchor width, bp (median)", f"{np.median(np.r_[df[2] - df[1], df[5] - df[4]]):,.0f}")]
+    if len(w): rows.append(("loop strength (min / median / mean / max)", _q(w, "{:.2f}")))
+    rows.append(("CTCF orientation", "present (columns 8-9)" if df.shape[1] > 8 else "absent: all orientations block equally"))
+    return rows

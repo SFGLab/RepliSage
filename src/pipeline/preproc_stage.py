@@ -8,7 +8,7 @@ if __package__ in (None, ""):  # run directly (e.g. VS Code "Run Python File"): 
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
     __package__ = "src.pipeline"
 
-from ..preproc.bedpe import preprocessing, loop_stats
+from ..preproc.bedpe import preprocessing, loop_stats, input_stats
 from ..logger import log
 
 def run_preprocessing(ctx):
@@ -16,7 +16,8 @@ def run_preprocessing(ctx):
     log.step("Preprocessing: loop (BEDPE) data")
     L, R, n_ctcf = preprocessing(ctx.bedpe, ctx.region, ctx.chrom, ctx.n_beads)
     ctx.n_ctcf = n_ctcf
-    log.table("Input loops", loop_stats(L, R) + [("region", f"{ctx.region[0]}-{ctx.region[1]}"), ("bead size (bp)", (ctx.region[1] - ctx.region[0]) // ctx.n_beads)])
+    log.table("Input loops (BEDPE)", input_stats(ctx.bedpe, ctx.region, ctx.chrom, ctx.n_beads))
+    log.table("CTCF binding potentials on the beads", loop_stats(L, R))
     return L, R, n_ctcf
 
 if __name__ == "__main__":

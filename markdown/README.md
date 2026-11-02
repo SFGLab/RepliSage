@@ -16,33 +16,22 @@
 
 Welcome. These pages explain what RepliSage models, how to run it, and how to read what comes out. Start with the quick path below, then dive into whichever model you want to understand or tune.
 
+## How the documentation is organised
+
+| Section | What it covers |
+|---|---|
+| **Getting started** | [Installation](installation.md), [command line](cli.md) and [examples](examples.md) |
+| **Theory** | The ideas behind the model, without implementation details: [scope and goals](scope.md), [the idea in a nutshell](intuition.md), [the Hamiltonian idea](hamiltonian.md), [Monte Carlo, MCMC and Metropolis](mcmc.md), [microstates and macrostates](micro_macro.md) |
+| **Implementation** | How the ideas are coded: [pipeline](pipeline.md), [pre-processing](preproc.md), [replication model](replication_model.md), [Monte Carlo model](mc_model.md), [molecular dynamics model](md_model.md) |
+| **Reference** | [Configuration](config.md), [analysis](analysis.md) and [outputs and visualisation](visualization.md) |
+| **Known limitations** | What the model leaves out: [limitations](limitations.md) |
+
 ## Quick path
 
-1. [Scope and goals](scope.md) and [the idea in a nutshell](intuition.md) and [the Hamiltonian idea](hamiltonian.md): what the model is for and how it works.
-2. [Installation](installation.md): get RepliSage running.
-3. [Command line](cli.md): the handful of flags you will use every day.
-4. [Pipeline](pipeline.md): what runs, in which order, and which inputs switch which parts on.
-5. [Outputs and visualisation](visualization.md): the report, the 3D viewer, the movie and the ChimeraX files.
-
-## The models
-
-| Page | What it covers |
-|---|---|
-| [Scope and goals](scope.md) | What RepliSage is for: the whole cell cycle, with S phase in focus |
-| [The idea in a nutshell](intuition.md) | The model without equations |
-| [The Hamiltonian idea](hamiltonian.md) | What a Hamiltonian is, and why RepliSage uses only the idea |
-| [Pre-processing](preproc.md) | From a BEDPE of loops to CTCF binding potentials on beads |
-| [Replication model](replication_model.md) | Timing data to origins, forks and the replicated-DNA matrix |
-| [Monte Carlo model](mc_model.md) | Loop extruders, epigenetic Potts spins and the energy function |
-| [Molecular dynamics model](md_model.md) | Turning the sampled states into 3D structures with OpenMM |
-
-## Configuring and analysing
-
-| Page | What it covers |
-|---|---|
-| [Configuration](config.md) | `config.ini`: every advanced parameter, grouped by section |
-| [Analysis](analysis.md) | Statistics, MCMC diagnostics and structural metrics |
-| [Examples](examples.md) | Ready-to-run commands and annotated config files |
+1. Read [Scope and goals](scope.md) and [the idea in a nutshell](intuition.md) to see what the model is for.
+2. [Install](installation.md) RepliSage and try the [command line](cli.md).
+3. Look at the [pipeline](pipeline.md) to see what runs, and at the [outputs](visualization.md) to read the report.
+4. Come back to the Theory pages when you want to understand or tune a parameter.
 
 ## Two ways to set things
 

@@ -8,7 +8,7 @@ where LEF $i$ has its legs on beads $m_i < n_i$, and bead $k$ has an epigenetic 
 
 $$p(\mathcal{S}) = \frac{1}{\mathcal{Z}} \exp\left(-\frac{\mathcal{H}}{T_{\text{mc}}}\right)$$
 
-with the partition function $\mathcal{Z}$ (a normalisation constant) and the Monte Carlo temperature $T_{\text{mc}}$ (the Boltzmann constant is set to 1). For the intuition, see [the idea in a nutshell](intuition.md).
+with the partition function $\mathcal{Z}$ (a normalisation constant) and the Monte Carlo temperature $T_{\text{mc}}$ (the Boltzmann constant is set to 1). For the intuition, see [the idea in a nutshell](intuition.md); for the sampling method, see [Monte Carlo, MCMC and Metropolis](mcmc.md).
 
 ## Energy
 

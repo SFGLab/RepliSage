@@ -14,12 +14,10 @@ STAGES = [("Loop extrusion", "LEFs with two legs (m, n) bind CTCF sites and extr
           ("Replication", "Origins fire from the initiation rate I(x,t); forks move in both directions."),
           ("Compartments", "A 5-state Potts spin per bead (−2…2): A-like if positive, B-like if negative."),
           ("3D structure", "OpenMM builds the chromatin chain(s) from every sampled state.")]
-EQ = [("E = E<sub>le</sub> + E<sub>rep</sub> + E<sub>potts</sub>", "Total energy; a move is accepted with probability min(1, e<sup>−ΔE/T</sup>) (T = MC temperature)."),
-      ("E<sub>le</sub> = c<sub>fold</sub> Σ log(n<sub>i</sub>−m<sub>i</sub>) + c<sub>cross</sub> Σ K + c<sub>bind</sub> Σ [L(m<sub>i</sub>)+R(n<sub>i</sub>)]",
-       "Folding favours long loops, K penalises crossing LEFs, L and R reward legs on left / right CTCF sites."),
-      ("E<sub>rep</sub> = c<sub>rep</sub> Σ ℛ(m<sub>i</sub>, n<sub>i</sub>; f<sub>rep</sub>)", "Penalty for loops that straddle a replication fork (f<sub>rep</sub> = replicated or not)."),
-      ("E<sub>potts</sub> = c<sub>p1</sub> Σ h<sub>k</sub> s<sub>k</sub> + c<sub>p2</sub> Σ J<sub>ij</sub> |s<sub>i</sub>−s<sub>j</sub>|",
-       "h = field from replication timing; J<sub>ij</sub> counts backbone and loop links between beads i and j.")]
+EQ = [("H = H<sub>le</sub> + H<sub>rep</sub> + H<sub>epi</sub>", "Total energy of a state. A Monte Carlo move is accepted with probability min(1, e<sup>−ΔH/T<sub>mc</sub></sup>), where T<sub>mc</sub> is the Monte Carlo temperature."),
+      ("H<sub>le</sub> = H<sub>fold</sub> + H<sub>cross</sub> + H<sub>bind</sub>", "Loop extrusion: folding favours long loops, crossing penalises LEFs that cross, binding rewards legs (m<sub>i</sub>, n<sub>i</sub>) sitting on CTCF sites."),
+      ("H<sub>rep</sub>", "Penalty for loops that straddle a replication fork."),
+      ("H<sub>epi</sub>", "Potts energy of the bead states s<sub>k</sub> ∈ {−2…2}: a replication-timing field plus coupling between beads linked by the backbone or by loops.")]
 READ = "Grey band = burn-in (discarded). Red band = S phase (replication). Red = A compartment (positive spin), blue = B compartment (negative spin). Orange / teal = left / right LEF legs and CTCF sites."
 
 # fid -> (title, what it shows, what to expect)
@@ -31,7 +29,7 @@ CAP = {
  "mc_convergence": ("Chain diagnostics", "Geweke z (start vs end of chain), effective sample size share (ESS/n) and split R̂ for each observable.", "|z| < 2, R̂ < 1.01 and ESS/n of several percent mean a well-mixed chain. Red bars flag problems: run longer."),
  "mc_replicas": ("Replica comparison", "Same observables across independent replicas (different seeds), with split R̂ between them.", "Replicas overlap; R̂ close to 1 means they agree."),
  "movie_gif": ("3D movie", "Interpolated 3D structures with the contact map (moving-window average) and the cell-cycle bar. Orange / gold = sister chromatids; black = LEF anchors; teal = forks.", "Compact G1 chromatin; two sisters appear during S and drift apart in G2/M; loops (black) hold beads together."),
- "mc_acf": ("Autocorrelation", "How quickly samples forget their past. τ = integrated autocorrelation time (samples).", "Curves fall to zero within a few lags. Large τ means correlated samples and fewer independent ones."),
+ "mc_acf": ("Autocorrelation", "How quickly samples forget their past. T_ρ = integrated autocorrelation time (samples).", "Curves fall to zero within a few lags. Large T_ρ means correlated samples and fewer independent ones."),
  "mc_running": ("Running mean", "Mean after burn-in as samples accumulate. Band = final mean ± 2 Monte Carlo standard errors.", "The curve settles inside the band. A drift means the run is too short."),
  "rep_violations": ("Fork conflicts", "Number and strength of loops straddling a replication fork during S phase.", "Low when the replication penalty is strong. Bursts appear as forks push LEFs."),
  "lef_traj": ("LEF trajectories", "Each red/black/grey shade is one LEF; the band spans its two legs over time. Dashed line = replication front; bars on the right = CTCF sites (red left, black right).", "Long-lived loops at CTCF anchors, nested bands, and loops rearranged behind the front in S phase."),
@@ -73,7 +71,7 @@ HOW = {
  "mc_energy_potts": "Potts energy measures how well spins agree with the replication timing field and with their loop partners; magnetisation is the mean spin (A positive, B negative). In G1 both should be steady. Their change in S phase shows epigenetic colour reorganising as DNA replicates.",
  "mc_distributions": "Each violin is a smoothed histogram of one phase; the white dot is the median and the thick bar the interquartile range. Phases whose violins barely overlap differ clearly. Without replication a single histogram is shown. Wide violins mean large fluctuations, not an error.",
  "mc_convergence": "Left: Geweke z compares the start and the end of the stationary part; bars inside the grey band (between -2 and 2) pass. Middle: effective sample size as a percentage of the samples; low values mean strongly correlated samples, so increase MC_STEP or run longer. Right: split R-hat; below 1.01 (teal) is good, gold is borderline, red means the halves of the chain disagree.",
- "mc_acf": "Autocorrelation is the correlation of a series with itself shifted by a lag. It starts at 1 and should die out. The number tau in the legend is the integrated autocorrelation time: roughly how many consecutive samples carry the information of one independent sample. If the curve stays high for tens of lags, raise MC_STEP so that recorded states are further apart.",
+ "mc_acf": "Autocorrelation is the correlation of a series with itself shifted by a lag. It starts at 1 and should die out. The number T_ρ in the legend is the integrated autocorrelation time: roughly how many consecutive samples carry the information of one independent sample. If the curve stays high for tens of lags, raise MC_STEP so that recorded states are further apart.",
  "mc_running": "The line is the average of all samples up to that step. It should settle onto the horizontal line, inside the grey band of plus or minus two Monte Carlo standard errors. If it keeps sliding the estimate is not converged. The faint line behind is the raw series.",
  "mc_stationarity": "A small KS statistic (Kolmogorov-Smirnov distance, 0 = identical, 1 = completely different) means the two halves look alike. Values above about 0.2 with visibly shifted curves say the chain was still moving: lengthen the burn-in.",
  "mc_mcse": "For independent samples the error falls as 1 over the square root of n (dashed line). Correlated chains fall more slowly, and the gap between the curves and the dashed line is the price of correlation. On the right, the effective sample size should keep growing as you add samples; if it flattens, more steps do not help and something is stuck.",
@@ -89,3 +87,11 @@ def cap_for(fid):
     if fid in CAP: return CAP[fid]
     if fid.startswith("md_heat_"): return ("Contact map", "Mean of 1/(distance + 1) between beads over the structures of one phase (dark = close).", "Domains (squares) along the diagonal and loop dots; the S-phase map shows the effect of replication.")
     return (fid.replace("_", " ").capitalize(), "", "")
+
+CAP.update({
+ "story": ("The run in one picture", "Replication progress, mean loop length, A/B compartment shares and the bound share of LEFs on one shared time axis. Numbers on top are phase means.", "Replication rises through S phase. Loops, compartments and binding change when the forks pass; they settle again in G2/M."),
+ "phase_compare": ("Phase comparison", "Mean of key observables in G1, S and G2/M with 95 % intervals that account for autocorrelation (SD / sqrt(ESS)).", "Intervals that do not overlap indicate a real effect of the phase; overlapping ones are within the sampling noise."),
+})
+HOW.update({"story": "Read it top to bottom. The shaded S-phase band marks when forks are active. Faint lines are every sample, bold lines are moving averages with a one-SD band, grey is burn-in. If loops or compartments move inside the band and recover afterwards, replication is the driver."})
+
+CAP["md_stills"] = ("Structures through the cell cycle", "One 3D structure per phase, drawn as smooth shaded tubes. Orange / gold = sister chromatids, dark spheres = LEF anchors, teal = replication forks.", "A single compact chain in G1, two sisters in S with forks at the branch points, and two separated copies in G2/M.")

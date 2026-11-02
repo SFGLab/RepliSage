@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
-from ..utils.arrays import reshape_array, min_max_normalize
+from ..utils.arrays import reshape_array, min_max_normalize, log_normalize
 from ..logger import log
 
 class SourceMixin:
@@ -42,8 +42,9 @@ class SourceMixin:
             .reshape(n_bins, bin_size)
             .mean(axis=1)
         )
-        # Log-transform
-        log_signal = np.log(signal_binned+1) if log_norm else signal_binned
+        # Log-transform (always)
+        if not log_norm: log.alert("BIGWIG_LOG_NORM=False is ignored: Repli-Seq signals are always log-normalised.")
+        log_signal = log_normalize(signal_binned)
         
         # Smooth
         signal_smooth = gaussian_filter1d(log_signal, sigma=sigma) if sigma > 0 else log_signal
@@ -67,7 +68,7 @@ class SourceMixin:
         self.data = self.data[self.data[0] == self.chrom].reset_index(drop=True)
         self.gen_windows = self.data[1].values
         self.avg_fx = self.data[2].values
-        self.avg_fx = (self.avg_fx - np.min(self.avg_fx)) / (np.max(self.avg_fx) - np.min(self.avg_fx))
+        self.avg_fx = log_normalize(self.avg_fx)   # always log-normalised
         if self.is_region:
             start, end = self.coords[0], self.coords[1]
             self.avg_fx = self.avg_fx[(self.gen_windows >= start) & (self.gen_windows <= end)]

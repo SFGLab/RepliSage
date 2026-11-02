@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.patches import Patch
-from .style import (bin_time, CMAP_SPIN, BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, SLATE, A_COL, B_COL, STATE_COL, CMAP_MAT, PHASE_COL, shade_phases, rolling, save_fig)
+from .style import (genome_axis, bin_time, CMAP_SPIN, BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, SLATE, A_COL, B_COL, STATE_COL, CMAP_MAT, PHASE_COL, shade_phases, rolling, save_fig)
 from .loops import overlay_front, _violin
 from ..analysis.compartments import (A, N, B, s_phase_states, transition_matrix, switch_rates, state_fractions, switch_summary)
 
@@ -28,13 +28,13 @@ def ising_traj_plot(spins, ph, out, p=None, f_rep_T=None):
     fig, ax = plt.subplots(figsize=(11, 5.6)); _spin_image(ax, fig, spins, ph)
     shade_phases(ax, ph, labels=True); ax.grid(False)
     if p is not None: overlay_front(ax, p, ph, spins.shape[0], f_rep_T)
-    ax.set_xlabel("MC step"); ax.set_ylabel("Bead")
+    ax.set_xlabel("MC step"); genome_axis(ax, spins.shape[0])
     return save_fig(fig, out, "MCMC_diagnostics", "potts_traj", "epi_traj")
 
 def fig_timing_sorted(spins, timing, ph, out):
     """Same map with beads sorted from early to late replicating: shows the spread of the colour with replication."""
     order = np.argsort(timing, kind="stable"); fig, ax = plt.subplots(figsize=(11, 5))
-    _spin_image(ax, fig, spins[order], ph); shade_phases(ax, ph, labels=True); ax.grid(False); ax.set_xlabel("MC step"); ax.set_ylabel("Beads (early → late)")
+    _spin_image(ax, fig, spins[order], ph); shade_phases(ax, ph, labels=True); ax.grid(False); ax.set_xlabel("MC step"); ax.set_ylabel("Simulation beads (early → late replicating)")
     return save_fig(fig, out, "MCMC_diagnostics", "potts_sorted_by_timing", "epi_sorted")
 
 def fig_fractions(spins, ph, out):

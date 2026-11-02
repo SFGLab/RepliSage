@@ -30,10 +30,13 @@ nav:
       - Installation: installation.md
       - Command line: cli.md
       - Examples: examples.md
-  - Models:
+  - Theory:
       - Scope and goals: scope.md
       - The idea in a nutshell: intuition.md
       - The Hamiltonian idea: hamiltonian.md
+      - Monte Carlo, MCMC and Metropolis: mcmc.md
+      - Microstates and macrostates: micro_macro.md
+  - Implementation:
       - Pipeline: pipeline.md
       - Pre-processing: preproc.md
       - Replication model: replication_model.md
@@ -44,3 +47,4 @@ nav:
       - Analysis: analysis.md
       - Outputs and visualisation: visualization.md
   - Known limitations: limitations.md
+  - The story and the role of AI: story.md

@@ -11,6 +11,7 @@ if __package__ in (None, ""):  # run directly (e.g. VS Code "Run Python File"): 
     __package__ = "src.pipeline"
 
 from dataclasses import dataclass
+import os
 import numpy as np
 from ..replication_simulation.replikator import Replikator
 from ..MC.replication_matrix import to_time_major
@@ -28,6 +29,14 @@ class ReplicationData:
     input_timing: np.ndarray = None # (N_beads,) earliness from the data (1 = early)
     speed: float = 0.0              # mean fork speed (simulation units)
 
+def rt_input_rows(ctx, rep):
+    """Rows describing the replication-timing input after it was mapped onto the beads (earliness: 1 = early, 0 = late)."""
+    x = np.asarray(rep.avg_fx, float); a, b = ctx.region; src = "single-cell parquet (GM12878)" if ctx.is_sc else "Repli-Seq signal, log-normalised"
+    return [("source", f"{src}: {os.path.basename(ctx.rept_path)}"), ("region", f"{ctx.chrom}:{a:,}-{b:,} ({(b - a) / 1e6:.2f} Mb)"),
+            ("bead size", f"{(b - a) / ctx.n_beads / 1e3:.2f} kb"), ("earliness min / median / mean / max", " / ".join(f"{v:.2f}" for v in (x.min(), np.median(x), x.mean(), x.max()))),
+            ("early-replicating region (earliness > 0.5)", f"{(x > .5).mean() * 100:.0f} % of the region = {(x > .5).sum() * (b - a) / ctx.n_beads / 1e3:,.0f} kb"),
+            ("earliest / latest bead", f"{ctx.chrom}:{a + int(np.argmax(x)) * (b - a) // ctx.n_beads:,} / {ctx.chrom}:{a + int(np.argmin(x)) * (b - a) // ctx.n_beads:,}")]
+
 def run_replication(ctx):
     """Return ReplicationData, or None if replication is not modelled."""
     if not ctx.has_rep: return None
@@ -41,6 +50,7 @@ def run_replication(ctx):
     except Exception as e:
         raise ValueError("Something went wrong with the replication simulation. Probably the region of modelling is too large "
                          "or too short for the resolution (number of beads) specified.") from e
+    log.table("Replication timing input", rt_input_rows(ctx, rep))
     if a.REP_TIME_DURATION % a.REP_SIM_T:
         log.warning(f"REP_TIME_DURATION is not a multiple of REP_SIM_T={a.REP_SIM_T}: the last "
                     f"{a.REP_TIME_DURATION % a.REP_SIM_T} steps keep no replication state (same as the published code).")

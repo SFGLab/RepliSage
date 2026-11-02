@@ -38,7 +38,7 @@ def make_parser():
     opt(g, "-c", "--config", "--config-file", dest="config_file", metavar="FILE", help="ini file with the parameters (see src/config.ini)")
     g = p.add_argument_group("input data")
     opt(g, "--bedpe-file", metavar="FILE", help="loops (.bedpe), CTCF orientation optional")
-    opt(g, "--rt-file", metavar="FILE", help="replication timing: .bigWig/.bw, .txt, or .parquet (single cell); 'builtin' = shipped single-cell data. No file = no replication")
+    opt(g, "--rt-file", metavar="FILE", help="replication timing: .bigWig/.bw, .txt, or .parquet (single cell); 'builtin' = shipped GM12878 single-cell data; 'none' = loop extrusion only. Without this flag you are asked in the terminal")
     opt(g, "--region", metavar="CHR[:START-END]", type=parse_region, help="modelled region, e.g. chr14:80835000-98674700 (no range = whole chromosome)")
     opt(g, "--n-beads", type=int, metavar="N", help="beads per chain (default: region length / 2 kb)")
     g = p.add_argument_group("what to run")
@@ -78,7 +78,8 @@ def flags_to_params(ns):
     if ns.get("region"): o["CHROM"], o["REGION_START"], o["REGION_END"] = ns["region"]
     rt = ns.get("rt_file")
     if rt is not None:
-        if rt.lower() == "builtin": o.update(USE_SC_REPT=True, REPT_PATH="")
+        if rt.lower() in ("none", "no", "off"): o.update(REPT_PATH="", USE_SC_REPT=False, ASK_RT=False)
+        elif rt.lower() == "builtin": o.update(USE_SC_REPT=True, REPT_PATH="")
         elif rt.lower().endswith(SC_SUFFIX): o.update(USE_SC_REPT=True, SC_REPT_PATH=rt, REPT_PATH="")
         else: o.update(REPT_PATH=rt, USE_SC_REPT=False)
     if ns.get("run_md") is not None: o["SIMULATION_TYPE"] = (ns.get("md_mode") or "MD") if ns["run_md"] else ""

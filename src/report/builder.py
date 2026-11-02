@@ -8,7 +8,8 @@ from importlib import metadata
 from pathlib import Path
 from .theme import CSS, JS
 from .text import TAGLINE, ABOUT, STAGES, EQ, READ
-from .html_parts import esc, figure, table, section, chip, params_table, page
+from .html_parts import esc, figure, table, section, chip, params_table, page, findings, group
+from .findings import key_findings
 from ..analysis.tables import Table, has_potts
 from ..plots.style import FIGS
 from .._version import __version__
@@ -53,34 +54,40 @@ def _viz3d(F, out_dir):
     d = Path(out_dir); names = [("viewer_3d.html", "interactive 3D viewer"), ("movie_3d.mp4", "movie (mp4)"), ("ensemble/view.cxc", "ChimeraX script")]
     links = " · ".join(f'<a href="{n}">{t}</a>' for n, t in names if (d / n).exists())
     gif = d / "movie_3d.gif"
-    return (f"<p>{links}</p>" if links else "") + (figure("movie_gif", str(gif)) if gif.exists() and gif.stat().st_size < 4e6 else "")
+    return (f'<div class="links">{"".join(f"<a href=\"{n}\">{t}</a>" for n, t in names if (d / n).exists())}</div>' if links else "") + _figs(F, ["md_stills"]) + (figure("movie_gif", str(gif)) if gif.exists() and gif.stat().st_size < 4e6 else "")
 
 def _md_extra(F, out_dir):
     f = Path(out_dir) / "plots" / "md_simulation" / "dynamics.png"
     if f.exists(): F["md_dynamics"] = str(f)
+    f = Path(out_dir) / "plots" / "3d" / "stills.png"
+    if f.exists(): F["md_stills"] = str(f)
     heats = sorted((k for k in F if k.startswith("md_heat_")), key=lambda k: int(k.split("_")[2]))
     return heats
 
-def write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command=""):
+def write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command="", diag=None, where=""):
     """Write <out_dir>/report.html and return its path."""
     F, T = dict(FIGS), {t.key: t for t in tables}; heats = _md_extra(F, out_dir); secs = []
     def add(sid, title, body, lead=""):
         if body.strip(): secs.append((sid, title, section(sid, title, body, lead)))
-    add("about", "The model", _about())
-    add("summary", "Run summary", "".join(table(T[k]) for k in ("overview", "lef", "replication", "compartments") if k in T), "Key numbers of this run.")
+    try: fd = key_findings(ctx, p, res, rep, ph, obs, diag, where, tables)
+    except Exception as e: log.alert(f"Key findings failed: {type(e).__name__}: {e}"); fd = []
+    add("findings", "Key findings", (findings(fd) if fd else "") + _figs(F, ["story", "phase_compare"]), "What this run says, in plain language.")
     add("input", "Input", _figs(F, ["loops_input"]), "Loop anchors extracted from your BEDPE file.")
-    add("mcmc", "Monte Carlo diagnostics", _figs(F, ["mc_energy", "mc_energy_potts", "mc_distributions", "mc_budget"])
-        + _figs(F, ["mc_convergence"]) + table(T["convergence"]) + _figs(F, ["mc_acf", "mc_running", "mc_stationarity", "mc_mcse", "mc_rolling", "mc_correlation"])
-        + table(T["phases"]) + _figs(F, ["rep_violations"]), "Is the chain converged, and how do observables change between phases?")
-    add("lef", "Loop extrusion", _figs(F, ["lef_traj", "lef_coverage", "loop_length", "violin_loop_length", "lef_binding", "lef_dynamics"]), "Where loops form, how long they are and how they anchor.")
+    add("lef", "Loop extrusion", _figs(F, ["lef_coverage", "loop_length", "lef_binding"]), "Where loops form, how long they are and how they anchor.")
     if rep is not None:
-        add("replication", "Replication", _figs(F, ["rep_forks", "rep_fraction", "rep_initiation", "rep_timing"]) + table(T["replication"]), "Origins, forks and replication timing.")
+        add("replication", "Replication", _figs(F, ["rep_forks", "rep_fraction", "rep_timing"]) + table(T["replication"])
+            + group("More replication plots", _figs(F, ["rep_initiation", "rep_violations"]), "initiation rate, fork conflicts"), "Origins, forks and replication timing.")
     if has_potts(p):
-        add("compartments", "Epigenetic states and compartments", _figs(F, ["epi_traj", "epi_sorted", "epi_fractions", "epi_switching", "epi_switch_bars", "epi_switch_map",
-                                                                              "epi_same_sign", "violin_same_sign", "epi_domains", "epi_order", "epi_order2"]) + (table(T["compartments"]) if "compartments" in T else ""),
-            "How epigenetic colour spreads and how beads switch between A and B compartments (B→A and A→B) during S phase.")
+        add("compartments", "Epigenetic states and compartments", _figs(F, ["epi_traj", "epi_switch_bars", "epi_switch_map"]) + (table(T["compartments"]) if "compartments" in T else "")
+            + group("More compartment plots", _figs(F, ["epi_sorted", "epi_fractions", "epi_switching", "epi_domains", "epi_same_sign", "epi_order", "epi_order2"]), "state fractions, domains, order parameters"),
+            "How epigenetic colour spreads and how beads switch between A and B compartments during S phase.")
     if ctx.has_md:
-        add("structure", "3D ensemble", _viz3d(F, out_dir) + _figs(F, ["md_structure", "md_structure2", *heats, "md_dynamics"]), "Structures built by molecular dynamics from the sampled states.")
+        add("structure", "3D ensemble", _viz3d(F, out_dir) + group("Structure statistics", _figs(F, ["md_structure", "md_structure2", *heats, "md_dynamics"]), "size, shape, contact maps"),
+            "Structures built by molecular dynamics from the sampled states.")
+    diag_body = (_figs(F, ["mc_energy", "mc_energy_potts", "mc_budget", "mc_distributions", "mc_convergence"]) + table(T["convergence"]) + _figs(F, ["mc_acf", "mc_running", "mc_stationarity", "mc_mcse", "mc_rolling", "mc_correlation", "lef_dynamics", "lef_traj"])
+                 + table(T["phases"]) + "".join(table(T[k]) for k in ("overview", "lef") if k in T))
+    add("mcmc", "Diagnostics", group("Monte Carlo diagnostics and tables", diag_body, "convergence, autocorrelation, energies"), "Open to check that the chain is converged and the numbers are reliable.")
+    add("about", "The model", _about())
     add("reproduce", "Command and parameters", _repro(ctx, out_dir, command), "Everything needed to repeat this run.")
     main = _hero(ctx, p) + "".join(s for _, _, s in secs) + f'<footer>RepliSage v{__version__} · generated {datetime.datetime.now():%Y-%m-%d %H:%M}</footer>'
     path = os.path.join(out_dir, "report.html")

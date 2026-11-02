@@ -1,0 +1,15 @@
+flowchart LR
+    B(Burn-in<br/>discarded) --> G1(G1<br/>one DNA copy) --> S(S phase<br/>forks move) --> G2(G2/M<br/>two copies)
+    classDef input fill:#F1F3F5,stroke:#6B7280,stroke-width:1.8px,color:#1F2937;
+    classDef decide fill:#FFF4D6,stroke:#B58105,stroke-width:1.8px,color:#1F2937;
+    classDef core fill:#FFFFFF,stroke:#374151,stroke-width:2px,color:#1F2937;
+    classDef opt fill:#FBE6EA,stroke:#A50F2D,stroke-width:2px,color:#1F2937;
+    classDef hot fill:#A50F2D,stroke:#7A0B20,stroke-width:2px,color:#FFFFFF;
+    classDef calm fill:#F1F3F5,stroke:#9CA3AF,stroke-width:1.8px,color:#1F2937;
+    classDef g1 fill:#E6EEF7,stroke:#4F7CAC,stroke-width:2px,color:#1F2937;
+    classDef done fill:#E3F2EC,stroke:#3F8F6F,stroke-width:2px,color:#1F2937;
+    linkStyle default stroke:#4B5563,stroke-width:1.8px;
+    class B calm;
+    class G1 g1;
+    class S hot;
+    class G2 done;

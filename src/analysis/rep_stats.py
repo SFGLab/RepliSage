@@ -30,5 +30,5 @@ def rep_summary(rep_frac, input_timing, speed, bead_kb, rep_duration):
             ("T10 / T50 / T90 (fraction of S)", f"{t10:.2f} / {t50:.2f} / {t90:.2f}"), ("S-phase span T10-T90", f"{(t90 - t10):.2f} of S"),
             ("inferred origins", len(org)),
             ("median origin spacing", f"{np.median(np.diff(org)) * bead_kb:.0f} kb" if len(org) > 1 else "n/a"),
-            ("mean fork speed (sim. units)", f"{speed:.3f}"), ("S duration (MC steps)", rep_duration),
+            ("mean fork speed (simulation units)", f"{speed:.3f}"), ("S duration (MC steps)", rep_duration),
             ("timing vs input, Spearman rho", f"{rho:.2f}" if rho == rho else "n/a")]

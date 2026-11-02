@@ -193,3 +193,8 @@ def expand_array(arr, L):
     
     else:
         raise ValueError("Only 2D arrays are supported for this function.")
+
+
+def log_normalize(x):
+    """Repli-Seq signals are always log-normalised: shift to non-negative values, then log(1 + x)."""
+    x = np.nan_to_num(np.asarray(x, float)); return np.log1p(x - min(x.min(), 0))

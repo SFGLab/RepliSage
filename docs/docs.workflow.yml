@@ -1,0 +1,44 @@
+name: docs
+
+# Deploy the MkDocs site on every release (same trigger as the PyPI upload),
+# on pushes to main that touch the docs, and on demand.
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - "markdown/**"
+      - "mkdocs.yml"
+      - "requirements-docs.txt"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to push to the gh-pages branch
+
+concurrency:
+  group: docs
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+
+      - name: Install docs dependencies
+        run: pip install -r requirements-docs.txt
+
+      # --strict fails the job on broken links or missing nav pages
+      - name: Build (check)
+        run: mkdocs build --strict
+
+      - name: Deploy to GitHub Pages
+        run: mkdocs gh-deploy --force --clean

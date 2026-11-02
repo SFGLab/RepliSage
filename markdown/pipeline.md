@@ -2,29 +2,9 @@
 
 RepliSage is a chain of small stages. Each stage reads what the previous one produced, and the inputs you give decide which stages run. Every stage can also be run on its own from a script (see the bottom of each file in `src/pipeline/`).
 
-```mermaid
-flowchart TD
-    A[BEDPE loops<br/>--bedpe-file] --> P[1. Pre-processing<br/>CTCF binding potentials L and R]
-    T[Replication timing<br/>--rt-file] -.optional.-> R
-    P --> R{timing data<br/>given?}
-    R -- yes --> S[2. Replication simulation<br/>origins, forks, replicated DNA]
-    R -- no --> M
-    S --> M[3. Monte Carlo<br/>loop extruders + Potts spins]
-    M --> D{--run-md true?}
-    D -- yes --> MD[4. 3D structures<br/>OpenMM, one or two chains]
-    D -- no --> AN
-    MD --> V[5. 3D viewer, movie, CIF files]
-    MD --> AN[6. Analysis, figures, tables]
-    V --> AN
-    AN --> RP[report.html]
+![Pipeline of RepliSage from BEDPE loops to the report](assets/diagrams/flow_pipeline.svg)
 
-    classDef opt fill:#fff,stroke:#A50F2D,stroke-width:2px,color:#141414;
-    classDef core fill:#141414,stroke:#141414,color:#fff;
-    class P,M,AN core;
-    class S,MD,V opt;
-```
-
-Black boxes always run; red-outlined boxes run only when their inputs are present.
+Grey boxes always run; pink boxes run only when their inputs are present; blue boxes are inputs; yellow diamonds are decisions; the strong pink box is the final report.
 
 ## The stages
 
@@ -43,12 +23,7 @@ For what each phase means biologically, see [Scope and goals](scope.md).
 
 A cell cycle is laid out along the Monte Carlo steps. The first steps are burn-in, during which the system relaxes. G1 follows, then S phase from `REP_START_TIME` for `REP_TIME_DURATION` steps, then G2/M.
 
-```mermaid
-flowchart LR
-    B[Burn-in<br/>discarded] --> G1[G1<br/>one DNA copy] --> S[S phase<br/>forks move] --> G2[G2/M<br/>two copies]
-    classDef s fill:#A50F2D,stroke:#A50F2D,color:#fff;
-    class S s;
-```
+![Simulation phases: burn-in, G1, S, G2/M](assets/diagrams/flow_phases.svg)
 
 During S the replicated-DNA matrix tells the Monte Carlo which beads are already copied. The 3D model then has two chains (the sister chromatids) that are tied together where DNA is replicated and pulled apart after S.
 

@@ -1,6 +1,8 @@
 """RunContext: validated parameters + derived quantities shared by all stages."""
 from dataclasses import dataclass
 from pathlib import Path
+import os
+import sys
 import numpy as np
 from ..utils.constants import chrom_sizes
 from ..utils.run_dirs import resolve_out_root, run_name, make_run_dir
@@ -35,20 +37,47 @@ def _chrom_end(chrom, bedpe):
     df = pd.read_csv(bedpe, sep='\t', header=None, usecols=[0, 5])
     return int(df[df[0] == chrom][5].max())
 
-def build_context(args, make_dirs=True):
-    """Validate arguments and decide which stages run (loops always; replication/MD optionally)."""
-    if not args.BEDPE_PATH: raise ValueError("BEDPE_PATH is required (the only mandatory input).")
-    if not args.CHROM: raise ValueError("CHROM is required (e.g. chr14).")
-    given = args.REGION_START is not None and args.REGION_END is not None
-    region = [args.REGION_START, args.REGION_END] if given else [0, _chrom_end(args.CHROM, args.BEDPE_PATH)]
-    if not given: log.alert(f"No REGION_START/REGION_END: modelling the WHOLE chromosome {args.CHROM} ({region[1]} bp).")
-    n_beads = args.N_BEADS if args.N_BEADS else int(np.round((region[1] - region[0]) / 2000))
+def _ask_rt(args):
+    """No timing data given: ask (terminal only) whether to use the bundled GM12878 single-cell RT or loop extrusion alone."""
+    msg = ("\nNo replication timing (RT) file was given. What should RepliSage do?\n"
+           "  [1] use the built-in single-cell RT of GM12878 (parquet): loop extrusion + replication + compartments (G1, S, G2/M)\n"
+           "  [2] loop extrusion only: no replication, no S and G2/M phases\n")
+    print(msg)
+    while True:
+        try: ans = input("Choose 1 or 2 [default 2]: ").strip() or "2"
+        except EOFError: ans = "2"
+        if ans in ("1", "2"): break
+        print("Please type 1 or 2.")
+    return ans == "1"
 
+def _resolve_rt(args):
+    """Return (rept_path, has_rep); validates the file and handles the missing-file / no-file cases."""
     rept = args.REPT_PATH
     if rept and not rept.lower().endswith(REPT_EXT + (".parquet",)):
         raise ValueError("REPT_PATH must be a .txt, .bw, .bigwig or single-cell .parquet file.")
+    if rept and not os.path.exists(rept):   # missing timing file: fall back to the bundled single-cell data
+        log.alert(f"REPT_PATH '{rept}' not found; using the bundled GM12878 single-cell replication timing instead.")
+        rept = None; args.USE_SC_REPT = True
+    if not rept and not args.USE_SC_REPT:
+        if args.ASK_RT and sys.stdin.isatty() and sys.stdout.isatty(): args.USE_SC_REPT = _ask_rt(args)
+        if not args.USE_SC_REPT: log.info("No replication timing: loop extrusion only (no replication, S or G2/M phase).")
+        else: log.info("Using the built-in GM12878 single-cell replication timing.")
     has_rep = bool(rept) or bool(args.USE_SC_REPT)
-    rept_path = (rept or args.SC_REPT_PATH) if has_rep else None
+    return ((rept or args.SC_REPT_PATH) if has_rep else None), has_rep
+
+def build_context(args, make_dirs=True):
+    """Validate arguments and decide which stages run (loops always; replication/MD optionally)."""
+    if not args.BEDPE_PATH:
+        raise ValueError("No BEDPE file given (--bedpe-file). RepliSage relies heavily on modelling loop extrusion, and without a BEDPE file "
+                         "it does not know where the CTCF barriers are.")
+    if not os.path.isfile(args.BEDPE_PATH): raise FileNotFoundError(f"BEDPE file not found: {args.BEDPE_PATH}")
+    if not args.CHROM: raise ValueError("CHROM is required (e.g. chr14), or give --region chr14:start-end.")
+    given = args.REGION_START is not None and args.REGION_END is not None
+    region = [args.REGION_START, args.REGION_END] if given else [0, _chrom_end(args.CHROM, args.BEDPE_PATH)]
+    if given and region[1] <= region[0]: raise ValueError(f"Invalid region: end ({region[1]}) must be larger than start ({region[0]}).")
+    if not given: log.alert(f"No REGION_START/REGION_END: modelling the WHOLE chromosome {args.CHROM} ({region[1]:,} bp).")
+    n_beads = args.N_BEADS if args.N_BEADS else int(np.round((region[1] - region[0]) / 2000))
+    rept_path, has_rep = _resolve_rt(args)
     is_sc = has_rep and not rept_path.lower().endswith(REPT_EXT)
 
     sim = args.SIMULATION_TYPE

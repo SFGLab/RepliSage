@@ -21,6 +21,11 @@ def g(x, d=3):
     if x is None or x != x: return "n/a"
     return f"{x:.{d}g}" if abs(x) < 1e5 else f"{x:.3e}"
 
+def bead_note():
+    """Unit reminder for observables measured in simulation beads."""
+    from ..plots.style import UNITS
+    return f"Loop lengths are in simulation beads (1 bead = {UNITS['bead_kb']:.2f} kb)." if UNITS["bead_kb"] else "Loop lengths are in simulation beads."
+
 def has_potts(p): return p.has_rep and (p.c_potts1 != 0 or p.c_potts2 != 0)
 
 def observables(res, p):
@@ -31,16 +36,16 @@ def observables(res, p):
     if has_potts(p): obs.update({"Potts energy": res.Es_potts, "Magnetization": res.mags})
     return obs
 
-def overview_table(res, p, n_ctcf):
-    return Table("overview", "Run overview", ("Quantity", "Value"), [(a, b) for a, b in summary_rows(res, p, n_ctcf)])
+def overview_table(res, p, n_ctcf, kb=None):
+    return Table("overview", "Run overview", ("Quantity", "Value"), [(a, b) for a, b in summary_rows(res, p, n_ctcf, kb)])
 
 def convergence_table(obs, ph):
     seg, where = diag_segment(ph)
     d = diagnose(obs, seg)
     rows = [(r["name"], r["n"], g(r["mean"]), g(r["sd"]), g(r["ess"], 4), g(r["iat"], 3), g(r["mcse"]), g(r["geweke"], 2), g(r["rhat"], 4)) for r in d]
-    note = (f"Computed {where}. ESS = effective sample size, τ = integrated autocorrelation time (samples), MCSE = Monte Carlo standard error, "
-            "Geweke z within ±2 and split R̂ below 1.01 indicate a stationary, well-mixed chain.")
-    return Table("convergence", "MC convergence diagnostics", ("Observable", "n", "Mean", "SD", "ESS", "τ", "MCSE", "Geweke z", "Split R̂"), rows, note), d
+    note = (f"Computed {where}. ESS = effective sample size, T_ρ = integrated autocorrelation time (samples), MCSE = Monte Carlo standard error, "
+            "Geweke z within ±2 and split R̂ below 1.01 indicate a stationary, well-mixed chain. " + bead_note())
+    return Table("convergence", "MC convergence diagnostics", ("Observable", "n", "Mean", "SD", "ESS", "T_ρ", "MCSE", "Geweke z", "Split R̂"), rows, note), d
 
 def phase_table(obs, ph):
     """Mean ± SD per phase and the effect size S vs G1 (Cohen d)."""
@@ -53,15 +58,15 @@ def phase_table(obs, ph):
         rows.append((name, *cells))
     head = ("Observable", *segs.keys()) + (("d (S vs G1)",) if ph.has_rep else ())
     return Table("phases", "Observables per phase (mean ± SD)", head, rows,
-                 "Samples are autocorrelated, so SD describes fluctuations, not uncertainty. d = Cohen's effect size of S relative to G1.")
+                 "Samples are autocorrelated, so SD describes fluctuations, not uncertainty. d = Cohen's effect size of S relative to G1. " + bead_note())
 
 def lef_table(res, p, ph, n_ctcf, kb):
     ls = lef_series(res, p); seg = slice(ph.g1, ph.n)
     cov = coverage(res.Ms, res.Ns, p.N_beads)[:, seg]
     ll = (res.Ns - res.Ms)[:, seg]; bound = ll[ll > 0]
     rows = [("LEFs (family 1 / 2)", f"{p.N_lef} / {p.N_lef2}"), ("CTCF sites", n_ctcf), ("bound LEFs", f"{ls['bound'][seg].mean() * 100:.1f} %"),
-            ("mean loop length", f"{bound.mean():.1f} beads = {bound.mean() * kb:.0f} kb" if bound.size else "n/a"),
-            ("median / 95th percentile", f"{np.median(bound):.0f} / {np.percentile(bound, 95):.0f} beads" if bound.size else "n/a"),
+            ("mean loop length", f"{bound.mean() * kb:.0f} kb ({bound.mean():.1f} beads)" if bound.size else "n/a"),
+            ("median / 95th percentile loop length", f"{np.median(bound) * kb:.0f} / {np.percentile(bound, 95) * kb:.0f} kb" if bound.size else "n/a"),
             ("legs on a CTCF site (left / right)", f"{ls['on_L'][seg].mean() * 100:.0f} % / {ls['on_R'][seg].mean() * 100:.0f} %"),
             ("beads inside a loop", f"{(cov > 0).mean() * 100:.1f} %"), ("mean loops per bead", f"{cov.mean():.2f}")]
     return Table("lef", "Loop extrusion statistics (after burn-in)", ("Quantity", "Value"), rows)

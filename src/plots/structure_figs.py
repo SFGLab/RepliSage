@@ -2,7 +2,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from .style import BLUE, ROYAL, TEAL, PURPLE, ORANGE, GREEN, rolling, save_fig, CMAP_SEQ
+from .style import genome_axis, BLUE, ROYAL, TEAL, PURPLE, ORANGE, GREEN, rolling, save_fig, CMAP_SEQ
 
 METRICS = [("radius_of_gyration", "Radius of gyration"), ("mean_pairwise_distance", "Mean pair distance"), ("end_to_end_distance", "End-to-end distance"),
            ("asphericity", "Asphericity"), ("contact_number", "Contacts"), ("convex_hull_volume", "Hull volume")]
@@ -22,6 +22,6 @@ def fig_structure(out):
 def fig_heatmap(mat, out, name, fid, title):
     """Averaged inverse-distance map of the ensemble."""
     fig, ax = plt.subplots(figsize=(6.2, 5.4)); lo, hi = mat.mean() - mat.std(), mat.mean() + mat.std()
-    im = ax.imshow(mat, cmap=CMAP_SEQ, vmin=max(lo, 0), vmax=hi, aspect="equal"); ax.grid(False); ax.set_title(title); ax.set_xlabel("Bead"); ax.set_ylabel("Bead")
+    im = ax.imshow(mat, cmap=CMAP_SEQ, vmin=max(lo, 0), vmax=hi, aspect="equal"); ax.grid(False); ax.set_title(title); genome_axis(ax, mat.shape[0], "x"); genome_axis(ax, mat.shape[0], "y")
     fig.colorbar(im, fraction=.046, pad=.03, label="1 / (d + 1)")
     return save_fig(fig, out, "structural_metrics", name, fid)

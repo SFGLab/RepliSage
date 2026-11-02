@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde, ks_2samp, spearmanr
-from .style import BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, GREEN, SLATE, PHASE_COL, A_COL, B_COL, CMAP_SEQ, shade_phases, rolling, band, centred, zoom, save_fig
+from .style import kb, unit_label, BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, GREEN, SLATE, PHASE_COL, A_COL, B_COL, CMAP_SEQ, shade_phases, rolling, band, centred, zoom, save_fig
 from .mc_timeplots import SHORT, SUB
 from ..analysis.mc_stats import ess, iat, diag_segment
 from ..analysis.lef_stats import bound_mask
@@ -113,9 +113,9 @@ def fig_domains(spin_traj, ph, out):
     for lab, s in segs.items():
         if s.stop - s.start < 3: continue
         d = np.concatenate([_domains(spin_traj[:, j]) for j in np.linspace(s.start, s.stop - 1, min(30, s.stop - s.start)).astype(int)])
-        if len(d): a.hist(d, bins=np.arange(1, max(12, d.max()) + 2) - .5, density=True, histtype="step", lw=2, color=PHASE_COL[lab], label=lab)
-    a.set_yscale("log"); a.set_xlabel("Domain size (beads)"); a.set_ylabel("Density"); a.set_title("Domain sizes"); a.legend()
-    idx = np.unique(np.linspace(0, ph.n - 1, min(ph.n, 300)).astype(int)); m = np.array([_domains(spin_traj[:, j]).mean() for j in idx])
+        if len(d): a.hist(kb(d), bins=kb(np.arange(1, max(12, d.max()) + 2) - .5), density=True, histtype="step", lw=2, color=PHASE_COL[lab], label=lab)
+    a.set_yscale("log"); a.set_xlabel(unit_label("Domain size")); a.set_ylabel("Density"); a.set_title("Domain sizes"); a.legend()
+    idx = np.unique(np.linspace(0, ph.n - 1, min(ph.n, 300)).astype(int)); m = kb(np.array([_domains(spin_traj[:, j]).mean() for j in idx]))
     shade_phases(b, ph, labels=True); b.plot(ph.x(idx), m, color=GREY, lw=.8, alpha=.6); b.plot(ph.x(idx), rolling(m, 9), color=ROYAL, lw=2)
-    b.set_xlabel("MC step"); b.set_ylabel("Mean size (beads)"); b.set_title("Domains grow or shrink")
+    b.set_xlabel("MC step"); b.set_ylabel(unit_label("Mean domain size")); b.set_title("Domains grow or shrink")
     return save_fig(fig, out, SUB, "domains", "epi_domains")

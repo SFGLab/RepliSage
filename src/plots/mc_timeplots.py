@@ -46,7 +46,7 @@ def fig_acf(obs, ph, out, keys=("Total energy", "Mean loop length", "Folding ene
         for i, k in enumerate(keys if ph.has_rep else [sel]):
             s = sel if ph.has_rep else segs["All"]; v = np.asarray(obs[k], float)[s]
             if len(v) < 12 or v.std() == 0: continue
-            a = autocorr(v)[:min(max_lag, len(v) // 3)]; ax.plot(a, color=cols[i % 3] if ph.has_rep else cols[pi % 3], label=f"{SHORT[k]}  τ={iat(v):.0f}")
+            a = autocorr(v)[:min(max_lag, len(v) // 3)]; ax.plot(a, color=cols[i % 3] if ph.has_rep else cols[pi % 3], label=f"{SHORT[k]}  T_ρ={iat(v):.0f}")
         ax.set_xlabel("Lag (samples)"); ax.legend(fontsize=8)
     axs[0].set_ylabel("Autocorrelation")
     return save_fig(fig, out, SUB, "autocorrelation", "mc_acf")

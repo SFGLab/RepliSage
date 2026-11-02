@@ -1,0 +1,20 @@
+\documentclass[tikz,border=6pt]{standalone}
+\usetikzlibrary{arrows.meta,calc}
+\definecolor{red}{HTML}{A50F2D}\definecolor{ink}{HTML}{141414}\definecolor{gry}{HTML}{5F5F5F}\definecolor{blu}{HTML}{1F5F99}
+\pgfmathdeclarefunction{trace}{1}{\pgfmathparse{1.0+2.0*exp(-#1/1.2)+0.13*(sin(deg(7*#1))+0.6*sin(deg(17*#1+1)))}}
+\begin{document}
+\begin{tikzpicture}[font=\sffamily\fontsize{11}{13}\selectfont,>=Stealth,x=1.15cm,y=1.1cm]
+\fill[gry!15] (0,0) rectangle (2.4,3.6);
+\node[gry,anchor=north] at (1.2,3.55) {burn-in};
+\node[gry,font=\sffamily\small,anchor=north] at (1.2,3.2) {discarded};
+\draw[->,ink,thick] (0,0)--(10,0) node[right]{MC step};
+\draw[->,ink,thick] (0,0)--(0,3.8) node[above]{observable, e.g.\ $\mathcal{H}$};
+\draw[ink,very thick,smooth,samples=300,domain=0.02:9.5] plot (\x,{trace(\x)});
+\draw[blu,dashed,thick] (2.4,1.0)--(9.8,1.0) node[right,blu]{$\langle\mathcal{H}\rangle$};
+\foreach \x in {2.8,3.5,...,9.4}{\fill[red] (\x,{trace(\x)}) circle (2.4pt);}
+\draw[red,thick,<->] (3.5,-0.55)--(4.2,-0.55);
+\node[red,font=\sffamily\small,anchor=north] at (3.85,-0.6) {$f_{\mathrm{mc}}$};
+\node[red,font=\sffamily\small,align=left,anchor=west] at (5.2,2.35) {recorded samples\\(every $f_{\mathrm{mc}}$ steps)};
+\node[blu,font=\sffamily\small,anchor=south] at (7.5,1.45) {stationary: fluctuates around the mean};
+\end{tikzpicture}
+\end{document}

@@ -113,6 +113,27 @@ class Geo:
     @property
     def label(self): return f"{self.chrom} position (Mb)"
 
+UNITS = {"bead_kb": None, "start": 0, "chrom": ""}   # genomic meaning of one simulation bead (set once per run)
+
+def set_units(ctx):
+    """Remember the bead size (kb) and region start so every plot can show genomic units."""
+    a, b = ctx.region; UNITS.update(bead_kb=(b - a) / ctx.n_beads / 1e3, start=a, chrom=ctx.chrom)
+
+def kb(v):
+    """Beads -> kb (unchanged if the bead size is unknown)."""
+    return np.asarray(v, float) * (UNITS["bead_kb"] or 1)
+
+def unit_label(name):
+    """'Loop length (kb)', or '(simulation beads)' when no genomic scale is known."""
+    return f"{name} ({'kb' if UNITS['bead_kb'] else 'simulation beads'})"
+
+def genome_axis(ax, n, which="y", ticks=6):
+    """Relabel a bead axis (0..n) with genomic positions in Mb."""
+    if not UNITS["bead_kb"]:
+        (ax.set_ylabel if which == "y" else ax.set_xlabel)("Simulation beads"); return
+    t = np.linspace(0, n, ticks); lab = [f"{(UNITS['start'] + x * UNITS['bead_kb'] * 1e3) / 1e6:.2f}" for x in t]
+    (ax.set_yticks if which == "y" else ax.set_xticks)(t, lab); (ax.set_ylabel if which == "y" else ax.set_xlabel)(f"{UNITS['chrom']} position (Mb)")
+
 def make_geo(ctx):
     a, b = ctx.region
     return Geo(np.linspace(a, b, ctx.n_beads, endpoint=False) / 1e6, ctx.chrom, (b - a) / ctx.n_beads / 1e3)

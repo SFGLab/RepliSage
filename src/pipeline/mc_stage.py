@@ -45,7 +45,7 @@ def run_mc_stage(ctx, L, R, n_ctcf, rep):
     dirs = replica_dirs(ctx, a.N_REPLICAS)
     for k, (r, d) in enumerate(zip(res, dirs)):
         check_acceptance(r.acceptance_rate)
-        log.table(f"MC summary (replica {k})" if len(res) > 1 else "MC summary", summary_rows(r, p, n_ctcf))
+        log.table(f"MC summary (replica {k})" if len(res) > 1 else "MC summary", summary_rows(r, p, n_ctcf, (ctx.region[1] - ctx.region[0]) / ctx.n_beads / 1e3))
         if a.SAVE_MDT: save_mc(r, p, d)
     log.success(f"Monte Carlo finished ({len(res)} replica(s), {max(r.elapsed for r in res):.1f} s per chain).")
     return p, list(zip(res, dirs))

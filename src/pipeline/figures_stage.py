@@ -2,6 +2,7 @@
 from ..plots.style import make_geo
 from ..plots.mc_timeplots import fig_energy, fig_energy_potts, fig_distributions, fig_acf, fig_convergence, fig_running, fig_violations
 from ..plots.diag_extra import fig_stationarity, fig_mcse, fig_rolling, fig_correlation, fig_budget, fig_lef_dynamics, fig_domains
+from ..plots.story import fig_story, fig_phase_compare
 from ..plots.loops import coh_traj_plot, plot_loop_length, fig_coverage, fig_binding, fig_input
 from ..plots.states import (ising_traj_plot, fig_timing_sorted, fig_fractions, fig_switching, fig_switch_bars, fig_switch_map,
                             compute_state_proportions_sign_based)
@@ -15,7 +16,8 @@ from ..logger import log
 def make_figures(ctx, p, res, out, rep, ph, obs, diag, where):
     """Write every figure (png + svg) of the replica; failures of single figures are reported, not fatal."""
     geo = make_geo(ctx); f_T = None if rep is None else rep.f_rep_T
-    steps = [("CTCF input", lambda: fig_input(p, geo, out)),
+    steps = [("story", lambda: fig_story(obs, res, p, rep, ph, out)), ("phase comparison", lambda: fig_phase_compare(obs, res, p, ph, out)),
+             ("CTCF input", lambda: fig_input(p, geo, out)),
              ("MC energies", lambda: fig_energy(obs, ph, out)), ("distributions", lambda: fig_distributions(obs, ph, out)), ("autocorrelation", lambda: fig_acf(obs, ph, out)),
              ("convergence", lambda: fig_convergence(diag, where, out)), ("running means", lambda: fig_running(obs, ph, out)),
              ("stationarity", lambda: fig_stationarity(obs, ph, out)), ("MCSE", lambda: fig_mcse(obs, ph, out)), ("rolling stats", lambda: fig_rolling(obs, ph, out)),

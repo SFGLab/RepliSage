@@ -18,6 +18,8 @@ At every recorded sample the following are computed:
 
 ## MCMC diagnostics
 
+The ideas behind these diagnostics (autocorrelation, ergodic mean, burn-in) are explained in [Monte Carlo, MCMC and Metropolis](mcmc.md).
+
 Samples of a Markov chain are correlated, so ten thousand samples are not ten thousand independent measurements. The diagnostics quantify this.
 
 **Autocorrelation.** For a series $x_t$ with mean $\bar{x}$, the autocorrelation at lag $\tau$ is
@@ -29,6 +31,8 @@ $$C(\tau) = \big\langle (x_t - \bar{x})(x_{t+\tau} - \bar{x}) \big\rangle$$
 where $C(\tau)$ is the autocovariance and $\langle\cdot\rangle$ the average over $t$.
 
 It starts at 1 and should fall to 0 within a few lags.
+
+In G1 and G2/M it should fall quickly. In S phase expect a slow decay: the forks keep changing loops and epigenetic states in a semi-deterministic way, so this is a feature of the replication program and not a failed run (see [what to expect in each phase](mcmc.md#what-to-expect-in-each-phase)).
 
 **Integrated autocorrelation time.**
 

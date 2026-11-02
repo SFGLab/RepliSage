@@ -14,14 +14,30 @@ def figure(fid, path, title=None):
     t, shows, expect = cap_for(fid)
     how = how_for(fid)
     body = (f'<div class="cap"><div><span>Shows</span>{esc(shows)}</div><div><span>Expect</span>{esc(expect)}</div>'
-            + (f'<div class="how"><span>How to read it</span>{esc(how)}</div>' if how else "") + "</div>") if shows else ""
+            + (f'<details class="how"><summary>How to read it</summary><p>{esc(how)}</p></details>' if how else "") + "</div>") if shows else ""
     return f'<figure id="fig-{esc(fid)}"><img alt="{esc(title or t)}" src="{img_uri(path)}"><figcaption><h4>{esc(title or t)}</h4>{body}</figcaption></figure>'
+
+def _fmt(c):
+    """Thousands separators for plain large numbers; other cells unchanged."""
+    try: v = float(str(c).replace(",", ""))
+    except ValueError: return c
+    return f"{int(v):,}" if str(c).lstrip("-").isdigit() and abs(v) >= 10000 else c
 
 def table(t):
     head = "".join(f"<th>{esc(h)}</th>" for h in t.header)
-    rows = "".join("<tr>" + "".join(f'<td class="num">{esc(c)}</td>' if i else f"<td>{esc(c)}</td>" for i, c in enumerate(r)) + "</tr>" for r in t.rows)
+    rows = "".join("<tr>" + "".join(f'<td class="num">{esc(_fmt(c))}</td>' if i else f"<td>{esc(c)}</td>" for i, c in enumerate(r)) + "</tr>" for r in t.rows)
     note = f'<div class="note">{esc(t.note)}</div>' if t.note else ""
     return f'<div class="tbl"><h4>{esc(t.title)}</h4><table><thead><tr>{head}</tr></thead><tbody>{rows}</tbody></table>{note}</div>'
+
+def findings(items):
+    """Key-finding cards: status colour, label, big value, one-sentence detail."""
+    names = {"ok": "good", "note": "note", "warn": "check"}
+    cards = "".join(f'<div class="fc {f["status"]}"><span class="st">{names[f["status"]]}</span><div class="lb">{esc(f["label"])}</div><div class="v">{esc(f["value"])}</div><div class="dt">{esc(f["detail"])}</div></div>' for f in items)
+    return f'<div class="find">{cards}</div><p class="hint">Rule-based reading aids, not statistical tests. Details are in the sections below.</p>'
+
+def group(title, body, sub="", open_=False):
+    """Collapsible block (used for diagnostics)."""
+    return f'<details class="grp"{" open" if open_ else ""}><summary>{esc(title)}<small>{esc(sub)}</small></summary>{body}</details>'
 
 def section(sid, title, body, lead=""):
     return f'<section id="{sid}"><h2>{esc(title)}</h2>' + (f'<p class="lead">{esc(lead)}</p>' if lead else "") + body + "</section>"
@@ -39,6 +55,6 @@ def params_table(args):
             + "".join(rows) + '</tbody></table></div><div class="note">Values that differ from the default are shown in red.</div>')
 
 def page(title, nav, main, css, js):
-    links = "".join(f'<a href="#{i}">{esc(t)}</a>' for i, t in nav)
+    links = "".join(f'<a class="l" href="#{i}">{esc(t)}</a>' for i, t in nav)
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)}</title><style>{css}</style></head>'
             f'<body><div class="layout"><nav><a class="brand" href="#top">Repli<b>Sage</b></a>{links}</nav><main id="top">{main}</main></div><div id="lb"><img alt=""></div><script>{js}</script></body></html>')

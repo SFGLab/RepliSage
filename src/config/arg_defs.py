@@ -22,10 +22,11 @@ def build_args() -> Args:
         A("general", "SEED", "[new] Random seed of the Monte Carlo (empty = random).", int),
         A("general", "VERBOSE", "[new] Verbosity 0-3 (same as -v, -vv, -vvv in the command line).", int, "0"),
         # ---------------- input ----------------
-        A("input", "BEDPE_PATH", "A .bedpe file path with loops. It is required.", str),
+        A("input", "BEDPE_PATH", "A .bedpe file path with loops (CTCF anchors). It is required: without it the model does not know where the CTCF barriers are. Optional columns 8-9 hold CTCF orientation.", str),
         A("input", "REPT_PATH", "The replication timing dataset (.txt, .bw, .bigwig). If empty, no replication is modelled (unless USE_SC_REPT).", str),
         A("input", "SC_REPT_PATH", "The single cell replication timing dataset (.parquet).", str, DEFAULT_REPT),
         A("input", "USE_SC_REPT", "[new] Use the built-in single-cell replication timing when REPT_PATH is empty.", bool, "False"),
+        A("input", "ASK_RT", "[new] Ask interactively what to do when no replication timing is given (only in a terminal).", bool, "True"),
         A("input", "CHROM", "Chromosome of the modelling region of interest.", str),
         A("input", "REGION_START", "Starting region coordinate. Empty = whole chromosome.", int),
         A("input", "REGION_END", "Ending region coordinate. Empty = whole chromosome.", int),
@@ -34,7 +35,7 @@ def build_args() -> Args:
         A("preprocessing", "REP_SIM_T", "[new] Number of time points of the replication simulation.", int, "1000"),
         A("preprocessing", "BIGWIG_BIN_SIZE", "[new] Bin size (bp) used to average a Repli-Seq bigWig.", int, "1000"),
         A("preprocessing", "BIGWIG_SIGMA", "[new] Gaussian smoothing (in bins) of a Repli-Seq bigWig.", float, "200.0"),
-        A("preprocessing", "BIGWIG_LOG_NORM", "[new] Log-transform Repli-Seq signal to fix its skewness.", bool, "True"),
+        A("preprocessing", "BIGWIG_LOG_NORM", "[deprecated] Repli-Seq signals are always log-normalised; this value is ignored.", bool, "True"),
         # ---------------- replication ----------------
         A("replication", "REP_WITH_STRESS", "True sets REP_T_STD_FACTOR, REP_SPEED_SCALE and REP_INIT_RATE_SCALE to replication-stress values.", bool, "False"),
         A("replication", "REP_T_STD_FACTOR", "Factor multiplying the standard deviation of the replication timing curve.", float, "0.1"),

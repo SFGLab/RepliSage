@@ -23,10 +23,10 @@ def phase_bounds(p):
     """Indices (in recorded samples) of the G1 start, S start and S end."""
     return p.burnin // p.MC_step, p.t_rep // p.MC_step, (p.t_rep + p.rep_duration) // p.MC_step
 
-def summary_rows(res, p, N_CTCF):
+def summary_rows(res, p, N_CTCF, kb=None):
     """Rows for the MC statistics table."""
     g1, s0, s1 = phase_bounds(p)
-    ll = res.Ns - res.Ms
+    ll = res.Ns - res.Ms; ln = (lambda x: f"{x * kb:.0f} kb") if kb else (lambda x: f"{x:.2f} beads")   # loop length with units
     rows = [("acceptance rate", f"{res.acceptance_rate * 100:.2f} %"), ("MC steps", p.N_steps),
             ("recorded samples", p.N_steps // p.MC_step), ("beads", p.N_beads),
             ("CTCF sites", N_CTCF), ("LEFs (family 1 / 2)", f"{p.N_lef} / {p.N_lef2}")]
@@ -34,11 +34,11 @@ def summary_rows(res, p, N_CTCF):
         nz = res.S_viols[s0:s1][res.S_viols[s0:s1] != 0]
         rows += [("energy G1 / S / G2M", " / ".join(f"{x.mean():.2f}" for x in (res.Es[g1:s0], res.Es[s0:s1], res.Es[s1:]))),
                  ("Potts energy G1 / S / G2M", " / ".join(f"{x.mean():.2f}" for x in (res.Es_potts[g1:s0], res.Es_potts[s0:s1], res.Es_potts[s1:]))),
-                 ("loop length G1 / S / G2M", " / ".join(f"{x.mean():.2f}" for x in (ll[:, g1:s0], ll[:, s0:s1], ll[:, s1:]))),
+                 ("mean loop length G1 / S / G2M", " / ".join(ln(x.mean()) for x in (ll[:, g1:s0], ll[:, s0:s1], ll[:, s1:]))),
                  ("LEF-replisome violations (S)", int(res.N_viols[s0:s1].sum())),
                  ("violation strength mean/max (S)", f"{nz.mean() if nz.size else 0:.2f} / {nz.max() if nz.size else 0:.2f}")]
     else:
-        rows += [("mean energy", f"{res.Es[g1:].mean():.2f}"), ("mean loop length", f"{ll[:, g1:].mean():.2f}")]
+        rows += [("mean energy", f"{res.Es[g1:].mean():.2f}"), ("mean loop length", ln(ll[:, g1:].mean()))]
     return rows
 
 def check_acceptance(rate):

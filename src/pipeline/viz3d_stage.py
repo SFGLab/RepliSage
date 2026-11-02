@@ -18,3 +18,9 @@ def run_viz3d(ctx, p, res, out_dir, rep):
             mode = a.MOVIE_COLOR if a.MOVIE_COLOR != "auto" else ("sister" if tr.has_rep else "compartment" if tr.spins.any() else "rainbow")
             log.success(f"Movie: {make_movie(tr, os.path.join(out_dir, 'movie_3d'), mode, a.MOVIE_INTERP)}")
         except Exception as e: log.alert(f"Movie skipped: {e}")
+    try:   # one still per phase for the report
+        from ..viz3d.video import render_stills
+        d = os.path.join(out_dir, "plots", "3d"); os.makedirs(d, exist_ok=True)
+        mode = a.MOVIE_COLOR if a.MOVIE_COLOR != "auto" else ("sister" if tr.has_rep else "compartment" if tr.spins.any() else "rainbow")
+        render_stills(tr, os.path.join(d, "stills.png"), mode)
+    except Exception as e: log.alert(f"3D stills skipped: {e}")

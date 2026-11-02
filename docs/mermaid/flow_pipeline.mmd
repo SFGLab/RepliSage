@@ -1,0 +1,28 @@
+flowchart TD
+    A(BEDPE loops<br/>--bedpe-file) --> P(1. Pre-processing<br/>CTCF binding potentials L and R)
+    T(Replication timing<br/>--rt-file) -.optional.-> R
+    P --> R{timing data<br/>given?}
+    R -- yes --> S(2. Replication simulation<br/>origins, forks, replicated DNA)
+    R -- no --> M
+    S --> M(3. Monte Carlo<br/>loop extruders + Potts spins)
+    M --> D{--run-md true?}
+    D -- yes --> MD(4. 3D structures<br/>OpenMM, one or two chains)
+    D -- no --> AN
+    MD --> V(5. 3D viewer, movie, CIF files)
+    MD --> AN(6. Analysis, figures, tables)
+    V --> AN
+    AN --> RP(report.html)
+    classDef input fill:#F1F3F5,stroke:#6B7280,stroke-width:1.8px,color:#1F2937;
+    classDef decide fill:#FFF4D6,stroke:#B58105,stroke-width:1.8px,color:#1F2937;
+    classDef core fill:#FFFFFF,stroke:#374151,stroke-width:2px,color:#1F2937;
+    classDef opt fill:#FBE6EA,stroke:#A50F2D,stroke-width:2px,color:#1F2937;
+    classDef hot fill:#A50F2D,stroke:#7A0B20,stroke-width:2px,color:#FFFFFF;
+    classDef calm fill:#F1F3F5,stroke:#9CA3AF,stroke-width:1.8px,color:#1F2937;
+    classDef g1 fill:#E6EEF7,stroke:#4F7CAC,stroke-width:2px,color:#1F2937;
+    classDef done fill:#E3F2EC,stroke:#3F8F6F,stroke-width:2px,color:#1F2937;
+    linkStyle default stroke:#4B5563,stroke-width:1.8px;
+    class A,T input;
+    class R,D decide;
+    class P,M,AN core;
+    class S,MD,V opt;
+    class RP hot;
