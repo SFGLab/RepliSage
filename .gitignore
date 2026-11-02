@@ -102,3 +102,8 @@ core.*
 nohup.out
 .Rhistory
 .Rproj.user/
+
+# Files produced by Claude sessions
+Claude outputs/
+.claude/
+CLAUDE.md
