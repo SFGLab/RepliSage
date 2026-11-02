@@ -31,6 +31,9 @@ nav:
       - Command line: cli.md
       - Examples: examples.md
   - Models:
+      - Scope and goals: scope.md
+      - The idea in a nutshell: intuition.md
+      - The Hamiltonian idea: hamiltonian.md
       - Pipeline: pipeline.md
       - Pre-processing: preproc.md
       - Replication model: replication_model.md
@@ -40,3 +43,4 @@ nav:
       - Configuration: config.md
       - Analysis: analysis.md
       - Outputs and visualisation: visualization.md
+  - Known limitations: limitations.md
