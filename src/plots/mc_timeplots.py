@@ -5,8 +5,8 @@ from .style import BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, GREEN, 
 from ..analysis.mc_stats import autocorr, iat, ess, diag_segment, split_rhat
 
 SUB = "MCMC_diagnostics"
-SHORT = {"Total energy": "Energy", "Folding energy": "Folding", "Binding energy": "Binding", "Potts energy": "Potts",
-         "Mean loop length": "Loop length", "Bound LEFs": "Bound", "Magnetization": "Magnet."}
+SHORT = {"Total energy": "Energy", "Folding energy": "Folding", "Binding energy": "Binding", "Epigenetic energy": "Epigenetic",
+         "Mean loop length": "Loop length", "Bound loop length": "Bound loop", "Bound LEFs": "Bound", "Average epigenetic state": "Mean state"}
 
 def _traces(obs, ph, out, keys, name, fid, cols, size=2.1):
     """Stacked traces (light) with moving average (bold), at most 3 panels."""
@@ -25,8 +25,8 @@ def fig_energy(obs, ph, out):
     return _traces(obs, ph, out, ("Total energy", "Folding energy", "Binding energy"), "energies", "mc_energy", (BLUE, TEAL, PURPLE))
 
 def fig_energy_potts(obs, ph, out):
-    """Potts energy and magnetization over time."""
-    return _traces(obs, ph, out, ("Potts energy", "Magnetization"), "energies_potts", "mc_energy_potts", (ORANGE, GREEN))
+    """Epigenetic energy and average epigenetic state over time."""
+    return _traces(obs, ph, out, ("Epigenetic energy", "Average epigenetic state"), "energies_potts", "mc_energy_potts", (ORANGE, GREEN))
 
 def fig_distributions(obs, ph, out, keys=("Total energy", "Folding energy", "Mean loop length")):
     """Distribution of three observables per phase (violins) or after burn-in (histogram)."""

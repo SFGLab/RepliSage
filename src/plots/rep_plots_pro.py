@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
-from .style import BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, SLATE, CMAP_REP, CMAP_SEQ, rolling, save_fig
+from .style import fork_layer, s_window, BLACK, ROYAL, GREY, BLUE, TEAL, GOLD, PURPLE, ORANGE, SLATE, CMAP_REP, CMAP_SEQ, rolling, save_fig
 from ..analysis.rep_stats import timing_profile, global_fraction, quantile_time, infer_origins
 
 SUB = "replication_simulation"
@@ -18,12 +18,12 @@ def fig_forks(rep, p, geo, out):
     fig, (a, b) = plt.subplots(1, 2, figsize=(11.5, 5), sharey=True, gridspec_kw=dict(wspace=.06))
     a.imshow(rf.T, origin="lower", aspect="auto", cmap=CMAP_REP, extent=ext, vmin=0, vmax=1.15, interpolation="nearest"); a.set_title("Replicated DNA")
     forks = (np.asarray(rep.l_forks) > 0) | (np.asarray(rep.r_forks) > 0)
-    img = np.zeros(forks.T.shape + (4,)); img[..., :3] = np.array([.17, .42, .69]); img[..., 3] = forks.T
+    img = fork_layer(forks)
     b.imshow(rf.T, origin="lower", aspect="auto", cmap=CMAP_REP, extent=ext, vmin=0, vmax=2.6, interpolation="nearest")
     b.imshow(img, origin="lower", aspect="auto", extent=ext, interpolation="nearest")
     b.scatter(geo.xs[org], t[0] + tim[org] * (t[-1] - t[0]), marker="^", s=38, color=ROYAL, edgecolor="white", linewidth=.7, zorder=3, label=f"Origins ({len(org)})")
     b.set_title("Forks"); b.legend(loc="lower right", fontsize=8.5)
-    for ax in (a, b): ax.grid(False); ax.set_xlabel(geo.label)
+    for ax in (a, b): ax.grid(False); ax.set_xlabel(geo.label); s_window(ax, t[0], t[-1], text=ax is b)
     a.set_ylabel("MC step")
     return save_fig(fig, out, SUB, "replication_forks", "rep_forks")
 
@@ -36,7 +36,7 @@ def fig_fraction(rep, p, out):
         x = t[0] + quantile_time(f, q) * (t[-1] - t[0]); a.plot([x], [q], "o", color=SLATE, ms=5); a.annotate(f"T{int(q * 100)}", (x, q), (6, -12), textcoords="offset points", fontsize=8.5)
     a.set_ylabel("Replicated fraction"); a.set_ylim(0, 1.03)
     fk = rolling(np.resize(forks, T), 7); b.fill_between(t, fk, color=BLUE, alpha=.25, lw=0); b.plot(t, fk, color=BLUE, lw=2)
-    b.set_ylabel("Active forks"); b.set_xlabel("MC step (S phase)")
+    b.set_ylabel("Active forks"); b.set_xlabel("MC step"); s_window(a, t[0], t[-1], "x"); s_window(b, t[0], t[-1], "x", text=False)
     return save_fig(fig, out, SUB, "replication_fraction", "rep_fraction")
 
 def fig_initiation(rep, p, geo, out):
@@ -47,10 +47,10 @@ def fig_initiation(rep, p, geo, out):
     ax, top, rt = fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[0, 0], sharex=None), fig.add_subplot(gs[1, 1], sharey=None)
     im = ax.imshow(I.T, origin="lower", aspect="auto", cmap=CMAP_SEQ, extent=ext, vmax=np.percentile(I[I > 0], 99.5) if (I > 0).any() else 1, interpolation="nearest")
     ax.scatter(geo.xs[org], t[0] + tim[org] * (t[-1] - t[0]), marker="^", s=26, color="white", edgecolor=SLATE, linewidth=.8, label="Origins"); ax.legend(loc="lower right", fontsize=8)
-    ax.grid(False); ax.set_xlabel(geo.label); ax.set_ylabel("MC step")
+    ax.grid(False); ax.set_xlabel(geo.label); ax.set_ylabel("MC step"); s_window(ax, t[0], t[-1])
     cax = fig.add_subplot(gs[0, 1]); cb = fig.colorbar(im, cax=cax, orientation="horizontal"); cb.set_label("I(x,t)", fontsize=9); cb.ax.tick_params(labelsize=8)
     top.fill_between(geo.xs, I.sum(1), color=ORANGE, alpha=.55, lw=0); top.set_xlim(ext[:2]); top.set_xticklabels([]); top.set_ylabel("Σ over t")
-    rt.fill_betweenx(t, I.sum(0), color=PURPLE, alpha=.5, lw=0); rt.set_ylim(t[0], t[-1]); rt.set_yticklabels([]); rt.set_xlabel("Σ over x"); rt.xaxis.set_label_position("top")
+    rt.fill_betweenx(t, I.sum(0), color=PURPLE, alpha=.5, lw=0); s_window(rt, t[0], t[-1], text=False); rt.set_yticklabels([]); rt.set_xlabel("Σ over x"); rt.xaxis.set_label_position("top")
     return save_fig(fig, out, SUB, "initiation_rate", "rep_initiation")
 
 def fig_timing(rep, geo, out):

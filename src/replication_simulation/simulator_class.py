@@ -29,7 +29,7 @@ class ReplicationSimulator:
         Run replication simulation.
         '''
         log.trace("Running replication simulation...")
-        self.f, self.l_forks, self.r_forks, T_final, self.rep_fract = simulator(self.initiation_rate, self.speed_mean, self.speed_std)
+        self.f, self.l_forks, self.r_forks, T_final, self.rep_fract, self.window = simulator(self.initiation_rate, self.speed_mean, self.speed_std)
         log.trace("Replication simulation finished.")
 
         return self.f, self.l_forks, self.r_forks, T_final, self.rep_fract

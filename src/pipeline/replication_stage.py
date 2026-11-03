@@ -66,6 +66,6 @@ if __name__ == "__main__":
     from .context import build_context
     from ..config.loader import get_config
     args, _ = get_config(["--bedpe-file", "my_loops.bedpe", "--region", "chr14:80835000-98674700", "--n-beads", "200", "--rt-file", "builtin",
-                          "--name", "demo_replication", "-v"], overrides={"REP_TIME_DURATION": 20000})
+                          "--name", "demo_replication", "-v"], overrides={"REP_TIME_DURATION": 12000})
     ctx = build_context(args)
     run_replication(ctx)

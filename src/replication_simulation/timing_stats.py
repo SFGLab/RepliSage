@@ -22,6 +22,9 @@ class StatsMixin:
         Slopes of replication timing curve should correlate with the speed of replication forks.
         '''
         extrema_indices = np.sort(np.concatenate((self.peaks, self.dips)))
+        if len(extrema_indices) < 2:    # smooth curve with <2 extrema (small region / fine beads): the region ends bound the segments
+            extrema_indices = np.unique(np.concatenate(([0], extrema_indices, [self.L - 1]))).astype(int)
+            log.info("Timing curve has fewer than two extrema: using the region ends as segment boundaries for the fork speed.")
         extrema_indices_sorted = np.sort(extrema_indices)
         log.info('Computing slopes of replication curves...')
 

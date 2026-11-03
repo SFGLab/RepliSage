@@ -15,6 +15,7 @@ from .data_sources import SourceMixin
 from .timing_stats import StatsMixin
 from .init_rate import InitRateMixin
 from .timing_io import sanitize_chr_dataframe
+from . import input_checks as chk
 from .simulator_class import ReplicationSimulator
 from ..utils.arrays import min_max_normalize
 from ..logger import log
@@ -43,9 +44,10 @@ class Replikator(SourceMixin, StatsMixin, InitRateMixin):
             self.data = pd.read_parquet(rept_data_path)
             sel = self.data['chromosome'].astype(str) == str(chrom_nr)
             self.gen_windows = self.data[sel][['start', 'end', 'center']].values
-            self.chrom_size = int(np.max(self.gen_windows))
             single_cell_cols = [col for col in self.data.columns if col.startswith('SC_')]
             self.mat = self.data[sel][single_cell_cols].T.values
+            chk.check_sc(self)
+            self.chrom_size = int(np.max(self.gen_windows))
         else:
             low = rept_data_path.lower()
             if low.endswith(".txt"):
@@ -53,9 +55,11 @@ class Replikator(SourceMixin, StatsMixin, InitRateMixin):
                 self.data = sanitize_chr_dataframe(self.data)
                 if not self.data[0].astype(str).str.startswith('chr').all():
                     self.data[0] = 'chr' + self.data[0].astype(str)
+                chk.check_txt(self)
             elif low.endswith((".bw", ".bigwig")):
                 import pyBigWig
                 self.data = pyBigWig.open(rept_data_path)
+                chk.check_bigwig(self)
         self.L, self.T = sim_L, sim_T
         self.sigma_t = self.T * Tstd_factor
         self.speed_factor = speed_factor
@@ -73,6 +77,7 @@ class Replikator(SourceMixin, StatsMixin, InitRateMixin):
             raise ValueError("Unsupported file format. Please provide a .txt, .bigWig or single-cell .parquet file.")
         self.compute_peaks()
         self.compute_slopes()
+        chk.check_signal(self)
         self.compute_init_rate()
 
     def run(self, scale=1):
@@ -80,8 +85,28 @@ class Replikator(SourceMixin, StatsMixin, InitRateMixin):
         self.prepare_data()
         repsim = ReplicationSimulator(self.L, self.T, scale * self.initiation_rate, self.speed_ratio, self.speed_avg)
         self.sim_f, l_forks, r_forks, T_final, rep_fract = repsim.run_simulator()
+        self.remap_rate(*repsim.window)                       # initiation rate on the same (S-phase) time axis
+        self.sim_f, l_forks, r_forks = self.normalise_time(self.sim_f, l_forks, r_forks)   # safeguard (no-op after the exact crop above)
         if self.out_path is not None: repsim.visualize_simulation(self.out_path)
         return self.sim_f, l_forks, r_forks
+
+    def remap_rate(self, first, last):
+        '''Initiation rate I(x,t) on the normalised S-phase axis: first firing -> first column, last replicated locus -> last column.'''
+        T = self.initiation_rate.shape[1]
+        cols = np.minimum(np.round(first + np.arange(T) * (last - first) / (T - 1)).astype(int), T - 1)
+        self.initiation_rate = self.initiation_rate[:, cols]
+
+    def normalise_time(self, sim_f, l_forks, r_forks):
+        '''Stretch the simulated time so that S phase starts with the first fired origin and ends when the last locus is replicated.'''
+        T = sim_f.shape[1]; any_rep = np.flatnonzero(sim_f.any(axis=0)); all_rep = np.flatnonzero(sim_f.all(axis=0))
+        if len(any_rep) == 0 or len(all_rep) == 0: return sim_f, l_forks, r_forks
+        c0, c1 = int(any_rep[0]), int(all_rep[0])
+        if c1 <= c0 or (c0 == 0 and c1 == T - 1): return sim_f, l_forks, r_forks
+        cols = np.round(c0 + np.arange(T) * (c1 - c0) / (T - 1)).astype(int)        # new time point -> original one (nearest, keeps 0/1 values)
+        self.time_map = cols
+        self.initiation_rate = self.initiation_rate[:, cols]
+        log.info(f"S-phase time axis normalised: the first origin fires at the start and the last locus is replicated at the end (original steps {c0}-{c1} of {T}).")
+        return sim_f[:, cols], l_forks[:, cols], r_forks[:, cols]
 
     def calculate_ising_parameters(self):
         '''Compartmentalization data: link early/late replication timing with Potts field and states.'''

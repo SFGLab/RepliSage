@@ -19,25 +19,39 @@ Only loops that lie fully inside the chosen region and chromosome are kept. If n
 
 ## From base pairs to beads
 
-The region is cut into `N_BEADS` equal pieces. With region length $\ell$, one bead spans $\ell / N$ base pairs. An anchor is assigned to the bead at the middle of its interval.
+The region is cut into `N_BEADS` equal pieces. For a region of $G$ base pairs, one bead spans $G / N_{\text{beads}}$ base pairs. An anchor is assigned to the bead at the middle of its interval.
 
 ## Binding potentials
 
-For every loop with strength $w$ and anchors on beads $x$ and $y$, the left potential $L$ and the right potential $R$ receive contributions at the two anchor beads.
+For every bead $k = 1, \dots, N_{\text{beads}}$ pre-processing computes two numbers, the **left potential** $L(k)$ and the **right potential** $R(k)$. They tell how strongly bead $k$ attracts the left leg $m_i$ and the right leg $n_i$ of a loop extruding factor (LEF) $i$. They enter the binding energy of the [Monte Carlo model](mc_model.md):
 
-Without orientation information:
+$$\mathcal{H}_{\text{bind}} = \mathcal{C}_{\text{bind}} \sum_{i=1}^{N_{\text{lef}}} \left(L(m_i) + R(n_i)\right)$$
 
-$$\begin{aligned} L_x &\leftarrow L_x + w, & R_x &\leftarrow R_x + w \\ L_y &\leftarrow L_y + w, & R_y &\leftarrow R_y + w \end{aligned}$$
+Since $\mathcal{C}_{\text{bind}} < 0$, a LEF with legs on beads with large $L$ and $R$ lowers the energy, which pulls loops towards the CTCF loops of your data. Only the shape of $L$ and $R$ matters, not the scale of $w_\lambda$, because $\mathcal{C}_{\text{bind}}$ divides by $\sum_k (L(k) + R(k))$.
 
-With orientation $o_x, o_y$ in columns 8 and 9:
+**Building $L$ and $R$.** Start from $L(k) = R(k) = 0$ and go through the loops $\lambda = 1, 2, \dots$ of the BEDPE file. Each loop brings three ingredients:
 
-$$L_x \leftarrow L_x + w \cdot (1 - o_x)$$
+* two **anchor beads** $a_\lambda$ and $b_\lambda$, the beads that hold the two ends of the loop;
+* a **strength** $w_\lambda \ge 0$, the score in column 7: how strongly the experiment supports this loop (for example the number of ChIA-PET read pairs or a HiChIP score). A strong loop makes its anchors more attractive for LEF legs, and a weak loop only slightly. If your file has no meaningful score, give every loop the same value, for example 1. Loops with a missing or negative score are skipped;
+* optionally, a **CTCF orientation** $o_c \in [0, 1]$ for each anchor $c$ (columns 8 and 9).
 
-$$R_x \leftarrow R_x + w \cdot o_x$$
+For each anchor bead $c \in \{a_\lambda, b_\lambda\}$ add:
 
-and the same for $y$. In words: a forward-facing CTCF site attracts the left leg of an extruder, a reverse-facing one attracts the right leg.
+* Without orientation information, the anchor attracts both legs equally:
 
-The number of CTCF sites $N_{CTCF}$ is the larger of the numbers of non-zero entries of $L$ and $R$. If you do not set `N_LEF`, RepliSage uses $2 N_{CTCF}$ extruders.
+$$L(c) \leftarrow L(c) + w_\lambda$$
+
+$$R(c) \leftarrow R(c) + w_\lambda$$
+
+* With the CTCF orientation $o_c \in [0, 1]$ from columns 8 and 9 (0 = forward only, 1 = reverse only):
+
+$$L(c) \leftarrow L(c) + w_\lambda (1 - o_c)$$
+
+$$R(c) \leftarrow R(c) + w_\lambda\, o_c$$
+
+In words: a forward-facing CTCF site ($o_c = 0$) attracts the left leg of a LEF, and a reverse-facing site ($o_c = 1$) attracts the right leg; values in between split the attraction. An anchor with a negative orientation (no motif) adds nothing. Anchors from different loops that fall on the same bead add up, so beads that anchor many strong loops get the deepest potential wells.
+
+The number of CTCF sites is $N_{\text{CTCF}} = \max\left(\#\{k : L(k) > 0\},\ \#\{k : R(k) > 0\}\right)$. If you do not set `N_LEF`, RepliSage uses $N_{\text{lef}} = N_{\text{CTCF}} / 2$ extruders, one per two CTCF sites. (Earlier versions used $2 N_{\text{CTCF}}$; with many CTCF sites per bead that can exceed the number of beads, and then no loops form, so set `N_LEF` below the number of beads, at most a quarter of it; at or above half of it is an error.)
 
 ## Parameters
 
@@ -45,7 +59,7 @@ The number of CTCF sites $N_{CTCF}$ is the larger of the numbers of non-zero ent
 |---|---|---|---|
 | `BEDPE_PATH` | `--bedpe-file` | Loops file | none (required) |
 | `CHROM`, `REGION_START`, `REGION_END` | `--region` | Region to model | whole chromosome |
-| `N_BEADS` | `--n-beads` | Number of beads | region length / 2 kb |
+| `N_BEADS` | `--n-beads` | Number of beads | region length / 7 kb (max 10,000 beads) |
 
 Parameters for reading replication timing (`BIGWIG_BIN_SIZE`, `BIGWIG_SIGMA`, `BIGWIG_LOG_NORM`, `REP_SIM_T`) are in the [replication model](replication_model.md) and the [config page](config.md).
 

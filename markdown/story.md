@@ -28,4 +28,8 @@ The ideas, the equations and the assumptions, however, come from human thinking 
 
 If you find something wrong or missing, please open an issue. Improving the model remains a human conversation, and you are welcome to join it.
 
+## A note about the name
+
+There is another project called **RepliSage**, at [replisage.com](https://replisage.com/). It is a 3D scene-replication service for virtual and augmented reality, and it has nothing to do with chromatin, DNA replication or loop extrusion. Please do not confuse the two. This model was first published as a preprint on bioRxiv on **4 April 2025** ([doi:10.1101/2025.03.31.646315](https://doi.org/10.1101/2025.03.31.646315)). We do different things, and the shared name is a coincidence. I wish them a successful journey with it too.
+
 *Sebastian Korsak*

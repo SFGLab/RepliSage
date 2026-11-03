@@ -16,7 +16,7 @@ A **macrostate** is a description by a few averaged quantities that many microst
 
 * an **order parameter**, such as the mean state $\langle s \rangle$, the fraction of links that join beads of the same sign, or the mean loop length $\langle \ell \rangle$;
 * the **average contact heatmap**, obtained by averaging over the ensemble;
-* the **A/B compartment profile**, from the mean spin of each bead;
+* the **A/B compartment profile**, from the mean epigenetic state of each bead;
 * structural summaries such as the radius of gyration $R_g$.
 
 Many different microstates give the same macrostate. For example, two different arrangements of LEFs can have the same mean loop length.
@@ -31,14 +31,14 @@ An **ensemble** is the collection of microstates we sample, here the MCMC sample
 
 | Concept | In RepliSage | Example |
 |---|---|---|
-| Microstate | One sampled configuration | positions of LEFs, spins, forks, bead coordinates |
+| Microstate | One sampled configuration | positions of LEFs, epigenetic states, forks, bead coordinates |
 | Observable $O(\mathcal{S})$ | A function of a microstate | loop length of this configuration |
 | Ensemble | All samples from all replicas | thousands of structures |
 | Macrostate | Average of observables | $\langle \ell\rangle$, $\langle s\rangle$, the average heatmap |
 
 ## Equilibrium and S phase
 
-In **G1 and G2/M** the rules do not change, so the ensemble is stationary and macrostates settle to constant values. In **S phase** the forks keep changing the rules, so the macrostates move with time: the mean loop length drops, and the average spin shifts as forks pass. The relevant averaging is over **replicas at each time**, not over time.
+In **G1 and G2/M** the rules do not change, so the ensemble is stationary and macrostates settle to constant values. In **S phase** the forks keep changing the rules, so the macrostates move with time: the mean loop length drops, and the average epigenetic state shifts as forks pass. The relevant averaging is over **replicas at each time**, not over time.
 
 ![Loop length per replica and the ensemble mean across G1, S and G2/M (schematic)](assets/diagrams/replica_ensemble.svg)
 

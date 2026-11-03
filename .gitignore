@@ -107,3 +107,10 @@ nohup.out
 Claude outputs/
 .claude/
 CLAUDE.md
+
+# Built documentation (rebuilt and deployed to gh-pages by .github/workflows/docs.yml)
+site/
+
+# Output of the demo and test runs
+demo/results/
+tests/**/results/

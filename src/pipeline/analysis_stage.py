@@ -29,8 +29,12 @@ def heatmaps(ctx, out_dir, rep):
         get_avg_heatmap(out_dir, 1, n_all, n_chains=n_ch); return
     b1 = (a.REP_START_TIME - a.BURNIN) // a.MC_STEP + 1
     b2 = (a.REP_START_TIME + a.REP_TIME_DURATION - a.BURNIN) // a.MC_STEP + 1
-    h = [get_avg_heatmap(out_dir, x, y, n_chains=n_ch) for x, y in ((1, b1), (b1, b2), (b2, n_all))]
+    rng = ((1, b1), (b1, b2), (b2, n_all)); h = [get_avg_heatmap(out_dir, x, y, n_chains=n_ch, plot=False) for x, y in rng]
     if all(m is not None for m in h):
+        try:
+            from ..plots.structure_figs import fig_heatmaps_phases
+            fig_heatmaps_phases(h, ["G1", "S", "G2/M"], rng, out_dir)   # the three phase maps in one row
+        except Exception as e: log.alert(f"Phase heatmap figure failed: {e}")
         np.save(f"{out_dir}/metadata/structural_metrics/avg_heatmap.npy", sum(h) / 3.0)
         log.success("Saved average heatmap (over all phases) as avg_heatmap.npy")
 

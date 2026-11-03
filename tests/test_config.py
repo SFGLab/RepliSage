@@ -45,13 +45,13 @@ def test_write_read_round_trip(tmp_path):
 def test_main_flags():
     a, _ = get_config(["--bedpe-file", "x.bedpe", "--region", "chr14:80,835,000-98674700", "--rt-file", "t.bigWig", "--run-md", "true", "--with-stress", "--n-beads", "200", "--no-movie"])
     assert (a.BEDPE_PATH, a.CHROM, a.REGION_START, a.REGION_END) == ("x.bedpe", "chr14", 80835000, 98674700)
-    assert a.REPT_PATH == "t.bigWig" and a.USE_SC_REPT is False and a.SIMULATION_TYPE == "MD" and a.N_BEADS == 200 and a.MOVIE is False
+    assert a.REPT_PATH == "t.bigWig" and a.USE_SC_REPT is False and a.SIMULATION_TYPE == "MD" and a.N_BEADS == 200 and a.SKIP_MOVIES is True
     assert a.REP_WITH_STRESS is True and a.REP_T_STD_FACTOR == 0.2            # stress preset applied
 
 def test_flags_underscore_and_rt_kinds():
     assert get_config(["--bedpe_file", "a", "--rt_file", "s.parquet"])[0].USE_SC_REPT is True
     a, _ = get_config(["--rt-file", "builtin"]); assert a.USE_SC_REPT is True and a.REPT_PATH is None
-    assert get_config([])[0].REPT_PATH is None and get_config([])[0].SIMULATION_TYPE is None     # no data, no 3D by default
+    assert get_config([])[0].REPT_PATH is None and get_config([])[0].SIMULATION_TYPE == "MD"     # no timing data; the 3D part runs by default
 
 def test_run_md_false_beats_file(tmp_path):
     ini = tmp_path / "c.ini"; ini.write_text("[x]\nsimulation_type = MD\n")
@@ -72,3 +72,8 @@ def test_step_flags(tmp_path):
                        "--md-steps", "200", "--md-step-size", "50 femtosecond"])
     assert (a.N_STEPS, a.MC_STEP, a.BURNIN, a.REP_START_TIME, a.REP_TIME_DURATION, a.SIM_STEP) == (9000, 50, 300, 3000, 4000, 200)
     assert a.INTEGRATOR_STEP == "50 femtosecond"
+
+def test_skip_movies_default_and_flag():
+    assert get_config([])[0].SKIP_MOVIES is False                                  # movies are written by default
+    assert get_config(["--skip-movies", "false"])[0].SKIP_MOVIES is False and get_config(["--no-movie"])[0].SKIP_MOVIES is True
+    assert get_config(["--skip-movies"])[0].SKIP_MOVIES is True

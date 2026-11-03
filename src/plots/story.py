@@ -36,10 +36,10 @@ def fig_story(obs, res, p, rep, ph, out):
         ax = axs["rep"]; xs = np.arange(p.N_steps); f = replicated_curve(rep, p, p.N_steps)
         head(ax, "Replication", "share of DNA that is copied"); ax.fill_between(xs, 0, f, color=TEAL, alpha=.25, lw=0); ax.plot(xs, f, color=TEAL, lw=2)
         ax.set_ylim(0, 1.05); ax.set_yticks([0, 1], ["0 %", "100 %"])
-    y = kb(obs["Mean loop length"]); m = _phase_means(y, ph); ax = axs["loop"]
+    y = kb(obs["Bound loop length"]); m = _phase_means(y, ph); ax = axs["loop"]
     sub = ""
     if "G1" in m and "S" in m and m["G1"] > 0: d = 100 * (m['S'] / m['G1'] - 1); sub = "S phase vs G1: no change" if abs(d) < .5 else f"S phase vs G1: {d:+.0f} %"
-    head(ax, "Loops", unit_label("mean loop length") + (f"   ·   {sub}" if sub else "")); ax.plot(t, y, color=BLUE, lw=.5, alpha=.25); band(ax, t, y, w, BLUE); _tag(ax, ph, m)
+    head(ax, "Loops", unit_label("mean size of a loop") + (f"   ·   {sub}" if sub else "")); ax.plot(t, y, color=BLUE, lw=.5, alpha=.25); band(ax, t, y, w, BLUE); _tag(ax, ph, m)
     lo, hi = np.percentile(y[ph.g1:], [.5, 99.5]); d = (hi - lo) or 1; ax.set_ylim(max(0, lo - .35 * d), hi + .35 * d)
     if "comp" in axs:
         ax = axs["comp"]; a = (spin > 0).mean(0); b = (spin < 0).mean(0); head(ax, "Compartments", "share of beads in A-like (red) and B-like (blue) states; numbers = A-like share per phase")
@@ -57,8 +57,8 @@ def fig_story(obs, res, p, rep, ph, out):
 def fig_phase_compare(obs, res, p, ph, out):
     """Per-phase means with 95 % intervals that account for autocorrelation (SE = SD / sqrt(ESS))."""
     segs = ph.segments(); spin = np.asarray(res.spin_traj); has_epi = bool(ph.has_rep and spin.size and np.any(spin != 0))
-    ms = [("Mean loop length", unit_label("Loop length"), "{:.1f}"), ("Bound LEFs", "Bound LEFs", "{:.0%}")]
-    series = {k: np.asarray(obs[k], float) for k, _, _ in ms}; series["Mean loop length"] = kb(series["Mean loop length"])
+    ms = [("Bound loop length", unit_label("Loop length"), "{:.1f}"), ("Bound LEFs", "Bound LEFs", "{:.0%}")]
+    series = {k: np.asarray(obs[k], float) for k, _, _ in ms}; series["Bound loop length"] = kb(series["Bound loop length"])
     if has_epi: series["A share"] = (spin > 0).mean(0); ms.append(("A share", "A-like beads", "{:.0%}"))
     if "Folding energy" in obs: series["Folding energy"] = np.asarray(obs["Folding energy"], float); ms.append(("Folding energy", "Folding energy", "{:.0f}"))
     fig, axs = plt.subplots(1, len(ms), figsize=(2.6 * len(ms) + .6, 3.3), gridspec_kw=dict(wspace=.55)); axs = np.atleast_1d(axs)

@@ -10,6 +10,13 @@ def unbind_bind(N_beads):
     return m_new, m_new
 
 @njit(cache=True)
+def load_bind(bind_cdf):
+    '''Rebinding step with a position-dependent loading probability (inverse-CDF sampling).'''
+    m_new = np.searchsorted(bind_cdf, rd.random() * bind_cdf[-1])
+    m_new = min(m_new, bind_cdf.shape[0] - 1)
+    return m_new, m_new
+
+@njit(cache=True)
 def slide(m_old, n_old, N_beads, f_T, t, rw=True, push_condition=True):
     '''Sliding Monte-Carlo step. f_T[t, bead] is the replication state (used for fork pushing).'''
     if n_old > m_old + 1:
@@ -36,12 +43,12 @@ def slide(m_old, n_old, N_beads, f_T, t, rw=True, push_condition=True):
     return int(m_new), int(n_new)
 
 @njit(cache=True)
-def initialize(N_lef, N_lef2, N_beads, random_init_spins=True):
+def initialize(N_lef, N_lef2, N_beads, bind_cdf, random_init_spins=True):
     '''Random initial condition of the simulation.'''
     ms = np.full(N_lef + N_lef2, -5, dtype=np.int64)
     ns = np.full(N_lef + N_lef2, -5, dtype=np.int64)
     for j in range(N_lef):
-        ms[j], ns[j] = unbind_bind(N_beads)
+        ms[j], ns[j] = load_bind(bind_cdf) if bind_cdf.shape[0] > 1 else unbind_bind(N_beads)
     if random_init_spins:
         state = np.random.randint(0, 2, size=N_beads) * 4 - 2
     else:

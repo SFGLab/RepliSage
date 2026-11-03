@@ -18,7 +18,7 @@ def run_both(p, seed=1234):
                   random_spins=p.random_spins, repfork_push=p.repfork_push)
     f_T = p.f_rep_T if p.has_rep else np.zeros((1, p.N_beads), np.int8)
     o = old.run_energy_minimization(f_rep=np.ascontiguousarray(f_T.T.astype(np.int64)), seed=seed, **common)
-    n = new_kernel(f_rep_T=f_T, has_rep=p.has_rep, seed=seed, progress=np.zeros(1, np.int64), **common)
+    n = new_kernel(f_rep_T=f_T, has_rep=p.has_rep, seed=seed, progress=np.zeros(1, np.int64), bind_cdf=np.zeros(1), **common)
     return o, n
 
 def assert_identical(o, n):
@@ -42,7 +42,7 @@ def run_both_no_rep(p):
                   t_rep=p.t_rep, rep_duration=p.rep_duration, potts_norm1=0.0, potts_norm2=0.0, h=np.zeros(p.N_beads), rw=True,
                   p_rew=0.5, rep_fork_organizers=True, cohesin_blocks_condensin=False, random_spins=True, repfork_push=False)
     o = old.run_energy_minimization(f_rep=np.zeros((p.N_beads, 1), np.int64), seed=77, **common)
-    n = new_kernel(f_rep_T=np.zeros((1, p.N_beads), np.int8), has_rep=False, seed=77, progress=np.zeros(1, np.int64), **common)
+    n = new_kernel(f_rep_T=np.zeros((1, p.N_beads), np.int8), has_rep=False, seed=77, progress=np.zeros(1, np.int64), bind_cdf=np.zeros(1), **common)
     return o, n
 
 @pytest.mark.parametrize("rw,cbc,rfo", [(False, False, True), (True, True, False), (True, False, False)])

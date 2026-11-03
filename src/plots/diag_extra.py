@@ -56,7 +56,9 @@ def fig_correlation(obs, ph, out):
     """Rank correlation between observables, and energy vs loop length coloured by time."""
     seg = slice(ph.g1, ph.n); keys = list(obs); X = np.array([np.asarray(obs[k], float)[seg] for k in keys])
     fig, (a, b) = plt.subplots(1, 2, figsize=(11.5, 4.6), gridspec_kw=dict(width_ratios=[1, 1.2], wspace=.55))
-    R = np.nan_to_num(spearmanr(X.T)[0]) if len(keys) > 2 else np.corrcoef(X)
+    from scipy.stats import rankdata
+    Z = np.apply_along_axis(rankdata, 1, X); Z = Z - Z.mean(1, keepdims=True); sd = np.sqrt((Z ** 2).mean(1))           # constant series have sd 0
+    R = np.divide(Z @ Z.T / Z.shape[1], np.outer(sd, sd), out=np.zeros((len(keys), len(keys))), where=np.outer(sd, sd) > 0); np.fill_diagonal(R, 1)
     im = a.imshow(R, cmap="RdBu_r", vmin=-1, vmax=1); a.set_xticks(range(len(keys)), [SHORT.get(k, k) for k in keys], rotation=90)
     a.set_yticks(range(len(keys)), [SHORT.get(k, k) for k in keys]); a.grid(False); a.set_title("Rank correlation")
     for i in range(len(keys)):
@@ -68,7 +70,7 @@ def fig_correlation(obs, ph, out):
 
 def fig_budget(obs, ph, out):
     """Energy components over time (smoothed) and their mean per phase."""
-    comp = {k: np.asarray(obs[k], float) for k in ("Folding energy", "Binding energy", "Potts energy") if k in obs}
+    comp = {k: np.asarray(obs[k], float) for k in ("Folding energy", "Binding energy", "Epigenetic energy") if k in obs}
     comp["Other"] = np.asarray(obs["Total energy"], float) - sum(comp.values())        # crossing + replication
     comp = {k: y - y[ph.g1:].mean() for k, y in comp.items()}                            # centre on post burn-in mean
     cols = dict(zip(comp, (BLUE, PURPLE, ORANGE, GREEN))); w = max(3, ph.n // 60)

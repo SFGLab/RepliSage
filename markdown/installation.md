@@ -11,6 +11,8 @@ replisage -h
 
 This installs the `replisage` command. The package is imported as `RepliSage`.
 
+If `replisage -h` shows old options (for example `--region_start`), an older installed copy is shadowing the repository. Reinstall with `pip install -e .` in the repository root, or run `python -m src.run` from there.
+
 ## From source
 
 ```bash
@@ -34,9 +36,9 @@ pip install pyRepliSage
 
 | You want | Install |
 |---|---|
-| The pyvista movie (`movie_3d.mp4` and `.gif`) | `pip install "pyRepliSage[viz]"` (the `ffmpeg` encoder comes with `imageio-ffmpeg`) |
+| The pyvista movies (`movie_3d_sister.mp4`, `movie_3d_compartment.mp4`) | `pip install "pyRepliSage[viz]"` (the `ffmpeg` encoder comes with `imageio-ffmpeg`) |
 | 3D on a GPU | a CUDA or OpenCL OpenMM build, then `--platform CUDA` (or `OpenCL`) |
-| To run the tests | `pip install "pyRepliSage[test]"`, then `pytest -m "not slow"` |
+| To run the tests | `pip install "pyRepliSage[test]"`, then `pytest` (fast tests) or `python run_tests.py` (all checks with one summary) |
 | To build these docs | `pip install "pyRepliSage[docs]"`, then `mkdocs serve` |
 
 The interactive `viewer_3d.html` needs nothing extra: it is one self-contained file that opens in any browser.
@@ -61,7 +63,7 @@ A `Dockerfile` is in the repository: `docker build -t replisage .`
 | The first Monte Carlo run pauses for a few seconds | numba compiles the energy functions once; later runs start at once |
 | `No template found for residue` in the 3D stage | the force field file does not match the structure; keep the default `FORCEFIELD_PATH` |
 | `pyBigWig` fails to install | install it from conda-forge: `conda install -c conda-forge pybigwig` |
-| The movie is skipped | install `pyvista`; use `--no-movie` to silence it |
+| The movie is skipped | install `pyvista`; use `--skip-movies` to skip the movies |
 | GPU not used | check `--platform`, and that your OpenMM sees the device: `python -m openmm.testInstallation` |
 
 Next: the [command line](cli.md) and [examples](examples.md).

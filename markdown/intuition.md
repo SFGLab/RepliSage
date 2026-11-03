@@ -7,7 +7,7 @@ RepliSage asks one question: *what does the 3D shape of a chromosome look like w
 The DNA is cut into $N_{\text{beads}}$ pieces (beads) joined like a necklace. This necklace is a graph $\mathcal{G}$ with two extra ingredients:
 
 * **Loops.** A loop extruding factor (LEF, such as cohesin) is a ring that reels in DNA from both sides. LEF $i$ is described by the beads $(m_i, n_i)$ its two legs stand on. LEFs prefer large loops, stop at CTCF sites and avoid crossing each other. This part comes from [LoopSage](https://github.com/SFGLab/pyLoopSage).
-* **Epigenetic states.** Each bead $k$ has a label $s_k \in \{-2,-1,0,1,2\}$ (a Potts-like model). Beads linked along the chain or by a loop like to share a label, and replication timing biases the label: early replicating DNA goes towards positive labels (A), late towards negative (B). Compartments are the **macrostate** that emerges when many beads agree.
+* **Epigenetic states.** Each bead $k$ has a label $s_k \in \{-2,-1,0,1,2\}$ (five states). Beads linked along the chain or by a loop like to share a label, and replication timing biases the label: early replicating DNA goes towards positive labels (A), late towards negative (B). Compartments are the **macrostate** that emerges when many beads agree.
 
 A tiny example (22 beads, drawn with the Kamada-Kawai layout, which places linked nodes close together) shows how the pieces fit:
 

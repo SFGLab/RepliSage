@@ -12,6 +12,9 @@
 <a href="https://github.com/SFGLab/RepliSage/blob/main/LICENSE"><img alt="License GPL v3" src="https://img.shields.io/badge/license-GPL%20v3-141414?labelColor=A50F2D"></a>
 </p>
 
+<p align="center"><img src="docs/structures_g1_s_g2m.png" alt="3D structures in G1, S and G2/M: two sister chromatids (orange, blue) with cohesin, CTCF and replication forks" width="100%"></p>
+<p align="center"><sub>One simulated cell cycle: G1, S (replication forks, sisters appear) and G2/M. Sister chromatids in orange and blue, cohesin in green, CTCF orientation as purple arrows, forks in turquoise.</sub></p>
+
 RepliSage simulates how loop extrusion, epigenetic state and DNA replication shape chromatin in 3D, from G1 through S phase to G2/M. It runs a replication simulation, a Monte Carlo of loop-extruding factors (LEFs) and Potts spins (A/B compartments), and optionally 3D structures with OpenMM. Every run ends with a single `report.html`.
 
 ## Install
@@ -67,7 +70,7 @@ Each run creates a folder `results/<run_name>/` (one `replica_XX/` per replica) 
 | `plots/`, `metadata/` | Figures (png + svg) and raw arrays / CSV statistics |
 | `config_used.ini` | Exact configuration, re-run with `-c` |
 
-Switch parts off with `--no-report`, `--no-viewer`, `--no-movie`.
+Switch parts off with `--no-report` and `--no-viewer`. The 3D movies take minutes to render: add `--skip-movies` for quick runs.
 
 ## Configuration
 

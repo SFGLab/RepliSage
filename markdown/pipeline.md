@@ -12,7 +12,7 @@ Grey boxes always run; pink boxes run only when their inputs are present; blue b
 |---|---|---|---|---|
 | 1 | Pre-processing | BEDPE, region, beads | Binding potentials of left and right CTCF sites per bead | [preproc.md](preproc.md) |
 | 2 | Replication simulation | Timing data | Matrix saying which bead is replicated at each time, fork positions, initiation rate | [replication_model.md](replication_model.md) |
-| 3 | Monte Carlo | Stages 1 and 2 | Loop positions, epigenetic spins and energies over time, for each replica | [mc_model.md](mc_model.md) |
+| 3 | Monte Carlo | Stages 1 and 2 | Loop positions, epigenetic states and energies over time, for each replica | [mc_model.md](mc_model.md) |
 | 4 | 3D structures | Stage 3 | One CIF file per sampled state | [md_model.md](md_model.md) |
 | 5 | 3D visualisation | Stage 4 | Interactive viewer, movie, ChimeraX script | [visualization.md](visualization.md) |
 | 6 | Analysis | Stage 3 (and 4) | Statistics, MCMC diagnostics, figures, `report.html` | [analysis.md](analysis.md) |
@@ -40,7 +40,7 @@ results/<run_name>/
 └── replica_00/
     ├── report.html          start here
     ├── viewer_3d.html       interactive 3D viewer
-    ├── movie_3d.mp4/.gif    interpolated movie
+    ├── movie_3d_*.mp4       interpolated movies (skip with --skip-movies)
     ├── ensemble/*.cif       one 3D structure per sampled state, view.cxc for ChimeraX
     ├── plots/               figures (png and svg)
     └── metadata/            arrays (npy) and statistics (csv)

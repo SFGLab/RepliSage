@@ -51,14 +51,14 @@ def autocorrelation(obs, ph):
                         if ts > t1 else "Similar in both phases, so replication does not slow the sampling here."))
 
 def loops(obs, ph):
-    y = np.asarray(obs["Mean loop length"], float); c = _change(y, ph, "G1", "S") if ph.has_rep else None
+    y = np.asarray(obs["Bound loop length"], float); c = _change(y, ph, "G1", "S") if ph.has_rep else None
     if c is None:
-        mean = y[ph.g1:].mean(); return dict(status=NOTE, label="Mean loop length", value=_len(mean), detail="averaged over the run after burn-in.")
+        mean = y[ph.g1:].mean(); return dict(status=NOTE, label="Loop length (bound LEFs)", value=_len(mean), detail="averaged over the run after burn-in.")
     rel, z, ma, mb = c; sig = z > 2
     txt = ("The paper reports shorter loops during S phase because forks act as barriers; this run shows the same trend." if rel < 0 and sig else
            "Loops are longer in S than in G1 here. Check the replication barrier strength (REP_COEFF) and the fork speed." if rel > 0 and sig else
            "The change is within the sampling noise, so this run shows no clear effect of replication on loops.")
-    return dict(status=OK if rel < 0 and sig else NOTE, label="Loops in S phase vs G1", value=("no change" if abs(rel) < .005 else f"{100 * rel:+.0f} %"), detail=f"mean loop length {_len(ma)} → {_len(mb)}. {txt}")
+    return dict(status=OK if rel < 0 and sig else NOTE, label="Loops in S phase vs G1", value=("no change" if abs(rel) < .005 else f"{100 * rel:+.0f} %"), detail=f"mean loop length of bound LEFs {_len(ma)} → {_len(mb)}. {txt}")
 
 def replication(rep, rows):
     if rep is None: return None

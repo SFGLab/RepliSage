@@ -1,10 +1,16 @@
 """Self-contained interactive 3D viewer (three.js inlined): trajectory bar, colour modes, contact map."""
 import base64, json, os
 import numpy as np
+from .palette import as_dict
+
+def _lut(name):
+    """256 RGB entries of the contact-map colour map (same as the movie)."""
+    from .video import get_cmap
+    return (get_cmap(name)(np.linspace(0, 1, 256))[:, :3] * 255).round().astype(int).tolist()
 
 def _b64(a): return base64.b64encode(np.ascontiguousarray(a).tobytes()).decode()
 
-def write_html_viewer(traj, path, title="", max_frames=400):
+def write_html_viewer(traj, path, title="", max_frames=400, cmap="turbo"):
     """Write the viewer HTML for a Traj. Frames are thinned to max_frames to keep the file small."""
     here = os.path.dirname(__file__); rd = lambda *a: open(os.path.join(here, *a), encoding="utf-8").read()
     keep = np.unique(np.linspace(0, len(traj.V) - 1, min(max_frames, len(traj.V))).astype(int))
@@ -12,7 +18,9 @@ def write_html_viewer(traj, path, title="", max_frames=400):
     data = dict(ext=float(np.percentile(np.linalg.norm(V, axis=2), 98)), F=len(keep), C=traj.n_chains, N=traj.n_beads, scale=sc, hasRep=traj.has_rep,
                 xyz=_b64(np.round(V / sc).astype(np.int16)), spin=_b64(traj.spins[keep].astype(np.int8)), rep=_b64(traj.rep[keep].astype(np.uint8)),
                 phase=[traj.phase[i] for i in keep], step=[int(traj.step[i]) for i in keep],
-                lefs=[traj.lefs[i].astype(int).ravel().tolist() for i in keep])
+                lefs=[traj.lefs[i].astype(int).ravel().tolist() for i in keep],
+                lefk=[traj.lef_fam[i].astype(int).tolist() if traj.lef_fam else [0] * len(traj.lefs[i]) for i in keep],
+                pal=dict(as_dict(), lut=_lut(cmap)), ctcf=[traj.ctcf[0].astype(int).tolist(), traj.ctcf[1].astype(int).tolist()])
     html = rd("assets", "viewer.html")
     for k, v in (("/*CSS*/", rd("assets", "viewer.css")), ("/*TITLE*/", title), ("/*THREE*/", rd("vendor", "three.min.js")),
                  ("/*ORBIT*/", rd("vendor", "OrbitControls.js")), ("/*APP*/", rd("assets", "viewer.js")),

@@ -18,6 +18,28 @@ MOTIF_FINDER = "https://github.com/BlackPianoCat/motif_finder"
 ORIENT_WARN = ("The BEDPE file has no CTCF orientation (columns 8-9). The model still runs, assuming every orientation blocks LEFs with the same "
                f"probability, but it is a bit less accurate. To detect CTCF orientation from motifs see {MOTIF_FINDER}")
 
+def bead_loops(bedpe_file, N_beads, region, chrom):
+    """Loops of the region with anchor coordinates converted from bp to simulation beads."""
+    df = load_region(bedpe_file, region, chrom); res = (region[1] - region[0]) // N_beads
+    for c in (1, 2, 4, 5): df[c] = (df[c] - region[0]) // res
+    return df
+
+def occupancy_profile(bedpe_file, N_beads, region, chrom):
+    """Loop occupancy per bead in [0, 1]: every loop adds its strength to all beads between its anchors, so nested loops stack up."""
+    df = bead_loops(bedpe_file, N_beads, region, chrom); w = df[6].astype(float).where(df[6] >= 0, 0).fillna(1.0).values if df.shape[1] > 6 else np.ones(len(df))
+    a = np.minimum((df[1] + df[2]) // 2, N_beads - 1).values; b = np.minimum((df[4] + df[5]) // 2, N_beads - 1).values
+    lo, hi = np.minimum(a, b), np.maximum(a, b); d = np.zeros(N_beads + 1)
+    np.add.at(d, lo, w); np.add.at(d, hi + 1, -w)                  # difference array -> cumulative sum
+    O = np.cumsum(d)[:N_beads]; return O / O.max() if O.max() > 0 else O
+
+def loading_weights(occ, floor=.05, power=1.0):
+    """Relative LEF loading weight per bead: floor for loop-naked beads, 1 for the most occupied."""
+    return floor + (1 - floor) * np.asarray(occ, float) ** power
+
+def orientation_confidence(L, R):
+    """Per bead: orientation score in [-1 (left-ward), +1 (right-ward)] and confidence |score| (0 = unknown or mixed)."""
+    t = L + R; s = np.where(t > 0, (R - L) / np.where(t > 0, t, 1), 0.0); return s, np.abs(s)
+
 def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=False,viz=False):
     '''
     Definition of left and right CTCF binding potential.
@@ -33,15 +55,12 @@ def binding_vectors_from_bedpe(bedpe_file,N_beads,region,chrom,normalization=Fal
     L (numpy array): left CTCF binding potential.
     R (numpy array): right CTCF binding potential.
     '''
-    df = load_region(bedpe_file, region, chrom)
-    # Convert hic coords into simulation beads
-    resolution = (region[1]-region[0])//N_beads
-    df[1], df[2], df[4], df[5] = (df[1]-region[0])//resolution, (df[2]-region[0])//resolution, (df[4]-region[0])//resolution, (df[5]-region[0])//resolution
+    df = bead_loops(bedpe_file, N_beads, region, chrom)
     
     # Check if columns 7 and 8 exist
     has_col_7_8 = df.shape[1] > 8
     if has_col_7_8:
-        log.success("The input bedpe file contains CTCF orientation! It will run taking it into account.")
+        log.info("The input bedpe file contains CTCF orientation: it is taken into account.")
     else:
         log.alert(ORIENT_WARN)
 

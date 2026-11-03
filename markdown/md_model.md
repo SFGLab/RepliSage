@@ -2,7 +2,7 @@
 
 The Monte Carlo gives a movie of abstract states: which beads are held together by loops, which beads are in A or B, and which beads are replicated. The 3D model turns each sampled state into a real 3D structure with [OpenMM](https://openmm.org).
 
-It runs only when you ask for it (`--run-md true`, or `simulation_type` in the config).
+It runs by default as molecular dynamics (`MD`), because we expect a trajectory of replication. Switch it off with `--run-md false` (or `simulation_type = none`), or use `EM` for a faster, static version. The platform is picked automatically: CUDA, then OpenCL, then CPU, with a fallback to the next one on any error.
 
 ## One chain or two
 
@@ -27,15 +27,15 @@ Beads have a mass of a 10 kb chromatin piece. Distances are in nanometres and th
 | Bonds, $U_{\text{bk}}$ | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^5$ | Neighbouring beads stay connected |
 | Stiffness | Harmonic angle around $\pi$, $k = 200$ | Chromatin is not infinitely flexible |
 | Loops, $U_{\text{le}}$ | Harmonic, $r_0 = 0.1$, $k = 5 \times 10^4$ between legs $m_k$ and $n_k$ of every bound LEF | Loop extrusion shapes the structure. Updated at every sample |
-| Compartments, $U_{\text{block}}$ | Gaussian attraction between beads of the same chain and the same spin state | A and B beads cluster separately |
+| Compartments, $U_{\text{block}}$ | Gaussian attraction between beads of the same chain and the same epigenetic state | A and B beads cluster separately |
 | Sister tie, $U_{\text{rep}}$ | Harmonic bond between bead $i$ on chain A and bead $i$ on chain B | Keeps the copies together (see below) |
 | Pulling, $U_{\text{pull}}$ | Constant force along $x$, opposite on the two chains | Separates the sisters after S phase |
 
 ### Compartment strength
 
-The attraction depth depends on the spin state of the two beads:
+The attraction depth depends on the epigenetic state of the two beads:
 
-| Spin | 2 | 1 | 0 | -1 | -2 |
+| Epigenetic state | 2 | 1 | 0 | -1 | -2 |
 |---|---|---|---|---|---|
 | Depth | -0.2 | -0.4 | -0.6 | -0.8 | -1.0 |
 

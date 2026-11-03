@@ -14,7 +14,7 @@ At every recorded sample the following are computed:
 | Fraction of bound LEFs | LEFs with $m_k \ge 0$ and $n_k > m_k$ |
 | Coverage | Number of loops that span each bead |
 | Violations | LEFs that straddle a replication fork |
-| Magnetisation, cluster order, Binder cumulant, entropy, synchronisation | Order parameters of the spins (only with replication data) |
+| Average epigenetic state (mean epigenetic state), cluster order, Binder cumulant, entropy, synchronisation | Order measures of the epigenetic states (only with replication data) |
 
 ## MCMC diagnostics
 
@@ -36,15 +36,15 @@ In G1 and G2/M it should fall quickly. In S phase expect a slow decay: the forks
 
 **Integrated autocorrelation time.**
 
-$$\tau_{\mathrm{int}} = 1 + 2 \sum_{\tau = 1}^{\tau_{\max}} \rho(\tau)$$
+$$T_{\rho} = 1 + 2 \sum_{\tau = 1}^{\tau_{\max}} \rho(\tau)$$
 
 where $\tau_{\max}$ is the lag at which the sum is cut,
 
-chosen with Geyer's rule (stop at the first pair of lags whose sum is negative). $\tau_{\mathrm{int}}$ is the number of samples that count as one independent sample.
+chosen with Geyer's rule (stop at the first pair of lags whose sum is negative). $T_{\rho}$ is the autocorrelation time: the number of samples that count as one independent sample.
 
 **Effective sample size.** With $n$ samples,
 
-$$n_{\mathrm{eff}} = \frac{n}{\tau_{\mathrm{int}}}$$
+$$n_{\mathrm{eff}} = \frac{n}{T_{\rho}}$$
 
 where $n_{\mathrm{eff}}$ is the effective sample size (ESS).
 
@@ -66,7 +66,7 @@ For each observable and phase (G1, S, G2/M) the report shows mean, standard devi
 
 ## Compartment switching
 
-Beads are classified as A (mean spin above 0.25), B (below -0.25) or neutral in two windows: the first and the last tenth of S phase. The report shows
+Beads are classified as A (mean epigenetic state above 0.25), B (below -0.25) or neutral in two windows: the first and the last tenth of S phase. The report shows
 
 * a transition matrix between the three states,
 * bar plots of the fractions of A, B and neutral at the start and the end of S,
@@ -92,14 +92,18 @@ Computed on every structure and saved in `metadata/structural_metrics/`:
 | Contact number | Number of bead pairs within contact distance |
 | Mean and maximum distance to the centre of mass | Radial spread |
 
-With replication only the first chain is analysed.
+With replication the shape metrics above are computed on the first sister chromatid. In addition, the whole system (both sisters) gets its own radius of gyration and convex hull volume (`radius_of_gyration_total`, `convex_hull_volume_total`), `sister_distance` is the distance between the two sister centroids, and `phases.npy` stores the cell-cycle phase (G1, S, G2/M) of every structure.
+
+**Contact maps by phase.** `plots/structural_metrics/mean_inv_heatmap_phases.png` puts the three averaged distance maps (G1, S, G2/M) in one row, each titled with its phase and the range of structures used. The value is the mean of $1/(d+1)$ over the structures of the phase, where $d$ is the distance between two beads (high = close). All three maps share one colour scale (the `turbo` colour map with a square-root stretch, clipped at the 2nd and 99.7th percentiles) so that differences between phases are real and weak patterns stay visible. The maps are also saved as `mean_inv_heatmap_<first>_<last>.npy`. Without replication there is a single map.
+
+**Compaction figure.** `plots/structural_metrics/compaction.png` shows, with G1, S and G2/M shaded, the radius of gyration (root-mean-square distance of the beads from their centre of mass), the convex hull volume (volume of the smallest convex shape enclosing the beads), the contacts and the sister distance of every structure (top), and the mean of each phase relative to G1 (bottom). The expectation is decompaction in S, when replicated chromatin unfolds and the sisters form, and further compaction in G2/M. Lengths are in nm and volumes in nm³ of the model. The first G1 structures are still relaxing from the initial conformation, so a short run overstates the G1 size; longer runs make this negligible.
 
 ## Where the numbers are
 
 | Location | Content |
 |---|---|
 | `metadata/statistics/*.csv` | `overview`, `convergence`, `phases`, `lef`, `compartments`, `replication` tables, also shown in the report |
-| `metadata/MCMC_output/*.npy` | Raw arrays: LEF legs `Ms`, `Ns`, spins, energies, violations |
+| `metadata/MCMC_output/*.npy` | Raw arrays: LEF legs `Ms`, `Ns`, epigenetic states, energies, violations |
 | `metadata/structural_metrics/*.npy` | One value per structure for each metric |
 | `plots/` | Every figure as `png` and `svg` |
 
@@ -118,7 +122,7 @@ With replication only the first chain is analysed.
 - [`src/analysis/compartments.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/compartments.py): compartment switching
 - [`src/analysis/rep_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/rep_stats.py): replication timing summaries
 - [`src/analysis/folding_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/folding_stats.py): compaction score
-- [`src/analysis/potts_order.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/potts_order.py): Potts order parameters
+- [`src/analysis/potts_order.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/potts_order.py): epigenetic order measures
 - [`src/analysis/potts_metrics.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/potts_metrics.py): `compute_potts_metrics`: per-sample order and synchronisation
 - [`src/analysis/synchronization.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/synchronization.py): graph synchronisation
 - [`src/analysis/structure_metrics.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/structure_metrics.py): 3D shape metrics
@@ -129,13 +133,13 @@ With replication only the first chain is analysed.
 | Function or class | What it does |
 |---|---|
 | `autocorr(x)` | normalised autocorrelation $\rho(\tau)$ by FFT |
-| `iat(x)` | integrated autocorrelation time $\tau_{\mathrm{int}}$ (Geyer positive sequence) |
-| `ess(x)` | effective sample size $n/\tau_{int}$ |
+| `iat(x)` | integrated autocorrelation time $T_{\rho}$ (Geyer positive sequence) |
+| `ess(x)` | effective sample size $n/T_{\rho}$ |
 | `geweke(x, a, b)` | Geweke $z$ comparing the first fraction `a` with the last fraction `b` |
 | `split_rhat(chains)` | split $\hat R$ |
 | `diagnose(series, seg)` | all diagnostics on slice `seg` for every named series |
 | `diag_segment(ph)` | the stationary part used for diagnostics |
-| `observables(res, p)` | named per-sample series (energies, loop length, bound LEFs, magnetization) |
+| `observables(res, p)` | named per-sample series (energies, loop length, bound LEFs, average epigenetic state) |
 | `convergence_table(obs, ph)  /  phase_table(obs, ph)` | convergence and per-phase tables (mean ± SD, Cohen $d$) |
 | `lef_series(res, p)  /  coverage(Ms, Ns, n_beads)` | LEF observables and loop coverage per bead |
 | `switch_rates(spins, lag)  /  transition_matrix(a, b)` | compartment switching rates and counts |

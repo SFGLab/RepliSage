@@ -40,7 +40,7 @@ over the configuration $\mathcal{S}$ (loop positions $(m_i, n_i)$ and epigenetic
 
 **Why simulated annealing helps.** Simulated annealing starts hot and cools slowly. While hot, the system explores widely and escapes shallow traps; as it cools, it gradually commits to deep valleys, so it is much more likely to end in a good, low-energy state than if it had been quenched cold straight away.
 
-![At low temperature the system is trapped, at high temperature it can cross barriers; annealing cools slowly](assets/diagrams/temperature.svg)
+![At high temperature the particle can hop over the barrier; after slow cooling it is trapped in the global minimum](assets/diagrams/temperature.svg)
 
 **Physical temperature versus an order parameter.** In models such as the [Ising model](https://en.wikipedia.org/wiki/Ising_model) and the [Potts model](https://en.wikipedia.org/wiki/Potts_model), the temperature has a clear physical meaning: it is the temperature of the heat bath, and phase transitions happen at well-defined values of it. In RepliSage, it is hard to say what $T_{\text{mc}}$ means biologically. There is no heat bath, and the energy terms are partly data-driven and balanced by hand. It is better to read $T_{\text{mc}}$ as an **order parameter**: a single knob that drives the system from a **less folded** state (high $T_{\text{mc}}$: noisy, loops fall off, shorter loops) to a **more folded**, ordered one (low $T_{\text{mc}}$). The relation is not exactly monotonic: in the paper, compaction is strongest at intermediate values, around $T^*_{\text{mc}} \approx 1.7 \pm 0.3$, and a run uses one fixed value.
 
@@ -52,12 +52,12 @@ Practical advice: do not interpret $T_{\text{mc}}$ as a temperature in kelvin (t
 
 There are three reasons, best stated plainly.
 
-**1. It is not defined on a phase space.** There are no momenta, and the variables are discrete (bead indices and five spin states), so there are no derivatives and no equations of motion. $T_{\text{mc}}$ is a modelling parameter and not a physical temperature, and Monte Carlo steps are pseudotime. The 3D part is an ordinary molecular dynamics simulation, but its forces are built from the Monte Carlo output.
+**1. It is not defined on a phase space.** There are no momenta, and the variables are discrete (bead indices and five epigenetic states), so there are no derivatives and no equations of motion. $T_{\text{mc}}$ is a modelling parameter and not a physical temperature, and Monte Carlo steps are pseudotime. The 3D part is an ordinary molecular dynamics simulation, but its forces are built from the Monte Carlo output.
 
 **2. It is out of equilibrium, especially in S phase.** The Boltzmann distribution assumes a fixed energy function and enough time to settle. In RepliSage the energy changes with time, $\mathcal{H}(t)$, because replication forks move:
 
 * loop extrusion **barriers change**, since $f_{\text{rep}}(x,t)$ decides which loops are allowed, and forks push loops ahead of them;
-* **epigenetic states respond**, since the field $h_{t,k}$ shifts the preferred state of a bead when a fork passes, and the states can reorganise collectively, like a phase transition in a Potts-like model.
+* **epigenetic states respond**, since the field $h_{t,k}$ shifts the preferred state of a bead when a fork passes, and the states can reorganise collectively, like a collective switch of a whole region between A-like and B-like.
 
 Both effects are seen in cells: replisomes push cohesin along DNA, and B to A compartment switching has been observed in S phase and under replication stress. So during S phase the system is chasing a moving target and is never in equilibrium. G1 and G2/M are much closer to the equilibrium picture, because the rules stop changing.
 

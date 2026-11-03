@@ -107,12 +107,14 @@ def average_binned_distance_matrix(folder_name,N_steps,step,burnin,th1=0,th2=23)
 
     return avg_mat
 
-def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2):
+def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2, plot=True):
     """
     Computes the mean inverse distance heatmap for a set of 3D structures.
 
     Parameters:
     -----------
+    plot : bool
+        Draw the single-map figure (the phase maps are drawn together by the caller).
     n_chains : int
         Number of polymer chains in each structure (2 with replication, 1 without).
     path : str
@@ -141,7 +143,7 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2
 
     first_file = glob.glob(path + f'/ensemble/ensemble_{N1}_*.cif')
     if not first_file:
-        log.info(f"No starting structure found at ensemble_{N1}_*.cif")
+        log.alert(f"No starting structure found at ensemble_{N1}_*.cif")
         return None
 
     V_init = get_coordinates_cif(first_file[0])
@@ -154,7 +156,7 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2
     for i in log.progress(range(N1, N2), desc='Averaging heatmap'):
         file_list = glob.glob(path + f'/ensemble/ensemble_{i}_*.cif')
         if not file_list:
-            log.info(f"Warning: No file for index {i}")
+            log.alert(f"Warning: No file for index {i}")
             continue
         try:
             V = get_coordinates_cif(file_list[0])[:N_beads]
@@ -166,11 +168,11 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2
                 heatmap_sum += 1.0 / (D + epsilon)
 
         except Exception as e:
-            log.info(f"Error reading {file_list[0]}: {e}")
+            log.alert(f"Error reading {file_list[0]}: {e}")
             continue
 
     if count == 0:
-        log.info("No valid structures loaded.")
+        log.alert("No valid structures loaded.")
         return None
 
     mean_V = structure_sum / count
@@ -186,8 +188,8 @@ def get_avg_heatmap(path, N1, N2, method='mean_heatmap', epsilon=1.0, n_chains=2
 
     try:
         from ..plots.structure_figs import fig_heatmap
-        fig_heatmap(mean_heat, path, f'mean_inv_heatmap_{N1}_{N2}', f'md_heat_{N1}_{N2}', 'Contact map')
+        if plot: fig_heatmap(mean_heat, path, f'mean_inv_heatmap_{N1}_{N2}', f'md_heat_{N1}_{N2}', 'Contact map')
     except Exception as e:
-        log.info(f"Plotting failed: {e}")
+        log.alert(f"Plotting failed: {e}")
 
     return mean_heat

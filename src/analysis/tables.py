@@ -32,8 +32,8 @@ def observables(res, p):
     """Named per-sample series used by diagnostics and figures."""
     ls = lef_series(res, p)
     obs = {"Total energy": res.Es, "Folding energy": res.Fs, "Binding energy": res.Bs,
-           "Mean loop length": ls["loop"], "Bound LEFs": ls["bound"]}
-    if has_potts(p): obs.update({"Potts energy": res.Es_potts, "Magnetization": res.mags})
+           "Mean loop length": ls["loop"], "Bound loop length": ls["loop_bound"], "Bound LEFs": ls["bound"]}
+    if has_potts(p): obs.update({"Epigenetic energy": res.Es_potts, "Average epigenetic state": res.mags})
     return obs
 
 def overview_table(res, p, n_ctcf, kb=None):
@@ -80,7 +80,7 @@ def compartment_table(res, ph):
              ("A fraction start → end", f"{(a == 1).mean() * 100:.1f} % → {(b == 1).mean() * 100:.1f} %"),
              ("B fraction start → end", f"{(a == -1).mean() * 100:.1f} % → {(b == -1).mean() * 100:.1f} %")]
     return Table("compartments", "A/B compartment switching across S phase", ("Quantity", "Value"), rows,
-                 "A: mean spin > 0.25, B: < −0.25, N: neutral; start/end = average over 10 % of S phase.")
+                 "A: mean epigenetic state > 0.25, B: < −0.25, N: neutral; start/end = average over 10 % of S phase.")
 
 def rep_table(rows):
     return Table("replication", "Replication simulation", ("Quantity", "Value"), rows)

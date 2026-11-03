@@ -3,6 +3,7 @@ import base64
 import html
 from pathlib import Path
 from .text import cap_for, how_for
+from .mathml import rich
 
 def esc(x): return html.escape(str(x))
 
@@ -13,9 +14,15 @@ def img_uri(path):
 def figure(fid, path, title=None):
     t, shows, expect = cap_for(fid)
     how = how_for(fid)
-    body = (f'<div class="cap"><div><span>Shows</span>{esc(shows)}</div><div><span>Expect</span>{esc(expect)}</div>'
-            + (f'<details class="how"><summary>How to read it</summary><p>{esc(how)}</p></details>' if how else "") + "</div>") if shows else ""
+    body = (f'<div class="cap"><div><span>Shows</span>{rich(shows)}</div><div><span>Expect</span>{rich(expect)}</div>'
+            + (f'<details class="how"><summary>How to read it</summary><p>{rich(how)}</p></details>' if how else "") + "</div>") if shows else ""
     return f'<figure id="fig-{esc(fid)}"><img alt="{esc(title or t)}" src="{img_uri(path)}"><figcaption><h4>{esc(title or t)}</h4>{body}</figcaption></figure>'
+
+def video(fid, rel):
+    """Inline mp4 player (the file sits next to report.html) with the caption of fid."""
+    t, shows, expect = cap_for(fid)
+    return (f'<figure id="fig-{esc(fid)}"><video src="{esc(rel)}" controls loop muted playsinline preload="metadata" style="width:100%"></video>'
+            f'<figcaption><h4>{esc(t)}</h4><div class="cap"><div><span>Shows</span>{rich(shows)}</div><div><span>Expect</span>{rich(expect)}</div></div></figcaption></figure>')
 
 def _fmt(c):
     """Thousands separators for plain large numbers; other cells unchanged."""
@@ -32,7 +39,7 @@ def table(t):
 def findings(items):
     """Key-finding cards: status colour, label, big value, one-sentence detail."""
     names = {"ok": "good", "note": "note", "warn": "check"}
-    cards = "".join(f'<div class="fc {f["status"]}"><span class="st">{names[f["status"]]}</span><div class="lb">{esc(f["label"])}</div><div class="v">{esc(f["value"])}</div><div class="dt">{esc(f["detail"])}</div></div>' for f in items)
+    cards = "".join(f'<div class="fc {f["status"]}"><span class="st">{names[f["status"]]}</span><div class="lb">{esc(f["label"])}</div><div class="v">{esc(f["value"])}</div><div class="dt">{rich(f["detail"])}</div></div>' for f in items)
     return f'<div class="find">{cards}</div><p class="hint">Rule-based reading aids, not statistical tests. Details are in the sections below.</p>'
 
 def group(title, body, sub="", open_=False):

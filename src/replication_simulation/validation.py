@@ -19,5 +19,5 @@ def correlate_with_experiment(sf, avg_fx):
     sim = np.average(sf, axis=1)
     rows = [(n, f"{fn(sim, avg_fx)[0]:.3f}") for n, fn in
             [("Pearson", stats.pearsonr), ("Spearman", stats.spearmanr), ("Kendall tau", stats.kendalltau)]]
-    log.table("Simulated vs experimental timing", rows, ("Correlation", "Value"), level=0)
+    log.table("Simulated vs experimental timing", rows, ("Correlation", "Value"))
     return rows

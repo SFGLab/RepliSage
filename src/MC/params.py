@@ -32,6 +32,7 @@ class MCParams:
     rep_duration: int = 1
     f_rep_T: Optional[np.ndarray] = None   # replication matrix, time-major (T, N_beads), int8
     h: Optional[np.ndarray] = None         # Potts field (from replication timing)
+    bind_w: Optional[np.ndarray] = None    # LEF loading weight per bead (preferential binding); None = uniform
 
     @property
     def has_rep(self):

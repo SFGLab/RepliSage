@@ -1,6 +1,6 @@
 # Examples
 
-Small recipes that you can copy. All commands run from the repository root (`python src/run.py ...`) or after installation (`replisage ...`). Replace the data paths with your own.
+Small recipes that you can copy. All commands run from the repository root (`python -m src.run ...`) or after installation (`replisage ...`). Replace the data paths with your own.
 
 The test region used in most examples is chr14:80835000-98674700, which is covered by the shipped single-cell replication timing (`--rt-file builtin`).
 
@@ -70,3 +70,32 @@ replisage --bedpe-file LHG0052H_loops_cleaned_th10_2.bedpe --rt-file ENCFF001GNK
 | [`production_replicas.ini`](https://github.com/SFGLab/RepliSage/blob/main/examples/production_replicas.ini) | Long runs with several replicas |
 
 Edit the data paths at the top of each file before running.
+
+## Only a config file
+
+If the file defines the input, `-c` is all you need:
+
+```ini
+[input]
+bedpe_path = loops.bedpe
+chrom = chr14
+region_start = 80835000
+region_end = 83835000
+rept_path = builtin          ; a file, builtin or none
+[mc]
+preferential_binding = True
+[md]
+simulation_type = MD         ; none = no 3D
+```
+
+```bash
+replisage -c my.ini
+```
+
+## A 3 Mb region with 3D structures
+
+Beads are set automatically (7 kb per bead gives about 430 beads):
+
+```bash
+replisage --bedpe-file loops.bedpe --region chr14:80835000-83835000 --rt-file builtin --run-md true --name chr14_3Mb_md
+```

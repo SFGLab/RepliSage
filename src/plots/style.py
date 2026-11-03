@@ -85,6 +85,40 @@ def shade_phases(ax, ph, labels=False):
             if b > a: ax.text(ph.x((a + b) / 2), 1.02, lab, transform=tr, ha="center", va="bottom", fontsize=9,
                               color=ROYAL if lab == "S" else GREY, fontweight="bold")
 
+PHASE_FILL = {"G1": BLUE, "S": ROYAL, "G2/M": TEAL}   # band colours of the cell-cycle phases
+
+def phase_runs(labels):
+    """[(phase, first, last+1)] runs of consecutive equal labels."""
+    out, s = [], 0
+    for i in range(1, len(labels) + 1):
+        if i == len(labels) or labels[i] != labels[s]: out.append((labels[s], s, i)); s = i
+    return out
+
+def phase_bands(ax, labels, x=None, text=True):
+    """Coloured bands + labels of the cell-cycle phases behind a trace; labels = phase per sample, x = sample positions."""
+    x = np.arange(len(labels), dtype=float) if x is None else np.asarray(x, float); dx = (x[1] - x[0]) / 2 if len(x) > 1 else .5
+    tr = ax.get_xaxis_transform()
+    for ph, a, b in phase_runs(list(labels)):
+        c = PHASE_FILL.get(ph, PURPLE); lo, hi = x[a] - dx, x[b - 1] + dx
+        ax.axvspan(lo, hi, color=c, alpha=.09, lw=0, zorder=0)
+        if a > 0: ax.axvline(lo, color=c, lw=1, ls="--", alpha=.8, zorder=1)
+        if text: ax.text((lo + hi) / 2, 1.015, ph, transform=tr, ha="center", va="bottom", fontsize=8.5, color=c, fontweight="bold")
+
+def s_window(ax, t0, t1, axis="y", pad=.09, text=True):
+    """Mark the S phase on a time axis spanning [t0, t1] (MC steps): pad the axis, shade G1 before and G2/M after, dashed lines at S start / end."""
+    d = (t1 - t0) * pad; lo, hi = t0 - d, t1 + d
+    (ax.set_ylim if axis == "y" else ax.set_xlim)(lo, hi)
+    span, line = (ax.axhspan, ax.axhline) if axis == "y" else (ax.axvspan, ax.axvline)
+    span(lo, t0, color=BLUE, alpha=.10, lw=0, zorder=0); span(hi, t1, color=TEAL, alpha=.10, lw=0, zorder=0)
+    for v in (t0, t1): line(v, color=ROYAL, lw=1.1, ls="--", zorder=4)
+    if not text: return
+    if axis == "y":
+        tr = ax.get_yaxis_transform(); kw = dict(transform=tr, ha="right", fontsize=8, fontweight="bold", va="center")
+        ax.text(.995, t0 - d / 2, "G1  ·  S starts above", color=BLUE, **kw); ax.text(.995, t1 + d / 2, "S ends below  ·  G2/M", color=TEAL, **kw)   # labels sit in the padded bands, clear of the data
+    else:
+        tr = ax.get_xaxis_transform(); kw = dict(transform=tr, ha="center", fontsize=8.5, fontweight="bold", va="bottom")
+        ax.text(t0 - d / 2, 1.015, "G1", color=BLUE, **kw); ax.text(t1 + d / 2, 1.015, "G2/M", color=TEAL, **kw); ax.text((t0 + t1) / 2, 1.015, "S phase", color=ROYAL, **kw)
+
 def bin_time(M, max_cols=400):
     """Average the time axis (last) of a matrix in equal bins so that at most max_cols columns remain; returns (matrix, factor)."""
     f = int(np.ceil(M.shape[1] / max_cols))
@@ -173,3 +207,12 @@ def save_fig(fig, out_dir, sub, name, fid=None, svg=True):
     plt.close(fig)
     FIGS[fid or name] = png
     return png
+
+
+def fork_layer(forks):
+    """RGBA overlay (time x genome) of fork events: thickened, in the fork colour of the 3D views, with a white halo so they stand out on the maps."""
+    from scipy.ndimage import binary_dilation
+    from ..viz3d.palette import FORK
+    f = np.asarray(forks).T.astype(bool); core = binary_dilation(f, np.ones((3, 3), bool)); halo = binary_dilation(f, np.ones((5, 5), bool))
+    img = np.zeros(f.shape + (4,)); img[halo] = [1, 1, 1, .8]; img[core, :3] = [int(FORK[i:i + 2], 16) / 255 for i in (1, 3, 5)]; img[core, 3] = 1
+    return img

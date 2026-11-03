@@ -24,12 +24,13 @@ def _kernel_args(p, seed, progress):
     fold, fold2, bind, k, rep, p1, p2 = energy_norms(p)
     f_T = p.f_rep_T if p.has_rep else np.zeros((1, p.N_beads), dtype=np.int8)
     h = p.h if p.h is not None else np.zeros(p.N_beads)
+    cdf = np.cumsum(p.bind_w[:-1], dtype=np.float64) if p.bind_w is not None else np.zeros(1)      # loading CDF over beads 0..N-2 (size 1 = uniform)
     return dict(N_steps=p.N_steps, N_sweep=p.N_sweep, N_lef=p.N_lef, N_lef2=p.N_lef2, N_beads=p.N_beads,
                 MC_step=p.MC_step, T=p.T, L=p.L, R=p.R, k_norm=k, fold_norm=fold, fold_norm2=fold2, bind_norm=bind,
                 rep_norm=rep, t_rep=p.t_rep, rep_duration=p.rep_duration, f_rep_T=f_T, has_rep=p.has_rep,
                 potts_norm1=p1, potts_norm2=p2, h=h, rw=p.rw, p_rew=p.p_rew, rep_fork_organizers=p.rep_fork_organizers,
                 cohesin_blocks_condensin=p.cohesin_blocks_condensin, random_spins=p.random_spins,
-                repfork_push=p.repfork_push, seed=seed, progress=progress)
+                repfork_push=p.repfork_push, seed=seed, progress=progress, bind_cdf=cdf)
 
 def _one_chain(p, seed, progress):
     t0 = time.time()

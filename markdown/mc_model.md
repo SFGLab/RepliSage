@@ -4,7 +4,7 @@ The notation follows the RepliSage paper. A configuration of the system is
 
 $$\mathcal{S} = \left(\{(m_i, n_i)\}_{i=1}^{N_{\text{lef}}},\ \{s_k\}_{k=1}^{N_{\text{beads}}}\right)$$
 
-where LEF $i$ has its legs on beads $m_i < n_i$, and bead $k$ has an epigenetic state $s_k \in \{-2,-1,0,1,2\}$ (a five-state Potts model: positive = A, negative = B). The graph $\mathcal{G}$ links neighbouring beads $k, k\pm1$ and the two anchors $m_i, n_i$ of every LEF. States are sampled from a Boltzmann distribution,
+where LEF $i$ has its legs on beads $m_i < n_i$, and bead $k$ has an epigenetic state $s_k \in \{-2,-1,0,1,2\}$ (five states: positive values = A-like, negative values = B-like). The graph $\mathcal{G}$ links neighbouring beads $k, k\pm1$ and the two anchors $m_i, n_i$ of every LEF. States are sampled from a Boltzmann distribution,
 
 $$p(\mathcal{S}) = \frac{1}{\mathcal{Z}} \exp\left(-\frac{\mathcal{H}}{T_{\text{mc}}}\right)$$
 
@@ -24,7 +24,7 @@ $$\mathcal{H}_{\text{fold}} = \mathcal{C}_{\text{fold}} \sum_{i=1}^{N_{\text{lef
 
 $$\mathcal{C}_{\text{fold}} = -\frac{N_{\text{beads}} f}{N_{\text{lef}} \log(N_{\text{beads}}/N_{\text{lef}})}$$
 
-**Binding: legs like CTCF sites.** $L(\cdot)$ and $R(\cdot)$ are the binding potentials for left and right legs ([pre-processing](preproc.md)).
+**Binding: legs like CTCF sites.** $L(k)$ and $R(k)$ are the binding potentials of bead $k$ for a left and a right leg ([pre-processing](preproc.md)).
 
 $$\mathcal{H}_{\text{bind}} = \mathcal{C}_{\text{bind}} \sum_{i=1}^{N_{\text{lef}}} \left(L(m_i) + R(n_i)\right)$$
 
@@ -53,7 +53,7 @@ $$\mathcal{C}_{\text{rep}} = c_{\text{rep}} \times 10^8$$
 
 Here $\ell_{\text{rep}}$ is the number of copied beads inside the loop. A fork is a *moving barrier*: a large $c_{\text{rep}}$ is a solid wall, a small one lets some LEFs through. The default is `REP_COEFF = 0.01` (a scale of $10^6$); tests show anything from $10^3$ to $10^8$ blocks loops equally well.
 
-**Epigenetic states** (Potts-like, active only with replication data):
+**Epigenetic states** (active only with replication data):
 
 $$\mathcal{H}_{\text{epi}} = \mathcal{C}_{p,1} \sum_{k=1}^{N_{\text{beads}}} \frac{h_k + h_{t,k}}{2} s_k + \mathcal{C}_{p,2} \sum_{k>l} J_{kl} |s_k - s_l|$$
 
@@ -75,6 +75,14 @@ with $t_r$ the time since replication started and $T_r$ its total duration. It i
 4. A Monte Carlo step is $N_{\text{sweep}}$ such proposals. Repeat for $N_{\text{steps}}$ steps, record every `MC_STEP` steps, and discard the first `BURNIN` steps. See [analysis](analysis.md) for convergence checks.
 
 Lower $T_{\text{mc}}$ gives a more ordered system, higher $T_{\text{mc}}$ a noisier one. During S phase the energy keeps changing, so the run is out of equilibrium there.
+
+## Preferential binding (optional)
+
+By default a LEF loads at a uniformly random bead. With `--preferential-binding` the loading probability follows where loops are expected to be. For every loop in the BEDPE file, its strength is added to **all** beads between its two anchors, so nested loops stack up; the sum is divided by its maximum to give an **occupancy** $O(b) \in [0, 1]$. A LEF then loads at bead $b$ with probability proportional to
+
+$$w(b) = \varepsilon + (1 - \varepsilon)\, O(b)^{\gamma},$$
+
+where $\varepsilon$ is `PREF_BIND_FLOOR` (default 0.05, the weight of a loop-naked bead relative to the most occupied one) and $\gamma$ is `PREF_BIND_POWER` (default 1). Only the choice of the loading bead changes; sliding moves and all energy terms stay the same. The report then shows the occupancy together with the CTCF sites: strength, orientation (left-ward or right-ward) and confidence $|R - L| / (R + L)$ of every site, where $L$ and $R$ are the left and right binding strengths of the bead.
 
 ## Phases
 
@@ -106,12 +114,12 @@ Lower $T_{\text{mc}}$ gives a more ordered system, higher $T_{\text{mc}}$ a nois
 
 | Name | Meaning | Default |
 |---|---|---|
-| `N_STEPS` | Total MC steps (`--n-steps`) | 50000 |
+| `N_STEPS` | Total MC steps (`--n-steps`) | 150000 |
 | `MC_STEP` | Recording interval (`--mc-step`) | 200 |
-| `BURNIN` | Discarded steps (`--burnin`) | 1000 |
+| `BURNIN` | Discarded steps (`--burnin`) | 5000 |
 | `N_SWEEP` | Proposals per step | 1000 |
 | `T_MC` | Temperature | 1.5 |
-| `N_LEF` | Number of LEFs (empty = 2 times the number of CTCF sites) | auto |
+| `N_LEF` | Number of LEFs (empty = half the number of CTCF sites) | auto |
 | `N_LEF2` | Number of second-family LEFs | 0 |
 | `P_REW` | Probability of a LEF move | 0.5 |
 | `LEF_RW` | Random-walk sliding (False = one-directional) | True |
@@ -122,9 +130,9 @@ Lower $T_{\text{mc}}$ gives a more ordered system, higher $T_{\text{mc}}$ a nois
 | `REP_COEFF` | Replication barrier (scale is this times $10^8$) | 0.01 |
 | `REP_FORK_PUSH` | Forks push loops | True |
 | `REP_FORK_EPIGENETIC_ORGANIZER` | Forks act as epigenetic organisers | True |
-| `EPI_FIELD_COEFF` | Potts field strength | 1.0 |
-| `EPI_INTERACT_COEFF` | Potts coupling strength | 1.0 |
-| `RANDOM_INIT_SPINS` | Random initial spins | True |
+| `EPI_FIELD_COEFF` | Strength of the epigenetic field | 1.0 |
+| `EPI_INTERACT_COEFF` | Strength of the epigenetic coupling | 1.0 |
+| `RANDOM_INIT_SPINS` | Random initial epigenetic states | True |
 | `N_REPLICAS` | Independent chains | 1 |
 | `SEED` | Random seed | random |
 
@@ -139,7 +147,7 @@ All of these belong to the config file; see [config.md](config.md).
 - [`src/MC/normalization.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/normalization.py): `energy_norms(p)`: the normalisation constants
 - [`src/MC/loops_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/loops_energy.py): fold, bind and cross terms
 - [`src/MC/replication_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/replication_energy.py): replication penalty
-- [`src/MC/potts_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/potts_energy.py): compartment (Potts) term
+- [`src/MC/potts_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/potts_energy.py): epigenetic (compartment) term
 - [`src/MC/total_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/total_energy.py): sums the terms: `get_E`, `get_dE_rewiring`
 - [`src/MC/results.py`](https://github.com/SFGLab/RepliSage/blob/main/src/MC/results.py): `MCResult`, `save_mc`, `phase_bounds`
 - [`src/pipeline/mc_stage.py`](https://github.com/SFGLab/RepliSage/blob/main/src/pipeline/mc_stage.py): `build_mc_params`, `run_mc_stage`
@@ -148,13 +156,13 @@ All of these belong to the config file; see [config.md](config.md).
 |---|---|
 | `unbind_bind(N_beads)` | proposes a new random position for a LEF (rebinding) |
 | `slide(m_old, n_old, N_beads, f_T, t, rw, push_condition)` | moves one or both legs by one bead; `rw` random walk, `push_condition` fork pushing |
-| `initialize(N_lef, N_lef2, N_beads, random_init_spins)` | random initial state of LEFs and spins |
+| `initialize(N_lef, N_lef2, N_beads, random_init_spins)` | random initial state of LEFs and epigenetic states |
 | `energy_norms(p)` | returns `fold_norm, fold_norm2, bind_norm, k_norm, rep_norm, potts_norm1, potts_norm2` |
 | `E_fold(ms, ns, fold_norm)  /  get_dE_fold(...)` | folding energy and its change for one move |
 | `E_bind(L, R, ms, ns, bind_norm)  /  get_dE_bind(...)` | CTCF binding energy and its change |
 | `E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin)  /  get_dE_cross(...)` | loop-crossing penalty, with the function `Kappa(mi, ni, mj, nj)` |
 | `E_rep(f_rep_T, ms, ns, t, rep_norm)  /  get_dE_rep(...)` | penalty for a LEF crossing a replication fork, with `Rep_Penalty(m, n, f)` |
-| `E_potts(spins, ms, ns, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)` | Potts energy (field plus couplings `J_pair`); `get_dE_node`, `get_dE_potts_link` give the changes |
+| `E_potts(spins, ms, ns, h, ht, potts_norm1, potts_norm2, t, rep_fork_organizers)` | epigenetic energy (field plus couplings `J_pair`); `get_dE_node`, `get_dE_potts_link` give the changes |
 | `get_E(...)  /  get_dE_rewiring(...)` | total energy and the change for a rewiring move |
 
 | Argument | Role |
@@ -163,6 +171,6 @@ All of these belong to the config file; see [config.md](config.md).
 | `N_LEF`, `N_LEF2`, `LEF_RW`, `COHESIN_BLOCKS_CONDENSIN` | number of LEFs (two families) and their movement rules |
 | `T_MC`, `P_REW` | temperature and the probability of a rewiring move |
 | `FOLDING_COEFF`, `FOLDING_COEFF2`, `BIND_COEFF`, `CROSS_COEFF`, `REP_COEFF` | energy weights $f$, $f_2$, $b$, $\kappa$, $c_{rep}$ |
-| `EPI_INTERACT_COEFF`, `EPI_FIELD_COEFF`, `RANDOM_INIT_SPINS` | Potts coupling, field and initial spins |
+| `EPI_INTERACT_COEFF`, `EPI_FIELD_COEFF`, `RANDOM_INIT_SPINS` | epigenetic coupling, field and initial states |
 | `REP_FORK_PUSH`, `REP_FORK_EPIGENETIC_ORGANIZER` | forks push LEFs; forks act as compartment organizers |
 | `--n-replicas`, `--seed`, `--threads` | independent chains, random seed, CPU threads |

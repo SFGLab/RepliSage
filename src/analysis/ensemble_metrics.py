@@ -4,22 +4,24 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from .structure_metrics import *
 import os
-from ..viz3d.data import list_ensemble
+from ..viz3d.data import list_ensemble, PHASE_OF
 from ..io.structure_io import get_coordinates_cif
 from ..logger import log
 
 def compute_metrics_for_ensemble(ensemble_path, duplicated_chain=False, path=None):
-    cifs = [os.path.basename(p) for _, _, p in list_ensemble(ensemble_path)]   # time order: G1 -> S -> G2/M
+    items = list_ensemble(ensemble_path); cifs = [os.path.basename(p) for _, _, p in items]   # time order: G1 -> S -> G2/M
     Rgs, mpds, eeds, asphs, fractals, convs, gdfs, CNs = list(), list(), list(), list(), list(), list(), list(), list()
     ellipsoid_ratios, planarities, ellipsoid_volumes = list(), list(), list()
     max_pairwise_distances, bounding_box_volumes = list(), list()
     mean_distances_to_com, std_pairwise_distances = list(), list()
     max_distances_to_com = list()
+    rg_tot, hull_tot, sis_dist, phases = [], [], [], []   # whole system (both sisters), sister separation, phase per structure
 
     for cif in log.progress(cifs):
         V = get_coordinates_cif(ensemble_path + '/' + cif)
         if duplicated_chain:
-            V = V[:len(V) // 2]
+            n = len(V) // 2; rg_tot.append(radius_of_gyration(V)); hull_tot.append(convex_hull_volume(V)); sis_dist.append(np.linalg.norm(V[:n].mean(0) - V[n:].mean(0)))
+            V = V[:n]
         Rgs.append(radius_of_gyration(V))
         mpds.append(mean_pairwise_distance(V))
         eeds.append(end_to_end_distance(V))
@@ -40,7 +42,11 @@ def compute_metrics_for_ensemble(ensemble_path, duplicated_chain=False, path=Non
         std_pairwise_distances.append(std_pairwise_distance(V))
         max_distances_to_com.append(max_distance_to_com(V))
 
+    phases = [PHASE_OF.get(ph, ph) for _, ph, _ in items]
     # Save metrics with clear names
+    np.save(path + '/metadata/structural_metrics/phases.npy', np.array(phases))
+    if rg_tot:
+        for k, v in (('radius_of_gyration_total', rg_tot), ('convex_hull_volume_total', hull_tot), ('sister_distance', sis_dist)): np.save(path + f'/metadata/structural_metrics/{k}.npy', np.array(v))
     np.save(path + '/metadata/structural_metrics/radius_of_gyration.npy', np.array(Rgs))
     np.save(path + '/metadata/structural_metrics/mean_pairwise_distance.npy', np.array(mpds))
     np.save(path + '/metadata/structural_metrics/end_to_end_distance.npy', np.array(eeds))
@@ -59,5 +65,5 @@ def compute_metrics_for_ensemble(ensemble_path, duplicated_chain=False, path=Non
     np.save(path + '/metadata/structural_metrics/max_distance_to_com.npy', np.array(max_distances_to_com))
 
     if path is not None:
-        from ..plots.structure_figs import fig_structure
-        fig_structure(path)
+        from ..plots.structure_figs import fig_structure, fig_compaction
+        fig_structure(path); fig_compaction(path)

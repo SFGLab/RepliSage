@@ -46,10 +46,10 @@ where $\mu_v, \sigma_v$ are estimated from the slopes between consecutive extrem
 | Replicated-DNA matrix | beads by time | Monte Carlo barrier and push, 3D sister tie |
 | Left and right fork matrices | beads by time | Figures |
 | Initiation rate $p_i(t)$ | beads by time | Figures |
-| Potts field $h_i = 2 f_i - 1$ | per bead | Monte Carlo spins |
-| Initial spin sign | per bead | Monte Carlo spins |
+| Epigenetic field $h_i = 2 f_i - 1$ | per bead | Monte Carlo epigenetic states |
+| Initial epigenetic state sign | per bead | Monte Carlo epigenetic states |
 
-The matrix is stretched to `REP_TIME_DURATION` Monte Carlo steps and placed at `REP_START_TIME`, so S phase happens between steps `REP_START_TIME` and `REP_START_TIME + REP_TIME_DURATION`.
+The time axis is **normalised** inside the simulator, before the matrices are rescaled to `REP_SIM_T` points: the idle steps before the first fired origin are removed, and the simulation stops at the step where the last locus is copied. So the first column of the matrix is the first firing (with its forks, which are aligned to the firing step) and the last column is the moment when everything is replicated. The initiation rate $I(x,t)$ used in the plots is mapped to the same axis, and `Replikator.normalise_time` stays as a safeguard that does nothing for a profile that is already normalised. The log reports how many idle steps were removed (with `-vv`). This only rescales time; the model itself is unchanged, and `demo/test_normalisation.py` checks it (no Monte Carlo needed). The matrix is then stretched to `REP_TIME_DURATION` Monte Carlo steps and placed at `REP_START_TIME`, so S phase happens between steps `REP_START_TIME` and `REP_START_TIME + REP_TIME_DURATION`.
 
 ## Replication stress
 
@@ -72,8 +72,8 @@ Forks are slower, more origins fire and timing is noisier, which is what cells u
 | `REP_SPEED_SCALE` | Fork speed scale | 10 |
 | `REP_INIT_RATE_SCALE` | Multiplier of the initiation rate | 1.0 |
 | `REP_WITH_STRESS` | Use the stress values above | False |
-| `REP_START_TIME` (`--rep-start`) | Monte Carlo step where S phase starts | 15000 |
-| `REP_TIME_DURATION` (`--rep-duration`) | Length of S phase in Monte Carlo steps | 20000 |
+| `REP_START_TIME` (`--rep-start`) | Monte Carlo step where S phase starts | 50000 |
+| `REP_TIME_DURATION` (`--rep-duration`) | Length of S phase in Monte Carlo steps | 50000 |
 | `BIGWIG_BIN_SIZE` | Bin size for Repli-Seq bigWig (bp) | 1000 |
 | `BIGWIG_SIGMA` | Gaussian smoothing in bins | 200 |
 | `BIGWIG_LOG_NORM` | Log-transform the bigWig signal | True |
@@ -111,3 +111,12 @@ The "Replication" section shows fork trajectories, the replicated fraction over 
 | `REP_T_STD_FACTOR`, `REP_SPEED_SCALE`, `REP_INIT_RATE_SCALE` | width of firing times, fork speed and initiation rate scales |
 | `REP_START_TIME`, `REP_TIME_DURATION` | S phase start and length in MC steps |
 | `--with-stress` | turns on replication stress (`REP_WITH_STRESS`, applied by `apply_stress` in `config/stress.py`) |
+
+## Robustness checks
+
+The model is unchanged; these are implementation safeguards.
+
+* **Input checks.** A missing chromosome, a region outside the timing data, a constant or empty timing signal, or fewer than four data points stop the run with a message that names the problem.
+* **Fork speed on smooth curves.** The fork speed is estimated from the slopes between successive peaks and dips of the timing curve. If a small region or fine beads leave fewer than two extrema, the region ends are used as segment boundaries, so the speed is never zero.
+* **Slow regions.** If DNA is still unreplicated after `REP_SIM_T` time steps, the initiation rate of the last time step is kept and the simulation continues until the region is replicated (the result is rescaled to `REP_SIM_T` columns as before). A hard cap of `20 * REP_SIM_T` steps raises a clear error.
+* **Speed.** Fork matrices are stacked once instead of at every step. Results for a given random seed are identical to the earlier implementation whenever it finished.

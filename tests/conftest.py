@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 from src.MC.params import MCParams          # noqa: E402
 
 REGION = (80835000, 98674700)               # chr14 region covered by the built-in single-cell data
+SMALL = (REGION[0], REGION[0] + 4_000_000)  # 4 Mb test region: 100 beads = 40 kb, inside the allowed bead size (200 bp - 50 kb)
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: runs OpenMM / the full pipeline (deselect with -m 'not slow')")
@@ -48,11 +49,11 @@ def params():
 
 @pytest.fixture(scope="session")
 def bedpe_file(tmp_path_factory):
-    """Synthetic loops (with CTCF orientation columns) on chr14 inside REGION."""
+    """Synthetic loops (with CTCF orientation columns) on chr14 inside SMALL."""
     rng = np.random.default_rng(3)
     rows = []
     for _ in range(300):
-        a = int(rng.integers(REGION[0], REGION[1] - 2e5)); b = int(a + rng.integers(2e4, 2e5))
+        a = int(rng.integers(SMALL[0], SMALL[1] - 2e5)); b = int(a + rng.integers(2e4, 2e5))
         rows.append(f"chr14\t{a}\t{a + 2000}\tchr14\t{b}\t{b + 2000}\t{int(rng.integers(10, 60))}\t{rng.random():.4f}\t{rng.random():.4f}")
     f = tmp_path_factory.mktemp("data") / "loops.bedpe"
     f.write_text("\n".join(rows) + "\n")
@@ -63,9 +64,9 @@ def cli(bedpe_file, tmp_path):
     """Base command-line arguments of a tiny loop-extrusion-only run (extend/override per test)."""
     def build(**over):
         a = {"bedpe_path": bedpe_file, "rept_path": "", "use_sc_rept": "False", "chrom": "chr14",
-             "region_start": str(REGION[0]), "region_end": str(REGION[1]), "n_beads": "100", "n_lef": "10", "n_lef2": "0",
+             "region_start": str(SMALL[0]), "region_end": str(SMALL[1]), "n_beads": "100", "n_lef": "10", "n_lef2": "0",
              "n_steps": "1000", "mc_step": "50", "burnin": "100", "n_sweep": "100", "simulation_type": "",
-             "save_plots": "False", "viz_heats": "False", "out_path": str(tmp_path / "results"), "seed": "1"}
+             "save_plots": "False", "skip_movies": "True", "viz_heats": "False", "out_path": str(tmp_path / "results"), "seed": "1"}
         a.update({k: str(v) for k, v in over.items()})
         ini = tmp_path / f"cfg_{abs(hash(tuple(sorted(a.items()))))}.ini"      # parameters go through a config file
         ini.write_text("[all]\n" + "".join(f"{k} = {v}\n" for k, v in a.items()))

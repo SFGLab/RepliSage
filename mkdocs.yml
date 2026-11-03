@@ -31,6 +31,7 @@ nav:
       - Command line: cli.md
       - Examples: examples.md
   - Theory:
+      - Biological background: biology.md
       - Scope and goals: scope.md
       - The idea in a nutshell: intuition.md
       - The Hamiltonian idea: hamiltonian.md

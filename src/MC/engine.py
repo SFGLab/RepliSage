@@ -6,7 +6,7 @@ The kernel is nogil, so several independent chains (replicas) can run in threads
 import numpy as np
 import random as rd
 from numba import njit
-from .moves import unbind_bind, slide, initialize
+from .moves import unbind_bind, load_bind, slide, initialize
 from .total_energy import get_E, get_dE_rewiring
 from .potts_energy import E_potts, get_dE_node
 from .loops_energy import E_fold, E_bind
@@ -18,7 +18,7 @@ def run_energy_minimization(
     L, R, k_norm, fold_norm, fold_norm2, bind_norm,
     rep_norm, t_rep, rep_duration, f_rep_T, has_rep,
     potts_norm1, potts_norm2, h, rw, p_rew, rep_fork_organizers,
-    cohesin_blocks_condensin, random_spins, repfork_push, seed, progress
+    cohesin_blocks_condensin, random_spins, repfork_push, seed, progress, bind_cdf
 ):
     '''
     Monte Carlo (Metropolis) simulation of LEFs and Potts states.
@@ -32,12 +32,13 @@ def run_energy_minimization(
     ht = np.zeros(N_beads, dtype=np.float64)   # time-dependent field (Potts)
     n_accepted = 0
     use_push = repfork_push and has_rep
+    use_pref = bind_cdf.shape[0] > 1                # preferential loading of LEFs
     is_potts = potts_norm1 != 0.0 or potts_norm2 != 0.0
 
     spin_choices = np.array([-2, -1, 0, 1, 2], dtype=np.int64)
     lef_idx_choices = np.arange(N_lef, dtype=np.int64)
 
-    ms, ns, spins = initialize(N_lef, N_lef2, N_beads, random_spins)
+    ms, ns, spins = initialize(N_lef, N_lef2, N_beads, bind_cdf, random_spins)
     n_rec = N_steps // MC_step
     spin_traj = np.zeros((N_beads, n_rec), dtype=np.int32)
 
@@ -85,7 +86,7 @@ def run_energy_minimization(
                 if m_old <= 0 or n_old <= 0:           # unbound LEF: force rebinding
                     r = 0
                 if r == 0:
-                    m_new, n_new = unbind_bind(N_beads)
+                    m_new, n_new = load_bind(bind_cdf) if use_pref else unbind_bind(N_beads)
                 else:
                     m_new, n_new = slide(m_old, n_old, N_beads, f_rep_T, rt, rw, use_push)
                 dE = get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns,

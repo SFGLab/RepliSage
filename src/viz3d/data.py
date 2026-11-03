@@ -18,6 +18,8 @@ class Traj:
     lefs: list               # per frame: (k, 2) array of bound LEF anchors (m, n)
     has_rep: bool
     files: list = field(default_factory=list)
+    lef_fam: list = field(default_factory=list)   # per frame: 0 = cohesin, 1 = condensin for every LEF in lefs
+    ctcf: tuple = (np.zeros(0, int), np.zeros(0, int))   # CTCF bead indices and orientation (+1 forward, -1 reverse)
 
 def kabsch(P, Q):
     """Rotation matrix aligning the centred P onto the centred Q."""
@@ -39,6 +41,10 @@ def list_ensemble(d):
     rank = {"BR": 0, "LE": 0, "R": 1, "AR": 2}
     return sorted(out, key=lambda t: (rank.get(t[1], 0), t[0]))   # G1 -> S -> G2/M
 
+def phase_at(step, t_rep, duration):
+    """Cell-cycle phase of an MC step: G1 before the S window, S inside it, G2/M after it (independent of the sampling interval)."""
+    return "G1" if step < t_rep else ("S" if step < t_rep + duration else "G2/M")
+
 def load_traj(out_dir, p, res, rep=None, max_frames=None):
     """Build a Traj from out_dir/ensemble and the MC result (res) of the same replica."""
     items = list_ensemble(os.path.join(out_dir, "ensemble"))
@@ -52,7 +58,21 @@ def load_traj(out_dir, p, res, rep=None, max_frames=None):
     if rep is not None:
         rt = np.clip(idx * ms - p.t_rep, 0, rep.f_rep_T.shape[0] - 1); r = rep.f_rep_T[rt].astype(np.uint8)
         r[idx * ms < p.t_rep] = 0; r[idx * ms >= p.t_rep + p.rep_duration] = 1   # before S: none, after S: all replicated
-    lefs = []
+    lefs, fam = [], []; kind = (np.arange(res.Ms.shape[0]) >= p.N_lef).astype(np.int8)   # LEF index >= N_lef -> condensin
     for j in idx:
-        m, n = res.Ms[:, j], res.Ns[:, j]; ok = (m >= 0) & (n > m); lefs.append(np.stack([m[ok], n[ok]], 1))
-    return Traj(V, n_ch, N, [PHASE_OF.get(ph, ph) for _, ph, _ in items], idx * ms, sp, r, lefs, rep is not None, [f for _, _, f in items])
+        m, n = res.Ms[:, j], res.Ns[:, j]; ok = (m >= 0) & (n > m); lefs.append(np.stack([m[ok], n[ok]], 1)); fam.append(kind[ok])
+    phase = [phase_at(s_, p.t_rep, p.rep_duration) for s_ in idx * ms] if rep is not None else [PHASE_OF.get(ph, ph) for _, ph, _ in items]   # phase from the MC step itself, not from file labels
+    return Traj(V, n_ch, N, phase, idx * ms, sp, r, lefs, rep is not None, [f for _, _, f in items], fam, ctcf_sites(p))
+
+def ctcf_sites(p, rel=.25):
+    """CTCF beads (binding weight above rel x the maximum) with orientation as in the model: L (attracts the left LEF leg) = forward-facing motif, arrow along the chain (+1); R = reverse-facing, arrow against it (-1)."""
+    L, R = np.asarray(p.L, float), np.asarray(p.R, float); i, d = [], []
+    for v, o in ((L, 1), (R, -1)):
+        k = np.flatnonzero(v > rel * v.max()) if v.max() > 0 else []; i += list(k); d += [o] * len(k)
+    return np.array(i, int), np.array(d, int)
+
+
+def replication_eyes(rp):
+    """Replicated segments (a, b), inclusive bead indices, of one chain. A segment has a fork at a (moving left) and at b + 1 (moving right); a fully copied chain has none."""
+    r = np.asarray(rp).astype(int); d = np.diff(np.r_[0, r, 0]); s = np.flatnonzero(d == 1); e = np.flatnonzero(d == -1) - 1
+    return [(int(a), int(b)) for a, b in zip(s, e) if not (a == 0 and b == len(r) - 1)]

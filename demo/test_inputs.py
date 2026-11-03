@@ -2,8 +2,8 @@
 import subprocess, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-BASE = ["--region", "chr14:40535000-60174700", "--n-beads", "100", "--n-steps", "3000", "--mc-step", "100", "--burnin", "300",
-        "--out-path", str(ROOT / "demo" / "results"), "--no-viewer", "--no-movie", "--no-report"]
+BASE = ["--region", "chr14:40535000-60174700", "--n-beads", "400", "--n-steps", "3000", "--mc-step", "100", "--burnin", "300",
+        "--run-md", "false", "--out-path", str(ROOT / "demo" / "results"), "--no-viewer", "--skip-movies", "--no-report"]
 
 def run(*args, stdin=""):
     """Run replisage with the given flags; returns (exit code, output)."""

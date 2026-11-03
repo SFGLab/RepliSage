@@ -16,7 +16,8 @@ header.hero{padding-bottom:22px;margin-bottom:10px;border-bottom:1px solid var(-
 .meta{display:flex;flex-wrap:wrap;gap:8px}.chip{background:var(--soft);border-radius:99px;padding:2px 12px;font-size:13px;font-weight:600;color:var(--ink)}
 .chip.on{background:var(--pink);color:var(--red)}.chip.red{background:var(--red);color:#fff}.chip.off{color:#9aa1ab;text-decoration:line-through}
 h2{font-size:26px;margin:56px 0 4px;letter-spacing:-.02em}h2:before{content:"";display:inline-block;width:6px;height:22px;background:var(--red);border-radius:3px;margin-right:12px;vertical-align:-2px}
-h3{font-size:17px;margin:28px 0 8px}p.lead{color:var(--mute);margin:2px 0 18px}
+h3{font-size:17px;margin:28px 0 8px}p.intro{background:var(--soft);border-left:4px solid var(--red);padding:12px 18px;border-radius:0 10px 10px 0;margin:10px 0 18px}
+p.lead{color:var(--mute);margin:2px 0 18px}
 .find{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin:18px 0}
 .fc{border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:14px 16px 12px;background:#fff;--c:var(--note)}
 .fc.ok{--c:var(--ok)}.fc.note{--c:var(--note)}.fc.warn{--c:var(--warn)}
@@ -25,6 +26,8 @@ h3{font-size:17px;margin:28px 0 8px}p.lead{color:var(--mute);margin:2px 0 18px}
 .fc .dt{font-size:13.5px;color:var(--mute);line-height:1.5}.fc .st{float:right;font-size:11px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.06em}
 .hint{font-size:13px;color:var(--mute)}
 .eq{background:var(--soft);border-left:4px solid var(--red);padding:10px 16px;margin:12px 0;font-family:Georgia,"Times New Roman",serif;font-size:18px;border-radius:0 8px 8px 0}
+.m{font-family:"STIX Two Text","Cambria Math","Times New Roman",Georgia,serif;font-size:1.06em;white-space:nowrap}.m i{font-style:italic}.m .fn{font-style:normal}.m sub,.m sup{font-size:.72em;line-height:0}
+.ov{text-decoration:overline}.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .15em;font-size:.92em}.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .2em}.fr>span:last-child{padding:0 .2em}
 .eq small{display:block;font:13px system-ui;color:var(--mute);margin-top:4px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0}
 .card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14.5px}.card b{color:var(--red)}
@@ -33,7 +36,7 @@ figure img{display:block;max-width:100%;height:auto;margin:0 auto;cursor:zoom-in
 figcaption{padding:12px 18px 14px;border-top:1px solid var(--line);background:var(--soft)}
 figcaption h4{margin:0 0 6px;font-size:15.5px}
 .cap{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;font-size:14px;color:#333a44}
-.cap span{display:block;color:var(--red);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.cap>div>span:first-child{display:block;color:var(--red);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 details.how{grid-column:1/-1;margin-top:2px}details.how summary{cursor:pointer;color:var(--red);font-weight:600;font-size:13px}
 details.how p{margin:6px 0 0;border-left:3px solid var(--red);padding-left:12px}
 @media(max-width:900px){.cap{grid-template-columns:1fr}}
@@ -41,6 +44,7 @@ details.grp{border:1px solid var(--line);border-radius:12px;margin:18px 0;paddin
 details.grp>summary{cursor:pointer;padding:12px 0;font-weight:700;font-size:16px}details.grp>summary small{font-weight:400;color:var(--mute);margin-left:8px}
 .tbl{margin:16px 0;overflow-x:auto}.tbl h4{margin:0 0 6px;font-size:15.5px}
 table{border-collapse:collapse;width:100%;font-size:14px}
+#pt th:not(:last-child),#pt td:not(:last-child){width:1%;white-space:nowrap}#pt td,#pt th{padding-left:8px;padding-right:12px}
 th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);border-bottom:2px solid var(--line);padding:7px 10px;white-space:nowrap}
 td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .note{font-size:13px;color:var(--mute);margin-top:6px}

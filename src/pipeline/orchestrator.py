@@ -21,7 +21,7 @@ def run_pipeline(args, command=""):
     """Run all stages for the resolved Args object (`command` is recorded in the report)."""
     apply_style()
     ctx = build_context(args)
-    log.table("Run configuration", describe(ctx), level=0)
+    log.table("Run configuration", describe(ctx), level=1)
     write_config(args, ctx.run_dir + "/config_used.ini")
     log.trace("Resolved parameters: " + ", ".join(f"{a.name}={a.val}" for a in args))
     L, R, n_ctcf = run_preprocessing(ctx)

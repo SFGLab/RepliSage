@@ -10,7 +10,7 @@ RepliSage explores its configurations with a **Markov chain Monte Carlo** (MCMC)
 | Markov chain | A sequence of states in which the next state depends only on the current one |
 | MCMC | A Markov chain built so that, in the long run, states appear with the target probability $p(\mathcal{S}) \propto e^{-\mathcal{H}/T_{\text{mc}}}$ |
 | Metropolis rule | Accept a proposed change with probability $\min(1, e^{-\Delta\mathcal{H}/T_{\text{mc}}})$, otherwise keep the old state |
-| Proposal | One attempted change of the configuration: a LEF move or a spin flip |
+| Proposal | One attempted change of the configuration: a LEF move or a change of an epigenetic state |
 | Sweep (`N_SWEEP`) | The number of proposals made in one Monte Carlo step |
 | Monte Carlo step | One unit of simulated (pseudo)time: `N_SWEEP` proposals in a row |
 | Sampling step (`MC_STEP`) | A configuration is saved every `MC_STEP` Monte Carlo steps. Saved configurations are the recorded samples that all statistics and 3D structures use |
@@ -35,7 +35,7 @@ The difficulty is how to draw samples from $p(\mathcal{S}) \propto e^{-\mathcal{
 
 ## The Metropolis algorithm
 
-The **Metropolis algorithm** is the recipe RepliSage uses. Starting from the current state, it proposes a small random change (move a LEF, or flip a spin $s_k$) and accepts it with probability
+The **Metropolis algorithm** is the recipe RepliSage uses. Starting from the current state, it proposes a small random change (move a LEF, or change the epigenetic state $s_k$) and accepts it with probability
 
 $$P_{\text{accept}} = \min\left(1,\ e^{-\Delta\mathcal{H}/T_{\text{mc}}}\right)$$
 
@@ -59,7 +59,7 @@ where $f_{\text{mc}}$ is `MC_STEP`.
 
 | Word | Meaning in RepliSage | Parameter |
 |---|---|---|
-| Proposal | One attempted change: a LEF move with probability `P_REW`, otherwise a spin flip | `P_REW` |
+| Proposal | One attempted change: a LEF move with probability `P_REW`, otherwise an epigenetic-state change | `P_REW` |
 | Sweep | Number of proposals in one Monte Carlo step, $N_{\text{sweep}}$ | `N_SWEEP` |
 | Monte Carlo step | $N_{\text{sweep}}$ proposals; the unit of pseudotime | |
 | Run length | $N_{\text{steps}}$ Monte Carlo steps | `N_STEPS` |
@@ -77,11 +77,11 @@ Neighbouring states in a chain look alike, so $n$ samples carry less information
 
 $$\rho(\tau) = \frac{C(\tau)}{C(0)}$$
 
-where $C(\tau)$ is the autocovariance (the average of $(x_t - \bar{x})(x_{t+\tau} - \bar{x})$ over $t$), so $\rho(0) = 1$, and $\rho$ should drop to about 0 within a few lags. The decay is summarised by the **integrated autocorrelation time** $\tau_{\text{int}}$, the number of samples that count as one independent sample, and the **effective sample size**
+where $C(\tau)$ is the autocovariance (the average of $(x_t - \bar{x})(x_{t+\tau} - \bar{x})$ over $t$), so $\rho(0) = 1$, and $\rho$ should drop to about 0 within a few lags. The decay is summarised by the **integrated autocorrelation time** $T_{\rho}$ (the sum of $\rho(\tau)$ over lags, so it is built from the autocorrelation itself), the number of samples that count as one independent sample, and the **effective sample size**
 
-$$n_{\text{eff}} = \frac{n}{\tau_{\text{int}}}$$
+$$n_{\text{eff}} = \frac{n}{T_{\rho}}$$
 
-If $\tau_{\text{int}}$ is large, the chain *mixes slowly*: it needs many steps to forget where it was. Remedies are a longer run, a larger sampling interval, a higher $T_{\text{mc}}$ (more uphill moves), or more replicas.
+If $T_{\rho}$ is large, the chain *mixes slowly*: it needs many steps to forget where it was. Remedies are a longer run, a larger sampling interval, a higher $T_{\text{mc}}$ (more uphill moves), or more replicas.
 
 ![Fast and slow mixing and their autocorrelation functions](assets/diagrams/autocorr.svg)
 
@@ -89,7 +89,7 @@ If $\tau_{\text{int}}$ is large, the chain *mixes slowly*: it needs many steps t
 
 Autocorrelation is not equally worrying in every phase. In G1 and G2/M the energy is fixed, so the chain relaxes to equilibrium and forgets its past quickly. In S phase the replication forks keep changing the system.
 
-| Phase | Expected $\tau_{\text{int}}$ | Why |
+| Phase | Expected autocorrelation (size of $T_{\rho}$) | Why |
 |---|---|---|
 | G1 | Small | Fixed energy; loops and states relax quickly and the samples are close to independent |
 | S | Large, almost always present | Forks move along the genome and keep pushing LEFs and the epigenetic states in a semi-deterministic way. Origin firing is stochastic, but in general it follows the replication program, so consecutive samples stay correlated |
