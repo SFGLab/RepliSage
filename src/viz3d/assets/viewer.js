@@ -10,7 +10,7 @@ let mode=0,tpos=0,playing=false,last=0;
 // ---- three.js scene
 const view=$('view'),W=()=>view.clientWidth,H=()=>view.clientHeight;
 const R=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(window.devicePixelRatio);R.setSize(W(),H());R.setClearColor(0xeef2f8);view.appendChild(R.domElement);
-const S=new THREE.Scene();S.fog=new THREE.Fog(0xeef2f8,D.ext*1.5,D.ext*3.4);const cam=new THREE.PerspectiveCamera(40,W()/H(),1,5000);
+const S=new THREE.Scene();S.fog=new THREE.Fog(0xeef2f8,D.ext*2.7,D.ext*9.7);const cam=new THREE.PerspectiveCamera(40,W()/H(),1,5000);
 S.add(new THREE.HemisphereLight(0xffffff,0xc9d2e0,.85));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(1,1.3,1.6);S.add(dl);
 const dl2=new THREE.DirectionalLight(0xffffff,.35);dl2.position.set(-1,-.6,-1);S.add(dl2);
 const ext=D.ext;
@@ -100,8 +100,9 @@ $('play').onclick=()=>{playing=!playing;$('play').innerHTML=playing?'&#10074;&#1
 ['tLef','tFork','tCtcf'].forEach(i=>$(i).onchange=render);
 $('win').oninput=()=>{$('winv').textContent=$('win').value;render()};
 $('rc').oninput=()=>{rcMul=$('rc').value/20;cache.clear();render()};
-$('rad').oninput=()=>{tubeR=$("rad").value*ext/240;render()};$('reset').onclick=home;$('spin').onchange=()=>{ctl.autoRotate=$('spin').checked;ctl.autoRotateSpeed=1.5};$('shot').onclick=()=>{R.render(S,cam);const a=document.createElement('a');a.download='replisage_3d.png';a.href=R.domElement.toDataURL('image/png');a.click()};
-function loop(t){requestAnimationFrame(loop);if(playing){tpos+=(t-last)/1000*3*(+$('speed').value);last=t;if(tpos>=F-1){tpos=F-1;playing=false;$('play').innerHTML='&#9654; Play'}render()}ctl.update();R.render(S,cam)}
+$('rad').oninput=()=>{tubeR=$("rad").value*ext/240;render()};$('reset').onclick=home;$('spin').onchange=()=>{ctl.autoRotate=$('spin').checked;ctl.autoRotateSpeed=1.5};$('shot').onclick=()=>{fog();R.render(S,cam);const a=document.createElement('a');a.download='replisage_3d.png';a.href=R.domElement.toDataURL('image/png');a.click()};
+function fog(){const d=cam.position.distanceTo(ctl.target);S.fog.near=d;S.fog.far=d+ext*7}   // gentle depth cue, only behind the centre
+function loop(t){requestAnimationFrame(loop);if(playing){tpos+=(t-last)/1000*3*(+$('speed').value);last=t;if(tpos>=F-1){tpos=F-1;playing=false;$('play').innerHTML='&#9654; Play'}render()}ctl.update();fog();R.render(S,cam)}
 window.onresize=()=>{R.setSize(W(),H());cam.aspect=W()/H();cam.updateProjectionMatrix();drawTL()};
 rcMul=$('rc').value/20;legend();render();requestAnimationFrame(loop);
 })();

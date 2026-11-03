@@ -143,7 +143,7 @@ def _light(pl, size, shadows=True):
 
 BG = np.array([232, 237, 245.])   # backdrop colour that distant parts fade into
 
-def _fade(pl, pts, rgb, ext, k=.62):
+def _fade(pl, pts, rgb, ext, k=.35):
     """Depth cueing (as in ChimeraX): colours blend into the backdrop with distance from the camera, so far parts look far."""
     cam = np.array(pl.camera.position); fp = np.array(pl.camera.focal_point); v = fp - cam; v /= np.linalg.norm(v)
     t = np.clip(((np.asarray(pts) - cam) @ v - (np.linalg.norm(fp - cam) - ext)) / (2.2 * ext), 0, 1)[:, None] ** 1.2
