@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.png" alt="RepliSage" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/SFGLab/RepliSage/main/docs/logo.png" alt="RepliSage" width="560"></p>
 
 <p align="center">
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-141414?logo=python&logoColor=white&labelColor=A50F2D"></a>
@@ -12,7 +12,7 @@
 <a href="https://github.com/SFGLab/RepliSage/blob/main/LICENSE"><img alt="License GPL v3" src="https://img.shields.io/badge/license-GPL%20v3-141414?labelColor=A50F2D"></a>
 </p>
 
-<p align="center"><img src="docs/structures_g1_s_g2m.png" alt="3D structures in G1, S and G2/M: two sister chromatids (orange, blue) with cohesin, CTCF and replication forks" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/SFGLab/RepliSage/main/docs/structures_g1_s_g2m.png" alt="3D structures in G1, S and G2/M: two sister chromatids (orange, blue) with cohesin, CTCF and replication forks" width="100%"></p>
 <p align="center"><sub>One simulated cell cycle: G1, S (replication forks, sisters appear) and G2/M. Sister chromatids in orange and blue, cohesin in green, CTCF orientation as purple arrows, forks in turquoise.</sub></p>
 
 RepliSage simulates how loop extrusion, epigenetic state and DNA replication shape chromatin in 3D, from G1 through S phase to G2/M. It runs a replication simulation, a Monte Carlo of loop-extruding factors (LEFs) and Potts spins (A/B compartments), and optionally 3D structures with OpenMM. Every run ends with a single `report.html`.
@@ -53,9 +53,9 @@ python src/run.py -c my_config.ini --with-stress --n-replicas 4 --threads 4
 | `--with-stress` | Replication stress (off by default) |
 | `--n-replicas`, `--seed`, `--out`, `--name`, `--platform`, `--threads` | Run control |
 
-Everything else (Monte Carlo, replication and MD energies, force field, plots) is set **only in the config file**: copy `src/config.ini` or one of the annotated files in [`examples/`](examples/README.md) and run it with `-c`. Flags win over the file; the file wins over the defaults.
+Everything else (Monte Carlo, replication and MD energies, force field, plots) is set **only in the config file**: copy `src/config.ini` or one of the annotated files in [`examples/`](https://github.com/SFGLab/RepliSage/tree/main/examples) and run it with `-c`. Flags win over the file; the file wins over the defaults.
 
-More in the [documentation](markdown/README.md): [command line](markdown/cli.md), [pipeline](markdown/pipeline.md), [replication](markdown/replication_model.md), [Monte Carlo](markdown/mc_model.md) and [3D](markdown/md_model.md) models, [config](markdown/config.md), [analysis](markdown/analysis.md).
+More in the [documentation](https://sfglab.github.io/RepliSage/): [command line](https://sfglab.github.io/RepliSage/cli/), [pipeline](https://sfglab.github.io/RepliSage/pipeline/), [replication](https://sfglab.github.io/RepliSage/replication_model/), [Monte Carlo](https://sfglab.github.io/RepliSage/mc_model/) and [3D](https://sfglab.github.io/RepliSage/md_model/) models, [config](https://sfglab.github.io/RepliSage/config/), [analysis](https://sfglab.github.io/RepliSage/analysis/).
 
 ## Output
 
