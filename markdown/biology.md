@@ -13,7 +13,7 @@ These structures are measured with **Hi-C**, an experiment that counts how often
 
 ## Loop extrusion
 
-**Loop extrusion** is the process that makes most loops. A ring-shaped protein complex, **cohesin**, lands on the DNA fibre, holds it in two places and then pulls the fibre through its ring from both sides, so the loop between the two contact points grows. Proteins that extrude loops are generally called **LEFs** (loop extruding factors).
+**Loop extrusion** is the process that makes most loops. A ring-shaped protein complex, **cohesin**, lands on the DNA fibre so that the fibre passes *through* its ring (the ring encircles the DNA, it never sits beside it). It then pulls the fibre through from both sides, so the loop between the two contact points grows and cohesin stays at the base of the loop, with both stems of the loop threaded through the ring. Proteins that extrude loops are generally called **LEFs** (loop extruding factors).
 
 Extrusion does not run forever. The protein **CTCF** sits on the DNA at specific sites and has a direction (an *orientation*). A CTCF site stops cohesin when it is approached from one particular side. If two CTCF sites face each other (**convergent** orientation), they stop the two legs of cohesin from both sides and the loop becomes stable, with the two sites held together at its base. This is why many Hi-C loops are anchored at convergent CTCF pairs.
 
@@ -39,7 +39,7 @@ G2 and M are modelled together as **G2/M**.
 
 ### S phase and the replication program
 
-DNA copying starts at thousands of places called **replication origins**. At an origin two **replication forks** are built that move away from each other in opposite directions, unwinding the DNA and copying it. Where two forks from neighbouring origins meet, they merge and stop. The two new copies of a chromosome are called **sister chromatids**. For a while they are glued together by cohesin (a different pool of cohesin from the one extruding loops), so that they can be separated cleanly later.
+DNA copying starts at thousands of places called **replication origins**. At an origin two **replication forks** are built that move away from each other in opposite directions, unwinding the DNA and copying it. Where two forks from neighbouring origins meet, they merge and stop. The two new copies of a chromosome are called **sister chromatids**. For a while they are glued together by cohesin (a different pool of cohesin from the one extruding loops): a ring that encircles both sister DNA molecules at once, so that they can be separated cleanly later.
 
 Origins do not fire all at once. The cell follows a **replication program**: some regions are copied early in S phase and others late. The program is strongly linked to chromatin state: **open, active (A) regions replicate early, and compact, inactive (B) regions replicate late**. The moment at which a region is copied is called its **replication timing**. It is measured genome-wide, and it is the main input that RepliSage uses to decide where and when forks move.
 

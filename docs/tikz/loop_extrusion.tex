@@ -17,7 +17,16 @@
 \newcommand{\eyetop}[4]{(#1-#3,#2) .. controls (#1-#3*0.5,#2+#4*1.33) and (#1+#3*0.5,#2+#4*1.33) .. (#1+#3,#2)}
 \newcommand{\eyebot}[4]{(#1-#3,#2) .. controls (#1-#3*0.5,#2-#4*1.33) and (#1+#3*0.5,#2-#4*1.33) .. (#1+#3,#2)}
 \newcommand{\eye}[4]{\dx[org]{\eyetop{#1}{#2}{#3}{#4}}\dx[blu]{\eyebot{#1}{#2}{#3}{#4}}\fill[teal] (#1-#3,#2) circle (3.2pt) (#1+#3,#2) circle (3.2pt);}
-\newcommand{\ring}[3]{\draw[grn,line width=1.8pt] (#1,#2) ellipse (#3 and #3*1.35);}
+% cohesin ring that ENCIRCLES DNA: back half drawn before the DNA, front half after it
+% flat ring around a pair of stems (loop base): x, y, half width
+\newcommand{\rg}[1]{\draw[line width=3.4pt,grn!80!black,line cap=round] #1; \draw[line width=1.3pt,grn!25!white,line cap=round] #1;}
+\newcommand{\ringbb}[3]{\rg{(#1-#3,#2) arc[start angle=180,end angle=0,x radius=#3,y radius=0.2]}}
+\newcommand{\ringbf}[3]{\rg{(#1-#3,#2) arc[start angle=180,end angle=360,x radius=#3,y radius=0.2]}}
+% tall ring around horizontal fibre(s): x, y centre, half height
+\newcommand{\ringvb}[3]{\rg{(#1,#2+#3) arc[start angle=90,end angle=270,x radius=0.17,y radius=#3]}}
+\newcommand{\ringvf}[3]{\rg{(#1,#2-#3) arc[start angle=-90,end angle=90,x radius=0.17,y radius=#3]}}
+% omega loop with base half width w
+\newcommand{\omegaw}[4]{(#1-#4,#2) .. controls (#1-#4,#2+0.45) and (#1-#3,#2+0.35) .. (#1-#3,#2+#3+0.45) arc[start angle=180,end angle=0,radius=#3] .. controls (#1+#3,#2+0.35) and (#1+#4,#2+0.45) .. (#1+#4,#2)}
 \newcommand{\gseg}[3]{\dx[gry]{(#2,#1) -- (#3,#1)}}
 
 \begin{document}
@@ -26,16 +35,16 @@
 \node[ttl,anchor=west] at (0,-2.6) {2  It reels in DNA: the loop grows};
 \node[ttl,anchor=west] at (0,-6.8) {3  Convergent CTCF stops it};
 % 1
-\dx{(0,0) -- (12,0)} \ring{6}{0}{0.3} \node[lbl,grn,anchor=west] at (6.6,0.7) {cohesin ring};
+\ringvb{6}{0}{0.42} \dx{(0,0) -- (12,0)} \ringvf{6}{0}{0.42} \node[lbl,grn,anchor=west] at (6.6,0.7) {cohesin ring};
 % 2
-\dx{(0,-4) -- (5.65,-4)} \dx{(6.35,-4) -- (12,-4)} \dx{\omegapath{6}{-4}{0.75}} \ring{6}{-4}{0.3}
+\ringbb{6}{-3.88}{0.58} \dx{(0,-4) -- (5.65,-4)} \dx{(6.35,-4) -- (12,-4)} \dx{\omegapath{6}{-4}{0.75}} \ringbf{6}{-3.88}{0.58}
 \draw[->,grn,line width=1.8pt] (3.6,-3.6) -- (5.0,-3.6); \draw[->,grn,line width=1.8pt] (8.4,-3.6) -- (7.0,-3.6);
 \node[lbl,grn,align=center,anchor=west] at (8.6,-2.6) {DNA is reeled in\\ from both sides};
 % 3
-\dx{(0,-9.2) -- (5.65,-9.2)} \dx{(6.35,-9.2) -- (12,-9.2)} \dx{\omegapath{6}{-9.2}{1.55}} \ring{6}{-9.2}{0.3}
-\foreach \x/\d in {4.7/1,7.3/-1}{
-  \node[fill=pur,rounded corners=3pt,minimum width=0.8cm,minimum height=0.45cm,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1pt] at (\x,-9.85) {CTCF};
-  \draw[ctcf] (\x-0.4*\d,-10.5) -- (\x+0.5*\d,-10.5);}
+\ringbb{6}{-9.08}{1.15} \dx{(0,-9.2) -- (5.1,-9.2)} \dx{(6.9,-9.2) -- (12,-9.2)} \dx{\omegaw{6}{-9.2}{1.55}{0.9}} \ringbf{6}{-9.08}{1.15}
+\foreach \x/\d in {5.1/1,6.9/-1}{
+  \node[fill=pur,rounded corners=3pt,minimum width=0.8cm,minimum height=0.45cm,text=white,font=\sffamily\bfseries\scriptsize,inner sep=1pt] at (\x,-9.62) {CTCF};
+  \draw[ctcf] (\x-0.4*\d,-10.25) -- (\x+0.5*\d,-10.25);}
 \node[lbl] at (6,-11.4) {the two CTCF sites face each other (convergent),\\ so they stop both legs of cohesin and the loop stays};
 \end{tikzpicture}
 \end{document}
