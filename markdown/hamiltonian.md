@@ -42,24 +42,33 @@ over the configuration $\mathcal{S}$ (loop positions $(m_i, n_i)$ and epigenetic
 
 ![At high temperature the particle can hop over the barrier; after slow cooling it is trapped in the global minimum](assets/diagrams/temperature.svg)
 
-**RepliSage has no simulated annealing, on purpose.** Annealing is a method to find one good low-energy state of a *fixed* energy landscape. A RepliSage run is different: it follows the chromosome through three phases of the cell cycle, G1, S and G2/M, and the goal is to see how the structure changes between them, not to find the single best state. In S phase the landscape itself moves (see below), so the system is out of equilibrium and there is no fixed minimum to cool towards. If each phase had its own cooling schedule, the phases would end at different temperatures, and differences between them would partly reflect those temperatures and not the biology (loops, epigenetic states and replication forks). It would also be odd to ask what G1 looks like "at one temperature" and G2/M "at another". So $T_{\text{mc}}$ is **one fixed value for the whole run**, and all three phases are sampled with the same rules. Differences between phases come from the forks and the cell-cycle rules only.
+!!! note "In RepliSage: no simulated annealing"
+    RepliSage has **no simulated annealing option, on purpose**. Annealing finds one good low-energy state of a *fixed* energy landscape. A RepliSage run is different: it follows the chromosome through three phases of the cell cycle, G1, S and G2/M, and the goal is to see how the structure changes between them, not to find the single best state.
 
-What replaces annealing is a careful choice of the order parameter, described next.
+    * In S phase the landscape itself moves (see below), so the system is **out of equilibrium** and there is no fixed minimum to cool towards.
+    * If each phase had its own cooling schedule, the phases would end at **different temperatures**, and differences between them would partly reflect those temperatures and not the biology (loops, epigenetic states, replication forks).
+    * So $T_{\text{mc}}$ is **one fixed value for the whole run**, and G1, S and G2/M are sampled with the same rules. Differences between phases come only from the forks and the cell-cycle rules.
 
-**Physical temperature versus an order parameter.** In models such as the [Ising model](https://en.wikipedia.org/wiki/Ising_model) and the [Potts model](https://en.wikipedia.org/wiki/Potts_model), the temperature has a clear physical meaning: it is the temperature of the heat bath, and phase transitions happen at well-defined values of it. In RepliSage, it is hard to say what $T_{\text{mc}}$ means biologically. There is no heat bath, and the energy terms are partly data-driven and balanced by hand. It is better to read $T_{\text{mc}}$ as an **order parameter**: a single knob that sets how ordered the loop system is, from a very ordered, frozen state (low $T_{\text{mc}}$) to a noisy, disordered one (high $T_{\text{mc}}$). A run uses one fixed value.
+    What replaces annealing is a careful choice of the order parameter, described below.
+
+**Physical temperature versus an order parameter.** In models such as the [Ising model](https://en.wikipedia.org/wiki/Ising_model) and the [Potts model](https://en.wikipedia.org/wiki/Potts_model), the temperature has a clear physical meaning: it is the temperature of the heat bath, and phase transitions happen at well-defined values of it. In RepliSage, it is hard to say what $T_{\text{mc}}$ means biologically. There is no heat bath, and the energy terms are partly data-driven and balanced by hand. It is better to read $T_{\text{mc}}$ as an **order parameter**: a single knob that sets how ordered the loop system is, from a very ordered, frozen state (low $T_{\text{mc}}$) to a noisy, disordered one (high $T_{\text{mc}}$).
 
 ![T_mc as an order parameter: too low freezes and stacks loops, too high makes them fall off, the critical region lies in between](assets/diagrams/order_parameter.svg)
 
-**The critical region: not too low, not too high.** What we need to understand in RepliSage is where to set this knob, and there are two ways to get it wrong:
+!!! note "In RepliSage: the critical region, not too low and not too high"
+    What we need to understand is where to set this knob. There are two ways to get it wrong:
 
-* **Too low.** The system almost only goes downhill. Loops get stuck where they first formed, and many of them pile up on top of each other (**stacking**: several loops sharing almost the same place and nested into one dense stack). The loops no longer move, so the result depends on the starting configuration, which is the same trap that annealing tries to avoid.
-* **Too high.** Moves are accepted almost at random. Loops fall off before they can grow, so they stay short, the epigenetic states are noisy, and the structure loses its organisation.
+    * **Too low.** The system almost only goes downhill. Loops get stuck where they first formed, and many pile up on top of each other (**stacking**: several loops sharing almost the same place, nested into one dense stack). The loops no longer move, so the result depends on the starting configuration, which is the trap that annealing tries to avoid.
+    * **Too high.** Moves are accepted almost at random. Loops fall off before they can grow, so they stay short, the epigenetic states are noisy, and the structure loses its organisation.
 
-Between the two lies a **critical region**: loops can still **move freely** (slide, unbind and rebind elsewhere), and yet they are still able to **form real loops** held at CTCF sites **without stacking** on each other. This is where the model is most informative, and where compaction is strongest. In the paper this region is around $T^*_{\text{mc}} \approx 1.7 \pm 0.3$, and the default $T_{\text{mc}} = 1.5$ lies inside it. The relation between $T_{\text{mc}}$ and compaction is therefore not monotonic, so do not simply lower the value to "get more loops".
+    Between the two lies a **critical region**: loops can still **move freely** (slide, unbind and rebind elsewhere), and yet they are still able to **form real loops**, held at CTCF sites, **without stacking** on each other. This is where the model is most informative and compaction is strongest. In the paper it is around $T^*_{\text{mc}} \approx 1.7 \pm 0.3$, and the default $T_{\text{mc}} = 1.5$ lies inside it. The relation is not monotonic, so do not simply lower the value to get more loops.
 
-**How to find the critical region for your data.** RepliSage has no built-in temperature scan, because the critical region is a property to understand and not a schedule to run. Do a short scan by hand: run the same setup with a few values of `t_mc` in the `[mc]` section of the config (for example 0.8, 1.2, 1.5, 1.8, 2.5), and for each one look at the mean loop length, the energy trace and the contact map in the [report](analysis.md). Choose the range where the loops are long and the maps show clear loop and domain signals, the energy fluctuates around a flat line (loops are moving) and the loops are not piled up in a few places. If you change the number of LEFs, the loop strengths or the data, check again, because the critical region moves with them.
+!!! tip "How to find the critical region for your data"
+    RepliSage has no built-in temperature scan, because the critical region is something to understand and not a schedule to run. Do a short scan by hand: run the same setup with a few values of `t_mc` in the `[mc]` section of the config (for example 0.8, 1.2, 1.5, 1.8, 2.5), and for each one look at the mean loop length, the energy trace and the contact maps in the [report](analysis.md).
 
-Practical advice: do not interpret $T_{\text{mc}}$ as a temperature in kelvin (the 3D simulation uses its own 310 K), keep it **fixed** across G1, S and G2/M, and compare phases only at the same value.
+    Choose the range where loops are long, the maps show clear loop and domain signals, the energy fluctuates around a flat line (loops are moving) and loops are not piled up in a few places. If you change the number of LEFs, the loop strengths or the data, check again, because the critical region moves with them.
+
+Practical advice: do not read $T_{\text{mc}}$ as a temperature in kelvin (the 3D simulation uses its own 310 K), keep it **fixed** across G1, S and G2/M, and compare phases only at the same value.
 
 ## Why it is not a real Hamiltonian
 
