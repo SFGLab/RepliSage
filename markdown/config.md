@@ -44,6 +44,8 @@ burnin  = 5000        ; steps discarded at the start
 t_mc    = 1.5         ; Monte Carlo temperature
 ```
 
+There is no simulated annealing: `t_mc` is one fixed value for the whole run (G1, S and G2/M). Keep it in the critical region, not too low (loops freeze and stack) and not too high (loops fall off); the default 1.5 is inside it. See [the Hamiltonian idea](hamiltonian.md#temperature-in-replisage).
+
 **Step 4. Run and check.** Every run saves the values it actually used as `config_used.ini` in its folder. Open it to confirm that your changes were picked up, and use it to repeat the run exactly.
 
 ```bash

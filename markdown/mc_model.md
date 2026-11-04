@@ -118,7 +118,7 @@ where $\varepsilon$ is `PREF_BIND_FLOOR` (default 0.05, the weight of a loop-nak
 | `MC_STEP` | Recording interval (`--mc-step`) | 200 |
 | `BURNIN` | Discarded steps (`--burnin`) | 5000 |
 | `N_SWEEP` | Proposals per step | 1000 |
-| `T_MC` | Temperature | 1.5 |
+| `T_MC` | Temperature, used as an order parameter and kept fixed in all phases (no annealing; see [the Hamiltonian idea](hamiltonian.md)) | 1.5 |
 | `N_LEF` | Number of LEFs (empty = half the number of CTCF sites) | auto |
 | `N_LEF2` | Number of second-family LEFs | 0 |
 | `P_REW` | Probability of a LEF move | 0.5 |

@@ -35,7 +35,7 @@ A fork creeps along DNA while cohesin comes and goes within about 15 to 30 minut
 
 ## Temperature and sampling
 
-(For what "energy" means and why it is only a pseudo-Hamiltonian, see [the Hamiltonian idea](hamiltonian.md).) The model defines an energy $\mathcal{H}$ and samples states with the Metropolis rule: a random change is accepted if it lowers $\mathcal{H}$, or with probability $e^{-\Delta\mathcal{H}/T_{\text{mc}}}$ otherwise. $T_{\text{mc}}$ is how noisy the sampling is. It is a modelling knob and is not the 310 K of the 3D simulation. The output is an **ensemble** of states, and one Monte Carlo step is **pseudotime**, not seconds. During S phase forks keep changing the energy, so the system is out of equilibrium.
+(For what "energy" means and why it is only a pseudo-Hamiltonian, see [the Hamiltonian idea](hamiltonian.md).) The model defines an energy $\mathcal{H}$ and samples states with the Metropolis rule: a random change is accepted if it lowers $\mathcal{H}$, or with probability $e^{-\Delta\mathcal{H}/T_{\text{mc}}}$ otherwise. $T_{\text{mc}}$ is how noisy the sampling is. It is a modelling knob and is not the 310 K of the 3D simulation. The output is an **ensemble** of states, and one Monte Carlo step is **pseudotime**, not seconds. During S phase forks keep changing the energy, so the system is out of equilibrium. There is no simulated annealing: $T_{\text{mc}}$ stays fixed through G1, S and G2/M, and it is set in the critical region, where loops move freely but do not stack (see [the Hamiltonian idea](hamiltonian.md#temperature-in-replisage)).
 
 ## From graph to 3D
 
