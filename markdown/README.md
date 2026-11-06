@@ -21,7 +21,7 @@ Welcome. These pages explain what RepliSage models, how to run it, and how to re
 | Section | What it covers |
 |---|---|
 | **Getting started** | [Installation](installation.md), [command line](cli.md) and [examples](examples.md) |
-| **Theory** | The ideas behind the model, without implementation details: [scope and goals](scope.md), [the idea in a nutshell](intuition.md), [the Hamiltonian idea](hamiltonian.md), [Monte Carlo, MCMC and Metropolis](mcmc.md), [microstates and macrostates](micro_macro.md) |
+| **Theory** | The ideas behind the model, without implementation details: [scope and goals](scope.md), [the idea in a nutshell](intuition.md), [the Hamiltonian idea](hamiltonian.md), [Monte Carlo, MCMC and Metropolis](mcmc.md), [microstates and macrostates](micro_macro.md), [metrics](metrics.md) |
 | **Implementation** | How the ideas are coded: [pipeline](pipeline.md), [pre-processing](preproc.md), [replication model](replication_model.md), [Monte Carlo model](mc_model.md), [molecular dynamics model](md_model.md) |
 | **Reference** | [Configuration](config.md), [analysis](analysis.md) and [outputs and visualisation](visualization.md) |
 | **Known limitations** | What the model leaves out: [limitations](limitations.md) |

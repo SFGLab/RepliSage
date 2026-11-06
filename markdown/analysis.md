@@ -4,7 +4,7 @@ After the Monte Carlo (and the 3D part, if it ran) RepliSage analyses the run, d
 
 ## Observables
 
-At every recorded sample the following are computed:
+At every recorded sample the following are computed. Every metric is defined mathematically on the [Metrics](metrics.md) page.
 
 | Observable | Meaning |
 |---|---|
@@ -62,7 +62,7 @@ where $s$ is the standard deviation of the series.
 
 ## Phase comparison
 
-For each observable and phase (G1, S, G2/M) the report shows mean, standard deviation and a Kruskal-Wallis test across phases, so you can see whether replication changes the loops.
+For each observable and phase (G1, S, G2/M) the report shows the mean and the standard deviation, and the effect size of S relative to G1 (Cohen's $d$, see [Metrics](metrics.md)), so you can see whether replication changes the loops.
 
 ## Compartment switching
 
@@ -79,6 +79,8 @@ Colours are always red for A and blue for B.
 Replicated fraction over time, the times at which given fractions of the DNA are replicated, inferred origins (local minima of the timing profile), fork speed and a comparison of the simulated timing profile with the input.
 
 ## Structural metrics (3D runs)
+
+The formulas are on the [Metrics](metrics.md#metrics-from-the-3d-structures) page.
 
 Computed on every structure and saved in `metadata/structural_metrics/`:
 
