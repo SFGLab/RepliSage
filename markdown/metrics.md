@@ -16,8 +16,9 @@ A simulation produces a lot of numbers: loop positions, epigenetic states, energ
 | $(m_k, n_k)$ | the two legs of LEF $k$; $m_k < n_k$ when bound, $m_k = n_k = -1$ when unbound |
 | $\ell_k = n_k - m_k$ | length of the loop of LEF $k$, in beads ($0$ if unbound) |
 | $s_i \in \{-2,-1,0,1,2\}$ | epigenetic state of bead $i$ (positive = A-like, negative = B-like) |
-| $\mathbf{r}_i$ | 3D position of bead $i$ in one structure |
-| $\langle \cdot \rangle$ | average over beads, over samples or over structures (stated in each case) |
+| $r_i$ | 3D position of bead $i$ in one structure (a vector with three coordinates) |
+| $\langle \cdot \rangle$ | average (over beads, samples or structures, stated in each case) |
+| $\#\{\cdot\}$ | number of items that satisfy the condition inside |
 
 All MC quantities are computed per recorded sample $t$, so each metric is a time series. Phase values (G1, S, G2/M) are means of that series over the samples of the phase, and the report also gives the standard deviation. Because consecutive samples are correlated, this standard deviation describes fluctuations and is not an uncertainty.
 
@@ -25,27 +26,15 @@ All MC quantities are computed per recorded sample $t$, so each metric is a time
 
 ### Loops
 
-**Loop length.** For one sample, the *mean loop length* is
+**Loop length.** For one sample, the *mean loop length* is the average of $n_k - m_k$ over **all** LEFs, so an unbound LEF counts as length 0 (this is the definition used in the paper). The *bound loop length* averages only over the bound LEFs. Multiply by the bead size to get kilobases. The report also gives the median and the 95th percentile of the bound loop lengths.
 
-$$\langle \ell \rangle = \frac{1}{N_{\text{lef}}} \sum_{k=1}^{N_{\text{lef}}} (n_k - m_k)$$
+**Fraction of bound LEFs.** A LEF is bound when $m_k \ge 0$ and $n_k > m_k$, so
 
-which averages over all LEFs and counts an unbound LEF as length 0 (this is the definition used in the paper). The *bound loop length* only averages over bound LEFs,
-
-$$\langle \ell \rangle_{\text{bound}} = \frac{\sum_{k \in \mathcal{B}} (n_k - m_k)}{|\mathcal{B}|}$$
-
-where $\mathcal{B}$ is the set of bound LEFs. Multiply by the bead size to get kilobases. The report also gives the median and the 95th percentile of the bound loop lengths.
-
-**Fraction of bound LEFs.**
-
-$$f_{\text{bound}} = \frac{|\mathcal{B}|}{N_{\text{lef}}}, \qquad \mathcal{B} = \{k : m_k \ge 0,\ n_k > m_k\}$$
+$$f_{\text{bound}} = \frac{\#\{\text{bound LEFs}\}}{N_{\text{lef}}}$$
 
 **Legs on CTCF sites.** The fraction of bound LEFs whose left leg sits on a CTCF site that attracts left legs, $f_L$, and whose right leg sits on a site that attracts right legs, $f_R$ (the orientation of the sites is explained in the [biology page](biology.md)). They tell how strongly the loops are anchored.
 
-**Coverage.** The number of loops that span bead $i$,
-
-$$c_i = \big|\{k \in \mathcal{B} : m_k \le i < n_k\}\big|$$
-
-The report gives the fraction of beads with $c_i > 0$ (beads inside a loop) and the mean $\langle c_i \rangle$ (loops per bead). A very high $\langle c_i \rangle$ with short loops is the signature of **stacking**, many loops piled on the same place, which is what happens when $T_{\text{mc}}$ is too low (see [the critical region](hamiltonian.md#temperature-in-replisage)).
+**Coverage.** The number of loops that span bead $i$, that is the number of bound LEFs with $m_k \le i < n_k$. The report gives the fraction of beads covered by at least one loop and the mean coverage (loops per bead). A very high mean coverage with short loops is the signature of **stacking**, many loops piled on the same place, which is what happens when $T_{\text{mc}}$ is too low (see [the critical region](hamiltonian.md#temperature-in-replisage)).
 
 ### Energies
 
@@ -62,49 +51,49 @@ After burn-in the energy should fluctuate around a flat line. The acceptance rat
 
 ### Replication and loops
 
-When a loop straddles a fork it breaks the rule that loops do not cross replication forks. Let $f_i(t) \in \{0, 1\}$ say whether bead $i$ is replicated at time $t$. A loop $(m, n)$ is a **violation** if its two legs are in different replication states, $f_m \ne f_n$, or if both are replicated but some bead between them is not. The number of violations $N_{\text{viol}}$ is counted in S phase, and each violating loop has a strength
+Loops are not allowed to straddle a replication fork. Let $f_i(t) = 1$ if bead $i$ is replicated at time $t$ and $0$ if not. A loop $(m, n)$ is a **violation** if its two legs are in different replication states ($f_m \ne f_n$), or if both legs are replicated but some bead between them is not. The number of violations is counted in S phase, and each violating loop has a strength
 
-$$\sigma = \min(r, \ell - r) + 1$$
+$$\sigma = \min(r,\ \ell - r) + 1$$
 
-where $\ell = n - m$ and $r$ is the number of replicated beads inside the loop. The reported strength is $\sum \sigma / (N_{\text{viol}} + 1)$. A good S phase has violations near zero.
+where $\ell = n - m$ is the loop length and $r$ the number of replicated beads inside it. The reported strength is the sum of $\sigma$ over the violating loops divided by (their number + 1). A good S phase has violations near zero.
 
 ### Epigenetic states and compartments
 
-**Average epigenetic state.** The mean state over all beads, $\langle s \rangle = \frac{1}{N} \sum_i s_i$. It is close to 0 when A-like and B-like beads balance, and its changes in S phase show a global shift.
+**Average epigenetic state.** The mean state over all beads, $\langle s \rangle$. It is close to 0 when A-like and B-like beads balance, and its change in S phase shows a global shift.
 
-**State fractions.** $p_k = \frac{1}{N}\,|\{i : s_i = k\}|$ for $k = -2, \dots, 2$.
+**State fractions.** $p_k$ is the fraction of beads in state $k$, for $k = -2, \dots, 2$.
 
-**Compartment of a bead.** In a window of samples (the first and the last 10 % of S phase), compute the window mean state $\bar{s}_i$ of each bead and classify
+**Compartment of a bead.** In a window of samples (the first and the last 10 % of S phase), take the mean state $\bar{s}_i$ of each bead and classify it:
 
-$$\text{compartment}_i = \begin{cases} \text{A} & \bar{s}_i > 0.25 \\ \text{B} & \bar{s}_i < -0.25 \\ \text{N (neutral)} & \text{otherwise} \end{cases}$$
+| Window-mean state | Compartment |
+|---|---|
+| $\bar{s}_i > 0.25$ | A (active) |
+| $\bar{s}_i < -0.25$ | B (inactive) |
+| in between | N (neutral) |
 
-**Compartment switching.** Comparing the two windows gives a $3 \times 3$ transition matrix between B, N and A. The report lists the number of beads that switched B to A and A to B, the **net flux** (B to A minus A to B), the fraction of unchanged beads and the A and B fractions before and after. For the time series, the *switching rate* at lag $\tau$ is the fraction of beads whose state sign changes between sample $t$ and $t + \tau$,
-
-$$r_{B \to A}(t) = \frac{1}{N} \big|\{i : s_i(t) < 0,\ s_i(t+\tau) > 0\}\big|$$
-
-and similarly for A to B.
+**Compartment switching.** Comparing the two windows gives a $3 \times 3$ table of how many beads go from B, N or A to B, N or A. The report lists the number of beads that switched B to A and A to B, the **net flux** (B to A minus A to B), the fraction of unchanged beads and the A and B fractions before and after. For the time series, the *switching rate* at lag $\tau$ is the fraction of beads that have a negative state at sample $t$ and a positive state at sample $t + \tau$ (B to A), and the reverse for A to B.
 
 ### Order parameters of the epigenetic states
 
-These describe how ordered the states are at each sample (only with replication data). With $q = 5$ states, $N_k$ the number of beads in state $k$ and $p_k = N_k / N$:
+These describe how ordered the states are at each sample (only with replication data). With $q = 5$ states, $p_k$ the fraction of beads in state $k$ and $p_{\max}$ the largest of them:
 
 | Metric | Definition | Meaning |
 |---|---|---|
-| Magnetisation | $M = \dfrac{q\,N_{\max} - N}{N\,(q - 1)}$ | 0 if the states are evenly mixed, 1 if all beads share one state ($N_{\max}$ = size of the most populated state) |
-| Cluster order | $C = N_{\max} / N$ | the fraction of beads in the most common state (this uses state counts, not neighbours along the chain) |
-| Binder-type cumulant | $U = 1 - \dfrac{\sum_k p_k^4}{3 \left(\sum_k p_k^2\right)^2}$ | a measure of the shape of the state distribution, built from its second and fourth moments |
+| Magnetisation | $M = \dfrac{q\,p_{\max} - 1}{q - 1}$ | 0 if the states are evenly mixed, 1 if all beads share one state |
+| Cluster order | $C = p_{\max}$ | the fraction of beads in the most common state (state counts, not neighbours along the chain) |
+| Binder-type cumulant | $U = 1 - \dfrac{\sum_k p_k^4}{3\,(\sum_k p_k^2)^2}$ | a measure of the shape of the state distribution (built from its second and fourth moments) |
 | Entropy | $H = -\sum_k p_k \ln p_k$ | 0 if all beads share a state, $\ln q$ if the states are evenly mixed |
-| Synchronisation | $\Sigma = \dfrac{1}{|E|} \sum_{(u,v) \in E} \dfrac{\mathbb{1}[s_u = s_v]}{q - 1}$ | agreement of the states of beads joined by an edge of the graph |
+| Synchronisation | $\dfrac{\text{fraction of edges whose two beads have the same state}}{q - 1}$ | agreement of the states of beads joined by an edge of the graph |
 
-For the synchronisation, the graph has one edge between every pair of consecutive beads and one edge for every bound loop, so it measures how well neighbouring beads and the two anchors of a loop agree, which is what produces compartments. The sum runs over the edges $E$ and each agreeing edge adds $1/(q-1)$, so with $q = 5$ the value stays between 0 and 0.25. Use it for comparisons between phases and runs, not as an absolute fraction.
+For the synchronisation, the graph has one edge between every pair of consecutive beads and one edge for every bound loop, so it measures how well neighbouring beads and the two anchors of a loop agree, which is what produces compartments. The fraction is divided by $q - 1$, so with $q = 5$ the value stays between 0 and 0.25. Use it for comparisons between phases and runs, not as an absolute fraction.
 
 ### Replication simulation
 
-These come from the replication simulation (Replikator), not from the loops. With $f_i(t)$ as above:
+These come from the replication simulation (Replikator), not from the loops. With $f_i(t)$ as above (1 = replicated):
 
 | Metric | Definition |
 |---|---|
-| Replicated fraction | $F(t) = \frac{1}{N} \sum_i f_i(t)$ |
+| Replicated fraction | $F(t)$ = fraction of beads with $f_i(t) = 1$ |
 | Replication time of bead $i$ | $t_i$ = first time with $f_i = 1$, divided by the S-phase length (0 to 1) |
 | $T_{10}$, $T_{50}$, $T_{90}$ | the times at which $F$ first reaches 10 %, 50 % and 90 % |
 | S-phase span | $T_{90} - T_{10}$, how spread out the replication is |
@@ -116,11 +105,11 @@ These come from the replication simulation (Replikator), not from the loops. Wit
 
 These tell whether the Monte Carlo has run long enough, and are applied to the series above (energies, loop lengths, bound fraction, average state): autocorrelation $\rho(\tau)$, integrated autocorrelation time $T_\rho$, effective sample size $n_{\text{eff}} = n / T_\rho$, standard error $\mathrm{MCSE} = s / \sqrt{n_{\text{eff}}}$, the Geweke $z$ score and the split $\hat{R}$. They are defined in [Analysis](analysis.md#mcmc-diagnostics) and explained in [Monte Carlo, MCMC and Metropolis](mcmc.md).
 
-**Effect size between phases.** To say how much an observable $x$ changes from G1 to S, the report gives Cohen's $d$,
+**Effect size between phases.** To say how much an observable changes from G1 to S, the report gives Cohen's $d$,
 
-$$d = \frac{\bar{x}_{\text{S}} - \bar{x}_{\text{G1}}}{\sqrt{\left(\sigma_{\text{G1}}^2 + \sigma_{\text{S}}^2\right)/2}}$$
+$$d = \frac{\mu_{\text{S}} - \mu_{\text{G1}}}{\sigma_{\text{pooled}}}, \qquad \sigma_{\text{pooled}} = \sqrt{\frac{\sigma_{\text{G1}}^2 + \sigma_{\text{S}}^2}{2}}$$
 
-where $\bar{x}$ and $\sigma$ are the mean and standard deviation in each phase. As a rule of thumb, $|d|$ below 0.2 is small and above 0.8 is large.
+where $\mu$ and $\sigma$ are the mean and standard deviation of the observable in each phase. As a rule of thumb, $d$ below 0.2 (in absolute value) is small and above 0.8 is large.
 
 ## Metrics from the 3D structures
 
@@ -128,40 +117,36 @@ For every structure the coordinates form a matrix $V$ of $N$ rows (beads) and th
 
 ### Size
 
-Let $\mathbf{r}_c = \frac{1}{N}\sum_i \mathbf{r}_i$ be the centre of mass and $d_{ij} = |\mathbf{r}_i - \mathbf{r}_j|$ the distance between two beads.
+Let $c$ be the centre of mass (the mean of all $r_i$), $D_i$ the distance of bead $i$ from it, and $d_{ij}$ the distance between beads $i$ and $j$.
 
 | Metric | Definition | Meaning |
 |---|---|---|
-| Radius of gyration | $R_g = \sqrt{\frac{1}{N}\sum_i \lvert\mathbf{r}_i - \mathbf{r}_c\rvert^2}$ | root-mean-square distance from the centre: the overall size |
-| Mean distance to the centre | $\frac{1}{N}\sum_i \lvert\mathbf{r}_i - \mathbf{r}_c\rvert$ | radial spread |
-| Maximum distance to the centre | $\max_i \lvert\mathbf{r}_i - \mathbf{r}_c\rvert$ | the farthest bead |
-| Mean pairwise distance | $\frac{2}{N(N-1)} \sum_{i<j} d_{ij}$ | compactness |
-| Standard deviation of pairwise distances | spread of $d_{ij}$ over all pairs $i < j$ | how heterogeneous the structure is |
-| Maximum pairwise distance | $\max_{i<j} d_{ij}$ | the diameter |
-| End-to-end distance | $\lvert\mathbf{r}_N - \mathbf{r}_1\rvert$ | distance between the two chain ends |
+| Radius of gyration | $R_g = \sqrt{\langle D_i^2 \rangle}$ | root-mean-square distance from the centre: the overall size |
+| Mean distance to the centre | $\langle D_i \rangle$ | radial spread |
+| Maximum distance to the centre | $\max_i D_i$ | the farthest bead |
+| Mean pairwise distance | $\langle d_{ij} \rangle$ over all pairs | compactness |
+| Standard deviation of pairwise distances | spread of $d_{ij}$ over all pairs | how heterogeneous the structure is |
+| Maximum pairwise distance | $\max d_{ij}$ | the diameter |
+| End-to-end distance | $d_{1N}$ | distance between the two chain ends |
 
 ### Shape
 
-The **gyration tensor** describes how the beads are spread in each direction,
-
-$$G = \frac{1}{N} \sum_i (\mathbf{r}_i - \mathbf{r}_c)(\mathbf{r}_i - \mathbf{r}_c)^{\mathsf{T}}$$
-
-It is a $3 \times 3$ matrix with eigenvalues $\lambda_1 \ge \lambda_2 \ge \lambda_3 \ge 0$ (the squared extent along the three principal axes), and $R_g^2 = \lambda_1 + \lambda_2 + \lambda_3$. A sphere has three equal eigenvalues, a rod has one large, and a flat disc has one small.
+The **gyration tensor** $G$ describes how the beads are spread in each direction. It is a $3 \times 3$ matrix whose entry $G_{ab}$ is the average over beads of (offset from the centre along axis $a$) times (offset along axis $b$). Its eigenvalues $\lambda_1 \ge \lambda_2 \ge \lambda_3 \ge 0$ are the squared extents along the three principal axes, and they add up to $R_g^2$. A sphere has three equal eigenvalues, a rod has one large, and a flat disc has one small.
 
 | Metric | Definition | Meaning |
 |---|---|---|
-| Asphericity | $\dfrac{\lambda_1 - \lambda_3}{\lambda_1 + \lambda_2 + \lambda_3}$ | 0 for a sphere, towards 1 for an elongated shape (this is the definition used in RepliSage, which differs from the usual $\lambda_1 - \frac{1}{2}(\lambda_2 + \lambda_3)$ form) |
-| Planarity | $\dfrac{\lambda_3}{\lambda_1 + \lambda_2 + \lambda_3}$ | small for a flat shape, up to $1/3$ for a sphere |
-| Ellipsoid ratio | $\sigma_1 / \sigma_3$ with $\sigma_a = \sqrt{\lambda_a}$ | ratio of the longest to the shortest principal extent |
-| Ellipsoid volume | $\frac{4}{3}\pi\, \sigma_1 \sigma_2 \sigma_3$ | volume of the ellipsoid whose semi-axes are the standard deviations along the principal axes |
+| Asphericity | $\dfrac{\lambda_1 - \lambda_3}{R_g^2}$ | 0 for a sphere, towards 1 for an elongated shape (the definition used in RepliSage, which differs from the usual $\lambda_1 - \frac{1}{2}(\lambda_2 + \lambda_3)$ form) |
+| Planarity | $\dfrac{\lambda_3}{R_g^2}$ | small for a flat shape, up to $1/3$ for a sphere |
+| Ellipsoid ratio | $\sqrt{\lambda_1 / \lambda_3}$ | longest over shortest principal extent |
+| Ellipsoid volume | $\frac{4}{3}\pi \sqrt{\lambda_1 \lambda_2 \lambda_3}$ | volume of the ellipsoid whose semi-axes are the principal extents |
 
 ### Volume and contacts
 
 | Metric | Definition | Meaning |
 |---|---|---|
 | Convex hull volume | volume of the smallest convex shape that contains all beads | the space the structure occupies; falls when the structure compacts |
-| Bounding box volume | $\prod_{a=x,y,z} (\max r_a - \min r_a)$ | volume of the axis-aligned box around the beads |
-| Contact number | $\frac{1}{N} \sum_i \lvert\{j \ne i : d_{ij} < d_c\}\rvert$ | mean number of beads closer than the cutoff $d_c$ (default $d_c = 1$ in coordinate units) |
+| Bounding box volume | width $\times$ height $\times$ depth | volume of the axis-aligned box around the beads |
+| Contact number | $\langle \#\{j \ne i : d_{ij} < d_c\} \rangle_i$ | mean number of beads closer than the cutoff $d_c$ (default $d_c = 1$ in coordinate units) |
 
 ### Two chains: sisters
 
@@ -170,13 +155,13 @@ With replication, the whole system of both sisters has its own size and volume, 
 | Metric | Definition | Meaning |
 |---|---|---|
 | Total radius of gyration, total convex hull volume | $R_g$ and hull volume computed on all $2N$ beads | size and volume of the replicated system |
-| Sister distance | $\big\lvert \langle\mathbf{r}\rangle_{\text{sister 1}} - \langle\mathbf{r}\rangle_{\text{sister 2}} \big\rvert$ | distance between the two centroids: 0 when the sisters overlap, growing as they separate |
+| Sister distance | distance between the centroids of the two chains | 0 when the sisters overlap, growing as they separate |
 
 ### Contact maps
 
-For a set of structures (all of one phase), the **contact map** is the ensemble average of an inverse distance,
+For a set of structures (all of one phase), the **contact map** is the average of an inverse distance,
 
-$$C_{ij} = \left\langle \frac{1}{d_{ij} + 1} \right\rangle_{\text{structures}}$$
+$$C_{ij} = \left\langle \frac{1}{d_{ij} + 1} \right\rangle$$
 
 where $\langle\cdot\rangle$ averages over the structures and $d_{ij}$ is the distance between beads $i$ and $j$ in one structure (high value = close). It is the 3D counterpart of a Hi-C map and is computed separately for G1, S and G2/M. Averaging the maps is preferred to taking the map of the average structure, because a mean structure is blurred and its distances are not those of any single cell.
 
