@@ -37,6 +37,7 @@ nav:
       - The Hamiltonian idea: hamiltonian.md
       - Monte Carlo, MCMC and Metropolis: mcmc.md
       - Microstates and macrostates: micro_macro.md
+      - Metrics: metrics.md
   - Implementation:
       - Pipeline: pipeline.md
       - Pre-processing: preproc.md
