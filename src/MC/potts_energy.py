@@ -69,15 +69,8 @@ def get_dE_node(spins, i, s_new, ms, ns, h, ht, potts_norm1, potts_norm2, t, rep
     return potts_norm1 * dE1 + potts_norm2 * dE2
 
 @njit(cache=True)
-def get_dE_potts_link(spins, ms, ns, m_new, n_new, m_old, n_old, potts_norm2=0.0):
-    '''Energy difference of a link (LEF) update, J evaluated on the current state.'''
-    if m_new >= 0 and m_old >= 0:
-        dE = J_pair(ms, ns, m_new, n_new) * np.abs(spins[m_new] - spins[n_new]) \
-           - J_pair(ms, ns, m_old, n_old) * np.abs(spins[m_old] - spins[n_old])
-    elif m_new < 0 and m_old >= 0:
-        dE = -J_pair(ms, ns, m_old, n_old) * np.abs(spins[m_old] - spins[n_old])
-    elif m_new >= 0 and m_old < 0:
-        dE = J_pair(ms, ns, m_new, n_new) * np.abs(spins[m_new] - spins[n_new])
-    else:
-        dE = 0
-    return potts_norm2 * dE
+def get_dE_potts_link(spins, m_new, n_new, m_old, n_old, potts_norm2=0.0):
+    '''Energy difference of one LEF moving from (m_old, n_old) to (m_new, n_new): its own loop term |s_m - s_n| (bound = 0 <= m < n, as in E_potts).'''
+    old = np.abs(spins[m_old] - spins[n_old]) if m_old >= 0 and n_old > m_old else 0
+    new = np.abs(spins[m_new] - spins[n_new]) if m_new >= 0 and n_new > m_new else 0
+    return potts_norm2 * (new - old)

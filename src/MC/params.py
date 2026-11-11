@@ -32,6 +32,8 @@ class MCParams:
     rep_duration: int = 1
     f_rep_T: Optional[np.ndarray] = None   # replication matrix, time-major (T, N_beads), int8
     h: Optional[np.ndarray] = None         # Potts field (from replication timing)
+    L_site: Optional[np.ndarray] = None    # bool mask of left CTCF sites (raw sites widened by the smoothing); None = L > 0
+    R_site: Optional[np.ndarray] = None    # same for right sites
     bind_w: Optional[np.ndarray] = None    # LEF loading weight per bead (preferential binding); None = uniform
 
     @property

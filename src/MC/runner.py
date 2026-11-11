@@ -35,7 +35,7 @@ def _kernel_args(p, seed, progress):
 def _one_chain(p, seed, progress):
     t0 = time.time()
     out = run_energy_minimization(**_kernel_args(p, seed, progress))
-    return MCResult(*out, seed=seed, elapsed=time.time() - t0)
+    return MCResult(*out[:11], seed=seed, elapsed=time.time() - t0, Ec=out[11], Er=out[12], Et=out[13], Fk=out[14])
 
 def run_mc(p, n_replicas=1, n_threads=1, seed=None):
     """Run n_replicas independent chains; returns a list of MCResult."""

@@ -7,6 +7,7 @@ import numpy as np
 from ..utils.constants import chrom_sizes
 from ..utils.run_dirs import resolve_out_root, run_name, make_run_dir
 from ..logger import log
+from ..preproc.readers import detect_format
 
 REPT_EXT = (".txt", ".bw", ".bigwig")
 
@@ -24,6 +25,8 @@ class RunContext:
     has_md: bool
     run_dir: str = None
     n_ctcf: int = 0
+    input_fmt: str = "bedpe"   # bedpe | bed | narrowpeak
+    binding: object = None  # Binding of the input file (set by the preprocessing stage)
 
     @property
     def region_coords(self):
@@ -31,11 +34,12 @@ class RunContext:
         return self.region if self.region_given else None
 
 def _chrom_end(chrom, bedpe):
-    """Chromosome length: table of sizes, else the largest coordinate in the bedpe."""
+    """Chromosome length: table of sizes, else the largest coordinate in the input file."""
     if chrom in chrom_sizes: return chrom_sizes[chrom]
     import pandas as pd
-    df = pd.read_csv(bedpe, sep='\t', header=None, usecols=[0, 5])
-    return int(df[df[0] == chrom][5].max())
+    end = 5 if detect_format(bedpe) == "bedpe" else 2
+    df = pd.read_csv(bedpe, sep='\t', header=None, usecols=[0, end], comment='#')
+    return int(df[df[0] == chrom][end].max())
 
 def _ask_rt(args):
     """No timing data given: ask (terminal only) whether to use the bundled GM12878 single-cell RT or loop extrusion alone."""
@@ -85,9 +89,12 @@ def check_resolution(bp):
 def build_context(args, make_dirs=True):
     """Validate arguments and decide which stages run (loops always; replication/MD optionally)."""
     if not args.BEDPE_PATH:
-        raise ValueError("No BEDPE file given (--bedpe-file). RepliSage relies heavily on modelling loop extrusion, and without a BEDPE file "
-                         "it does not know where the CTCF barriers are.")
-    if not os.path.isfile(args.BEDPE_PATH): raise FileNotFoundError(f"BEDPE file not found: {args.BEDPE_PATH}")
+        raise ValueError("No input file given (--bedpe-file, or --input-file). RepliSage relies heavily on modelling loop extrusion, and without a "
+                         "BEDPE, BED or narrowPeak file it does not know where the CTCF barriers are.")
+    if not os.path.isfile(args.BEDPE_PATH): raise FileNotFoundError(f"Input file not found: {args.BEDPE_PATH}")
+    fmt = detect_format(args.BEDPE_PATH)
+    if args.HIC_FILE and not os.path.isfile(args.HIC_FILE): raise FileNotFoundError(f"Hi-C file (HIC_FILE) not found: {args.HIC_FILE}")
+    if args.MOTIF_GENOME and not os.path.isfile(args.MOTIF_GENOME): raise FileNotFoundError(f"Reference genome (MOTIF_GENOME) not found: {args.MOTIF_GENOME}")
     if not args.CHROM: raise ValueError("CHROM is required (e.g. chr14), or give --region chr14:start-end.")
     given = args.REGION_START is not None and args.REGION_END is not None
     region = [args.REGION_START, args.REGION_END] if given else [0, _chrom_end(args.CHROM, args.BEDPE_PATH)]
@@ -100,7 +107,7 @@ def build_context(args, make_dirs=True):
 
     sim = args.SIMULATION_TYPE
     if sim and sim not in ("MD", "EM"): raise ValueError("SIMULATION_TYPE must be 'MD', 'EM' or none.")
-    ctx = RunContext(args, args.CHROM, args.BEDPE_PATH, region, given, n_beads, rept_path, is_sc, has_rep, bool(sim))
+    ctx = RunContext(args, args.CHROM, args.BEDPE_PATH, region, given, n_beads, rept_path, is_sc, has_rep, bool(sim), input_fmt=fmt)
     if make_dirs:
         ctx.run_dir = make_run_dir(resolve_out_root(args.OUT_PATH), run_name(args, has_rep, ctx.has_md))
     return ctx

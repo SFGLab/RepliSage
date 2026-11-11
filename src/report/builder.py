@@ -79,10 +79,13 @@ def write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command="", diag=No
     gl = "".join(f"<tr><td><b>{esc(t)}</b></td><td>{rich(d)}</td></tr>" for t, d in glossary(UNITS["bead_kb"]))
     terms = group("How the quantities are defined", f'<div class="tbl"><table><tbody>{gl}</tbody></table></div>', "loop length, bound LEFs, compartments, switching, replication")
     add("findings", "Key findings", (findings(fd) if fd else "") + terms + _figs(F, ["story", "phase_compare"]), "What this run says, in plain language.")
-    add("input", "Input", _figs(F, ["loop_anchors", "ctcf_occupancy", "loops_input"]), "Loop anchors extracted from your BEDPE file.")
+    add("input", "Input", _figs(F, ["anchor_map", "anchor_stats", "loops_input", "ctcf_occupancy"]), "CTCF sites read from your input file (BEDPE, BED or narrowPeak).")
     add("lef", "Loop extrusion", _figs(F, ["lef_traj", "lef_coverage", "loop_length", "lef_binding", "model_maps"]), "Where loops form, how long they are and how they anchor.")
+    add("families", "Families of loops", _figs(F, ["loop_nesting", "loop_parents_children"]) + (table(T["nesting"]) if "nesting" in T else ""), "How loops nest (parents, children, orphans) in each phase of the cell cycle.")
+    add("energy", "Free energy", _figs(F, ["energy_budget_phases", "free_energy_landscape"]) + (table(T["energy_budget"]) if "energy_budget" in T else ""), "How the energy of the system and its landscape change over the cell cycle.")
+    if "hic_validation" in T: add("hic", "Hi-C validation", _figs(F, ["hic_validation"]) + table(T["hic_validation"]) + (table(T["hic_phases"]) if "hic_phases" in T else ""), "How well the model reproduces your Hi-C map.")
     if rep is not None:
-        add("replication", "Replication", _figs(F, ["rt_overview"]) + table(T["replication"])
+        add("replication", "Replication", _figs(F, ["rt_overview"]) + table(T["replication"]) + _figs(F, ["fork_events"]) + (table(T["fork_events"]) if "fork_events" in T else "")
             + group("More replication plots", _figs(F, ["rep_forks", "rep_fraction", "rep_timing", "rep_initiation", "rep_violations"]), "forks, fraction, timing check, initiation rate, fork conflicts"), "Origins, forks and replication timing.")
     if has_potts(p):
         add("compartments", "Epigenetic states and compartments", f'<p class="intro">{rich(EPI_INTRO)}</p>' + _figs(F, ["epi_traj", "epi_switch_bars", "epi_switch_map", "epi_switch_traj"]) + (table(T["compartments"]) if "compartments" in T else "")

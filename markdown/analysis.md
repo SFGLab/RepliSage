@@ -64,6 +64,29 @@ where $s$ is the standard deviation of the series.
 
 For each observable and phase (G1, S, G2/M) the report shows the mean and the standard deviation, and the effect size of S relative to G1 (Cohen's $d$, see [Metrics](metrics.md)), so you can see whether replication changes the loops.
 
+## Families of loops
+
+Loops can sit inside each other, as in a TAD with sub-TADs. A loop $B$ is **inside** loop $A$ when the left leg of $A$ is at or left of the left leg of $B$ and the right leg of $A$ is at or right of the right leg of $B$ (identical loops count once). The **nesting order** of a loop is the number of loops that contain it. Loops of order 0 are **parents** if they hold other loops and **orphans** if they are isolated; a loop of order $k$ is a **child of order $k$**. The report counts the loops of every family at every sample, and compares G1, S and G2/M: the share of each family, the mean and deepest order, the number of loops inside a parent, and the ratio of the length of a child to the loop that encloses it. More nesting means a more hierarchical fold, and a change from G1 to S shows how replication reorganises it.
+
+## Energy budget and free-energy landscapes
+
+The Monte Carlo records every term of its energy at every sample, recomputed from the state (not accumulated during the run):
+
+* **folding**, $\mathcal{H}_{\text{fold}}$: favours long loops;
+* **binding**, $\mathcal{H}_{\text{bind}}$: LEF legs on CTCF sites;
+* **epigenetic**, the Potts field and interaction (when replication is modelled);
+* **crossing** and **replication fork**: hard walls (scaled by $10^{8}$ times their coefficient). They are listed as the number of penalty units, not as energy.
+
+The report gives the mean ± SD of each soft term in G1, S and G2/M and the change relative to G1, so you can see which term replication perturbs. The **free-energy landscape** along an order parameter $x$ is
+
+$$F(x) = -T \ln P(x),$$
+
+where $P(x)$ is the histogram of $x$ over the samples of a phase and $T$ the Monte Carlo temperature (`T_MC`); $F$ is shifted so its minimum is 0. The order parameters are the mean loop length and, with replication, the mean epigenetic state. A shifted minimum between phases is a change of the preferred fold. Samples are correlated, so small differences are not significant.
+
+## Hi-C validation
+
+With `--hic file.hic` the model is compared with a Hi-C map on the same bead grid. The simulated map is built from the loop contacts of all post-burn-in samples (a population of cells in all phases) plus a polymer background, multiplied by the epigenetic checkerboard when it is on; with a 3D run the mean inverse-distance map of the ensemble is compared as well. The metrics are the Pearson $r$ of log contacts, of observed/expected contacts (each diagonal divided by its mean), the stratified correlation (SCC, mean $r$ per diagonal), $r$ of the decay $P(s)$ of contact with distance, $r$ of the insulation score (domain boundaries) and the F1 of the boundaries found in both maps, $r$ of the correlation matrices, and $r$ of the A/B eigenvector with the mean epigenetic state. The first three are also given for each phase. The comparison needs `hic-straw` (see [Pre-processing](preproc.md)); no optimisation against Hi-C is done.
+
 ## Compartment switching
 
 Beads are classified as A (mean epigenetic state above 0.25), B (below -0.25) or neutral in two windows: the first and the last tenth of S phase. The report shows
@@ -73,6 +96,10 @@ Beads are classified as A (mean epigenetic state above 0.25), B (below -0.25) or
 * B to A and A to B switching counts and rates over time.
 
 Colours are always red for A and blue for B.
+
+## LEF-fork encounters
+
+During S phase the kernel counts, in every recorded window, the **encounters** between LEFs and forks: a proposed LEF move met by a fork, i.e. the fork pushes a leg back (`REP_FORK_PUSH`) or the LEF straddles a fork. An accepted slide in which a fork pushed a leg is a **push**; an accepted rebinding of a straddling LEF is a **removal** (the fork dislodged it). The report gives the totals, the **pushing rate** and **removal rate** (events per encounter, so independent of the number of sweeps), events per 1000 MC steps, and the **cumulative fraction** of encounters, pushes and removals over S-phase progress (0 = first firing, 1 = last locus replicated), with counts and rates per tenth of S phase. The counts are saved as `fork_events.npy` (samples x 3: encounters, pushed, removed).
 
 ## Replication statistics
 
@@ -121,6 +148,9 @@ With replication the shape metrics above are computed on the first sister chroma
 - [`src/analysis/mc_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/mc_stats.py): chain diagnostics
 - [`src/analysis/tables.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/tables.py): tables of the report
 - [`src/analysis/lef_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/lef_stats.py): LEF series and coverage
+- [`src/analysis/nesting.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/nesting.py): families of loops
+- [`src/analysis/free_energy.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/free_energy.py): energy budget and landscapes
+- [`src/analysis/hic_compare.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/hic_compare.py): Hi-C validation
 - [`src/analysis/compartments.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/compartments.py): compartment switching
 - [`src/analysis/rep_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/rep_stats.py): replication timing summaries
 - [`src/analysis/folding_stats.py`](https://github.com/SFGLab/RepliSage/blob/main/src/analysis/folding_stats.py): compaction score

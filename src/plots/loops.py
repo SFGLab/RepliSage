@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kruskal
 from .style import kb, unit_label, genome_axis, bin_time, BLACK, ROYAL, GREY, ROSE, SLATE, PINK, BLUE, TEAL, GOLD, PURPLE, ORANGE, GREEN, LEFT, RIGHT, CMAP_SEQ, PHASE_COL, shade_phases, rolling, save_fig
-from ..preproc.bedpe import load_region
 from ..analysis.lef_stats import coverage, lef_series, leg_occupancy, bound_mask
 
 SUB = "MCMC_diagnostics"
@@ -130,32 +129,3 @@ def fig_binding(res, p, ph, out):
     b.scatter(x[p.R > 0], -p.R[p.R > 0] * sc, marker="^", s=18, color=GREY, edgecolor="none", label="CTCF (R)")
     genome_axis(b, p.N_beads, "x"); b.set_ylabel("Legs per sample"); b.legend(ncol=4, loc="lower center", bbox_to_anchor=(.5, 1.0), fontsize=8)
     return save_fig(fig, out, SUB, "lef_binding", "lef_binding")
-
-def fig_input(p, geo, out):
-    """CTCF binding potentials along the region: left (up) and right (down) sites."""
-    fig, ax = plt.subplots(figsize=(11, 2.8)); x = geo.xs
-    ax.vlines(x, 0, p.L, color=LEFT, lw=1.4, label="Left sites (L)"); ax.vlines(x, 0, -p.R, color=RIGHT, lw=1.4, label="Right sites (R)")
-    ax.axhline(0, color=GREY, lw=.8); ax.set_xlabel(geo.label); ax.set_ylabel("Binding strength"); ax.legend(ncol=2, loc="upper right")
-    return save_fig(fig, out, SUB, "ctcf_input", "loops_input")
-
-def fig_anchors(ctx, p, geo, out):
-    """Loops of the BEDPE file as arcs, their anchors coloured by CTCF orientation, and the resulting left / right binding potentials."""
-    from matplotlib.colors import LinearSegmentedColormap
-    df = load_region(ctx.bedpe, ctx.region, ctx.chrom); c1, c2 = (df[1] + df[2]) / 2e6, (df[4] + df[5]) / 2e6; w = df[6].fillna(df[6].median()).values.astype(float)
-    has_o = df.shape[1] > 8; o = np.r_[df[7], df[8]].astype(float) if has_o else np.full(2 * len(df), .5)     # share of right-ward CTCF per anchor
-    cm = LinearSegmentedColormap.from_list("lr", [LEFT, "#CFCFCF", RIGHT]); wn = (w - w.min()) / (np.ptp(w) or 1)
-    fig, (ax, bx) = plt.subplots(2, 1, figsize=(11, 6.4), sharex=True, gridspec_kw=dict(height_ratios=[2.6, 1.3], hspace=.1))
-    th = np.linspace(0, np.pi, 60)
-    for a, b, k in zip(c1, c2, wn):
-        h = (abs(b - a) * 1e3) ** .6; ax.plot((a + b) / 2 + (b - a) / 2 * np.cos(th), h * np.sin(th), color=PURPLE, alpha=.18 + .5 * k, lw=.6 + 1.6 * k)
-    xs = np.r_[c1, c2]; sz = 14 + 60 * np.r_[wn, wn]
-    ax.scatter(xs, np.zeros_like(xs), s=sz, c=cm(o) if has_o else "#9A9A9A", edgecolor="white", linewidth=.6, zorder=3, clip_on=False)
-    ax.set_ylim(-.04 * ax.get_ylim()[1], None); ax.set_yticks([]); ax.spines["left"].set_visible(False); ax.grid(False)
-    ax.set_title(f"{len(df)} loops in the region: arc = loop, dot = anchor (size and darkness = loop strength)", fontsize=10.5, loc="left", pad=8)
-    if has_o:
-        for v, lab in ((0, "left-ward CTCF (L)"), (.5, "mixed"), (1, "right-ward CTCF (R)")): ax.scatter([], [], s=50, color=cm(float(v)), label=lab)
-        ax.legend(ncol=3, loc="upper right", fontsize=8.5)
-    else: ax.text(.99, .95, "no orientation in the file: anchors count as both L and R", transform=ax.transAxes, ha="right", va="top", fontsize=8.5, color=GREY)
-    bx.vlines(geo.xs, 0, p.L, color=LEFT, lw=1.4, label="L: where the left leg m can bind"); bx.vlines(geo.xs, 0, -p.R, color=RIGHT, lw=1.4, label="R: where the right leg n can bind")
-    bx.axhline(0, color=GREY, lw=.8); bx.set_ylabel("Binding strength\non the beads"); bx.set_xlabel(geo.label); bx.legend(ncol=2, loc="upper right", fontsize=8.5)
-    return save_fig(fig, out, SUB, "loop_anchors", "loop_anchors")

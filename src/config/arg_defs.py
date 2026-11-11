@@ -22,7 +22,7 @@ def build_args() -> Args:
         A("general", "SEED", "[new] Random seed of the Monte Carlo (empty = random).", int),
         A("general", "VERBOSE", "[new] Verbosity 0-3 (same as -v, -vv, -vvv): 0 stages, progress bars and results; 1 + input / output tables; 2 + detailed info; 3 everything.", int, "0"),
         # ---------------- input ----------------
-        A("input", "BEDPE_PATH", "A .bedpe file path with loops (CTCF anchors). It is required: without it the model does not know where the CTCF barriers are. Optional columns 8-9 hold CTCF orientation.", str),
+        A("input", "BEDPE_PATH", "Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file.", str),
         A("input", "REPT_PATH", "The replication timing dataset (.txt, .bw, .bigwig). If empty, no replication is modelled (unless USE_SC_REPT).", str),
         A("input", "SC_REPT_PATH", "The single cell replication timing dataset (.parquet).", str, DEFAULT_REPT),
         A("input", "USE_SC_REPT", "[new] Use the built-in single-cell replication timing when REPT_PATH is empty.", bool, "False"),
@@ -32,15 +32,27 @@ def build_args() -> Args:
         A("input", "REGION_END", "Ending region coordinate. Empty = whole chromosome.", int),
         A("input", "N_BEADS", "Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads).", int),
         # ---------------- preprocessing ----------------
+        A("preprocessing", "SMOOTH_INPUT", "[new] Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads.", bool, "True"),
+        A("preprocessing", "SMOOTH_SIGMA", "[new] Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300).", float),
+        A("preprocessing", "MOTIF_GENOME", "[new] Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file.", str),
+        A("preprocessing", "MOTIF_PFM", "[new] Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif.", str),
+        A("preprocessing", "MOTIF_PVALUE", "[new] Score threshold of the motif scan: chance of a hit in random sequence.", float, "1e-5"),
+        A("preprocessing", "MOTIF_PSEUDOCOUNT", "[new] Pseudocount of the motif matrix (avoids infinite scores).", float, "0.8"),
+        A("preprocessing", "MOTIF_PAD", "[new] bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it).", int, "0"),
         A("preprocessing", "REP_SIM_T", "[new] Number of time points of the replication simulation.", int, "1000"),
         A("preprocessing", "BIGWIG_BIN_SIZE", "[new] Bin size (bp) used to average a Repli-Seq bigWig.", int, "1000"),
         A("preprocessing", "BIGWIG_SIGMA", "[new] Gaussian smoothing (in bins) of a Repli-Seq bigWig.", float, "200.0"),
         A("preprocessing", "BIGWIG_LOG_NORM", "[deprecated] Repli-Seq signals are always log-normalised; this value is ignored.", bool, "True"),
+        A("preprocessing", "HIC_FILE", "[new] Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation.", str),
+        A("preprocessing", "HIC_NORM", "[new] Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing).", str, "KR"),
+        A("preprocessing", "HIC_RESOLUTION", "[new] Hi-C bin size (bp) to read. Empty = the one closest to the bead size.", int),
+        A("preprocessing", "HIC_TRACK_SMOOTH", "[new] Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation.", float, "7.0"),
         # ---------------- replication ----------------
         A("replication", "REP_WITH_STRESS", "True sets REP_T_STD_FACTOR, REP_SPEED_SCALE and REP_INIT_RATE_SCALE to replication-stress values.", bool, "False"),
         A("replication", "REP_T_STD_FACTOR", "Factor multiplying the standard deviation of the replication timing curve.", float, "0.1"),
         A("replication", "REP_SPEED_SCALE", "A scale that quantifies the speed of the replication forks.", float, "10"),
         A("replication", "REP_INIT_RATE_SCALE", "Multiplier of the experimentally estimated initiation rate.", float, "1.0"),
+        A("replication", "REP_FRONT_SMOOTH", "[new] Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front.", float, "2.0"),
         A("replication", "REP_START_TIME", "MC step at which replication starts (G1 = the steps before it).", int, "50000"),
         A("replication", "REP_TIME_DURATION", "Duration of replication (in MC steps); G2/M = the steps after S phase.", int, "50000"),
         # ---------------- mc ----------------
@@ -93,4 +105,4 @@ def build_args() -> Args:
     ])
 
 # old config keys -> current names
-ALIASES = {"POTTS_INTERACT_COEFF": "EPI_INTERACT_COEFF", "POTTS_FIELD_COEFF": "EPI_FIELD_COEFF"}
+ALIASES = {"INPUT_PATH": "BEDPE_PATH", "POTTS_INTERACT_COEFF": "EPI_INTERACT_COEFF", "POTTS_FIELD_COEFF": "EPI_FIELD_COEFF"}

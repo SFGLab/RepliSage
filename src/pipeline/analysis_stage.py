@@ -1,6 +1,9 @@
 """Stage: statistics tables, figures, structural metrics, averaged heatmaps and the HTML report of one replica."""
 import numpy as np
-from ..plots.style import FIGS, make_phases, apply_style, set_units
+from ..plots.style import FIGS, make_phases, make_geo, apply_style, set_units
+from ..analysis.free_energy import budget_table
+from ..analysis.nesting import nesting_of, nesting_table
+from ..analysis.fork_stats import fork_table
 from ..analysis.tables import (observables, overview_table, convergence_table, phase_table, lef_table, compartment_table,
                                rep_table, has_potts, save_csv)
 from ..analysis.rep_stats import rep_summary
@@ -16,7 +19,10 @@ def statistics(ctx, p, res, rep, ph):
     obs = observables(res, p); conv, diag = convergence_table(obs, ph)
     kb = (ctx.region[1] - ctx.region[0]) / ctx.n_beads / 1e3
     tables = [overview_table(res, p, ctx.n_ctcf, kb), conv, phase_table(obs, ph), lef_table(res, p, ph, ctx.n_ctcf, kb)]
+    tables.append(budget_table(res, p, ph)); tables.append(nesting_table(nesting_of(res), ph, kb))
     if rep is not None:
+        ft = fork_table(res, p, ph)
+        if ft is not None: tables.append(ft)
         tables.append(rep_table(rep_summary(rep.rep_frac, rep.input_timing, rep.speed, kb, p.rep_duration)))
         if has_potts(p): tables.append(compartment_table(res, ph))
     return obs, tables, diag
@@ -38,6 +44,21 @@ def heatmaps(ctx, out_dir, rep):
         np.save(f"{out_dir}/metadata/structural_metrics/avg_heatmap.npy", sum(h) / 3.0)
         log.success("Saved average heatmap (over all phases) as avg_heatmap.npy")
 
+def hic_validation(ctx, p, res, ph, out_dir, geo):
+    """Hi-C validation (tables + figure); failures are reported, not fatal. Returns the new tables."""
+    try:
+        from ..preproc.hic import hic_for_run
+        from ..analysis.hic_compare import validate_hic, hic_tables
+        from ..plots.hic_validation import fig_hic
+        with log.timer("Hi-C validation"):
+            mat, info = hic_for_run(ctx, out_dir + "/metadata/hic")
+            V = validate_hic(ctx, p, res, ph, mat, out_dir, ctx.args.HIC_TRACK_SMOOTH); T = hic_tables(V, info)
+            if ctx.args.SAVE_PLOTS: fig_hic(V, info, geo, out_dir)
+        for t in T: log.table(t.title, t.rows, t.header)
+        save_csv(T, out_dir + "/metadata/statistics"); return T
+    except Exception as e:
+        log.alert(f"Hi-C validation failed: {type(e).__name__}: {e}"); return []
+
 def run_analysis(ctx, p, res, out_dir, rep, command=""):
     """Everything derived from one MC replica; returns the report path (or None)."""
     a = ctx.args
@@ -55,4 +76,5 @@ def run_analysis(ctx, p, res, out_dir, rep, command=""):
             with log.timer("Structural metrics"): compute_metrics_for_ensemble(out_dir + '/ensemble', duplicated_chain=rep is not None, path=out_dir)
     if a.VIZ_HEATS and ctx.has_md:
         with log.timer("Averaged heatmaps"): heatmaps(ctx, out_dir, rep)
+    if a.HIC_FILE: tables += hic_validation(ctx, p, res, ph, out_dir, make_geo(ctx))
     return write_report(ctx, p, res, out_dir, rep, ph, obs, tables, command, diag, where) if a.REPORT else None

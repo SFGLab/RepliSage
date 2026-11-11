@@ -54,7 +54,11 @@ def make_parser():
     g = p.add_argument_group("config file")
     opt(g, "-c", "--config", "--config-file", dest="config_file", metavar="FILE", help="ini file with the parameters (see src/config.ini)")
     g = p.add_argument_group("input data")
-    opt(g, "--bedpe-file", metavar="FILE", help="loops (.bedpe), CTCF orientation optional")
+    opt(g, "--bedpe-file", "--input-file", dest="bedpe_file", metavar="FILE", help="CTCF input: loops (.bedpe) or peaks (.bed, .narrowPeak); orientation optional")
+    opt(g, "--smooth-sigma", type=float, metavar="BEADS", help="Gaussian smoothing width of the input (default: max(1.5, n_beads / 300), as LoopSage)")
+    opt(g, "--motif-genome", metavar="FASTA", help="reference genome: read CTCF orientation from motifs where the input has none (more options: MOTIF_* in the config file)")
+    opt(g, "--hic", metavar="FILE", help="Hi-C map (.hic) to validate the model against (needs hic-straw; options HIC_* in the config file)")
+    opt(g, "--no-smooth", action="store_true", help="do not smooth the CTCF input (default: smoothed)")
     opt(g, "--rt-file", metavar="FILE", help="replication timing: .bigWig/.bw, .txt, or .parquet (single cell); 'builtin' = shipped GM12878 single-cell data; 'none' = loop extrusion only (ini: rept_path). Without it you are asked in the terminal")
     opt(g, "--region", metavar="CHR[:START-END]", type=parse_region, help="modelled region, e.g. chr14:80835000-98674700 (no range = whole chromosome)")
     opt(g, "--n-beads", type=int, metavar="N", help="beads per chain (default: region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads))")
@@ -93,6 +97,8 @@ def flags_to_params(ns):
     put("MC_STEP", ns.get("mc_step")); put("BURNIN", ns.get("burnin")); put("REP_START_TIME", ns.get("rep_start")); put("REP_TIME_DURATION", ns.get("rep_duration"))
     put("SIM_STEP", ns.get("md_steps")); put("INTEGRATOR_STEP", ns.get("md_step_size"))
     put("N_REPLICAS", ns.get("n_replicas")); put("SEED", ns.get("seed")); put("OUT_PATH", ns.get("out_path")); put("RUN_NAME", ns.get("run_name"))
+    put("HIC_FILE", ns.get("hic")); put("MOTIF_GENOME", ns.get("motif_genome")); put("SMOOTH_SIGMA", ns.get("smooth_sigma"))
+    if ns.get("no_smooth"): o["SMOOTH_INPUT"] = False
     put("PLATFORM", ns.get("platform")); put("N_THREADS", ns.get("threads"))
     if ns.get("region"): o["CHROM"], o["REGION_START"], o["REGION_END"] = ns["region"]
     put("REPT_PATH", ns.get("rt_file"))   # words/extensions are resolved in resolve_rt()

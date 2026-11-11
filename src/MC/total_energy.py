@@ -8,9 +8,9 @@ from .potts_energy import E_potts, get_dE_potts_link
 def get_E(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_norm, rep_norm, ms, ns, t, f_rep_T, has_rep,
           spins, h, ht, potts_norm1=0.0, potts_norm2=0.0, rep_fork_organizers=True, cohesin_blocks_condensin=False):
     '''The total energy.'''
-    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin) + E_fold(ms, ns, fold_norm)
-    if fold_norm2 != 0:
-        energy += E_fold(ms[N_lef:N_lef + N_lef2], ns[N_lef:N_lef + N_lef2], fold_norm2)
+    energy = E_bind(L, R, ms, ns, bind_norm) + E_cross(ms, ns, N_lef, N_lef2, k_norm, cohesin_blocks_condensin) + E_fold(ms[:N_lef], ns[:N_lef], fold_norm)
+    if N_lef2 > 0:
+        energy += E_fold(ms[N_lef:], ns[N_lef:], fold_norm2)     # family 2 has its own folding coefficient
     if has_rep and rep_norm != 0.0:
         energy += E_rep(f_rep_T, ms, ns, t, rep_norm)
     if potts_norm1 != 0.0 or potts_norm2 != 0.0:
@@ -28,8 +28,8 @@ def get_dE_rewiring(N_lef, N_lef2, L, R, bind_norm, fold_norm, fold_norm2, k_nor
         dE += get_dE_fold(fold_norm2, ms[idx], ns[idx], m_new, n_new)
     dE += get_dE_bind(L, R, bind_norm, ms, ns, m_new, n_new, idx)
     dE += get_dE_cross(ms, ns, m_new, n_new, idx, N_lef, N_lef2, k_norm, cohesin_blocks_condensin)
-    if has_rep and rep_norm > 0.0:
+    if has_rep and rep_norm != 0.0:
         dE += get_dE_rep(f_rep_T, rep_norm, ms, ns, m_new, n_new, t, idx)
-    if potts_norm2 > 0.0:
-        dE += get_dE_potts_link(spins, ms, ns, m_new, n_new, ms[idx], ns[idx], potts_norm2)
+    if potts_norm2 != 0.0:
+        dE += get_dE_potts_link(spins, m_new, n_new, ms[idx], ns[idx], potts_norm2)
     return dE

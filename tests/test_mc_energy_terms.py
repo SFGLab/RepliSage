@@ -65,16 +65,18 @@ def test_dE_node_matches_legacy_when_ht_old_aliases_ht(seed):
         assert b == pytest.approx(a, abs=1e-9)
 
 @pytest.mark.parametrize("seed", range(8))
-def test_dE_potts_link_matches_legacy(seed):
+def test_dE_potts_link_is_exact(seed):
+    """dE of the loop-link term equals the difference of the total E_potts (spins fixed, one LEF moved)."""
     rng = np.random.default_rng(seed)
     ms, ns, spins = random_state(rng)
-    J = old.initialize_J(N, ms, ns)
-    for _ in range(200):
+    h = rng.normal(size=N)
+    for _ in range(100):
         k = int(rng.integers(len(ms)))
-        m_new = int(rng.integers(0, N - 1)); n_new = int(rng.integers(m_new, N))
-        a = old.get_dE_potts_link(spins, J, m_new, n_new, ms[k], ns[k], 1.0)
-        b = P.get_dE_potts_link(spins, ms, ns, m_new, n_new, ms[k], ns[k], 1.0)
-        assert b == pytest.approx(a, abs=1e-12)
+        m_new = int(rng.integers(0, N - 1)); n_new = int(rng.integers(m_new + 1, N))
+        ms2, ns2 = ms.copy(), ns.copy(); ms2[k], ns2[k] = m_new, n_new
+        a = P.E_potts(spins, ms2, ns2, h, h, 0.0, 1.7, 0, False) - P.E_potts(spins, ms, ns, h, h, 0.0, 1.7, 0, False)
+        b = P.get_dE_potts_link(spins, m_new, n_new, ms[k], ns[k], 1.7)
+        assert b == pytest.approx(a, abs=1e-9)
 
 @pytest.mark.parametrize("seed", range(6))
 def test_loop_energy_terms_match_legacy(seed):

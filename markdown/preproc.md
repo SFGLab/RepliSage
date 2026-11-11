@@ -1,8 +1,8 @@
 # Pre-processing
 
-Pre-processing turns a list of loops into the quantities the Monte Carlo needs: how strongly each bead attracts a loop extruder from the left and from the right.
+Pre-processing turns a list of loops or CTCF peaks into the quantities the Monte Carlo needs: how strongly each bead attracts a loop extruder from the left and from the right.
 
-## Input: a BEDPE file
+## Input: a BEDPE file (loops)
 
 A tab-separated file, one loop per line:
 
@@ -16,6 +16,39 @@ A tab-separated file, one loop per line:
 | 8, 9 | Optional CTCF orientation of each anchor, between 0 and 1 (0 = forward only, 1 = reverse only, negative = no motif) |
 
 Only loops that lie fully inside the chosen region and chromosome are kept. If none remain, RepliSage stops with a clear message.
+
+## Other inputs: BED and narrowPeak
+
+If you have CTCF ChIP-seq peaks instead of loops, give a `.bed` or `.narrowPeak` file. The format is chosen from the file extension.
+
+| Format | Weight $w$ of a site | Position | CTCF orientation (optional) |
+|---|---|---|---|
+| `.bed` | column 5 (score; 1 if missing) | middle of the interval | column 7 = probability of reverse orientation, or the strand in column 6 (`+` = forward, `-` = reverse) |
+| `.narrowPeak` | column 7 (signalValue; the score in column 5 if it is all zero) | the summit (column 10), else the middle | an extra column with the probability of *forward* orientation (column 11, or 6) |
+
+A peak sits on one bead and adds $w (1 - o)$ to $L$ and $w\, o$ to $R$ exactly as an anchor does. Peak input has no loops, so the loop figures of the report and `PREFERENTIAL_BINDING` (which needs loops) are switched off.
+
+## Orientation from the DNA sequence (motif finder)
+
+If your sites have no orientation, give a reference genome with `--motif-genome genome.fa` (an uncompressed FASTA; an index `.fai` is created next to it). RepliSage scans every anchor or peak for the JASPAR CTCF motif (MA0139.1, or your own PFM in `MOTIF_PFM`) on both strands. A hit is kept when its score is at least the threshold that a random sequence reaches with probability `MOTIF_PVALUE` ($10^{-5}$). For a site with several hits the orientation is
+
+$$o = \frac{\sum_{\text{reverse hits}} 2^{s}}{\sum_{\text{all hits}} 2^{s}},$$
+
+where $s$ is the score of a hit: the share of the reverse strand, each hit weighted by its likelihood ratio $2^{s}$. A site without a hit stays without orientation. Orientations already in your file are kept. `MOTIF_PAD` widens the window scanned around each site.
+
+## Smoothing
+
+A site is a sharp spike on one bead, but a real CTCF site is not exact to one bead and the LEF legs move by thermal motion. Like LoopSage, RepliSage therefore smooths the profiles $L$ and $R$ with a Gaussian of width $\sigma$ beads (`SMOOTH_INPUT = True` by default):
+
+$$\sigma = \max\left(1.5,\ N_{\text{beads}} / 300\right)$$
+
+Change it with `SMOOTH_SIGMA` (`--smooth-sigma`), or switch smoothing off with `--no-smooth`. Loops are smoothed with a plain Gaussian. Peaks use a Gaussian whose width is capped (about three times the median gap between sites) so that isolated peaks are not erased. Smoothing keeps the total strength, so the binding energy does not change scale. The number of CTCF sites $N_{\text{CTCF}}$ and the "legs on a CTCF site" statistic always refer to the raw sites (the second one with a margin of $\sigma$ beads), not to the smoothed profile. For fine beads, $\sigma$ in kb can be large; the run log states it, and `SMOOTH_SIGMA` overrides it.
+
+The **replication front** is smoothed too (`REP_FRONT_SMOOTH`, in beads, default 2): the replication time of each bead is averaged with its neighbours and the replicated/unreplicated state is rebuilt from it, so the front is a gently varying profile instead of a random staircase. The start and end of S phase are kept. Use 0 for the sharp front.
+
+## Hi-C map for validation
+
+With `--hic file.hic` the same region is read from the Hi-C file (needs `hic-straw`, `pip install hic-straw`), put on the bead grid and used to [validate the model](analysis.md#hi-c-validation). The bin size closest to the bead size and the normalisation `HIC_NORM` (KR by default) are tried first; if the file lacks them the next available ones are used, and the log says so.
 
 ## From base pairs to beads
 
@@ -51,15 +84,21 @@ $$R(c) \leftarrow R(c) + w_\lambda\, o_c$$
 
 In words: a forward-facing CTCF site ($o_c = 0$) attracts the left leg of a LEF, and a reverse-facing site ($o_c = 1$) attracts the right leg; values in between split the attraction. An anchor with a negative orientation (no motif) adds nothing. Anchors from different loops that fall on the same bead add up, so beads that anchor many strong loops get the deepest potential wells.
 
-The number of CTCF sites is $N_{\text{CTCF}} = \max\left(\#\{k : L(k) > 0\},\ \#\{k : R(k) > 0\}\right)$. If you do not set `N_LEF`, RepliSage uses $N_{\text{lef}} = N_{\text{CTCF}} / 2$ extruders, one per two CTCF sites. (Earlier versions used $2 N_{\text{CTCF}}$; with many CTCF sites per bead that can exceed the number of beads, and then no loops form, so set `N_LEF` below the number of beads, at most a quarter of it; at or above half of it is an error.)
+The number of CTCF sites is the number of beads that carry an anchor in $L$ or $R$ after aggregation, $N_{\text{CTCF}} = \#\{k : L(k) > 0 \text{ or } R(k) > 0\}$, so anchors that fall into the same bead count once. If you do not set `N_LEF`, RepliSage uses $N_{\text{lef}} = N_{\text{CTCF}} / 2$ extruders, one per two CTCF sites. (Earlier versions used $2 N_{\text{CTCF}}$; with many CTCF sites per bead that can exceed the number of beads, and then no loops form, so set `N_LEF` below the number of beads, at most a quarter of it; at or above half of it is an error.)
+
+The **input figures** show the anchors read from your file: a map (loop arcs coloured by convergent, tandem, divergent or uncertain configuration for BEDPE; anchor strength with orientation markers; orientation confidence $|2p-1|$, where $p$ is the probability of a reverse-oriented site), anchor statistics, and the binding profiles $L$ and $R$ before and after smoothing.
 
 ## Parameters
 
 | Name | Where | Meaning | Default |
 |---|---|---|---|
-| `BEDPE_PATH` | `--bedpe-file` | Loops file | none (required) |
+| `BEDPE_PATH` | `--bedpe-file`, `--input-file` | Loops (`.bedpe`) or peaks (`.bed`, `.narrowPeak`) | none (required) |
 | `CHROM`, `REGION_START`, `REGION_END` | `--region` | Region to model | whole chromosome |
 | `N_BEADS` | `--n-beads` | Number of beads | region length / 7 kb (max 10,000 beads) |
+| `SMOOTH_INPUT`, `SMOOTH_SIGMA` | `--no-smooth`, `--smooth-sigma` | Gaussian smoothing of $L$ and $R$ | on, $\max(1.5, N/300)$ beads |
+| `MOTIF_GENOME`, `MOTIF_PFM`, `MOTIF_PVALUE`, `MOTIF_PSEUDOCOUNT`, `MOTIF_PAD` | `--motif-genome` | Orientation from motifs | off, built-in CTCF motif, $10^{-5}$, 0.8, 0 bp |
+| `REP_FRONT_SMOOTH` | | Smoothing of the replication front | 2 beads |
+| `HIC_FILE`, `HIC_NORM`, `HIC_RESOLUTION` | `--hic` | Hi-C map for validation | none, KR, closest to the bead size |
 
 Parameters for reading replication timing (`BIGWIG_BIN_SIZE`, `BIGWIG_SIGMA`, `BIGWIG_LOG_NORM`, `REP_SIM_T`) are in the [replication model](replication_model.md) and the [config page](config.md).
 
@@ -73,7 +112,10 @@ The stage is called from `run_preprocessing(ctx)` in - [`src/pipeline/preproc_st
 
 | Function or class | What it does |
 |---|---|
-| `preprocessing(bedpe_file, region, chrom, N_beads)` | reads the BEDPE file, bins it on the bead grid and returns the left and right CTCF binding potentials `L`, `R` and the number of CTCF sites |
+| `read_binding(path, region, chrom, n_beads, smooth, sigma, motif)` (`preproc/readers.py`) | reads BEDPE, BED or narrowPeak, fills missing orientations from the motif finder, smooths, and returns a `Binding` with `L`, `R`, the raw `L0`, `R0` and the number of sites |
+| `preprocessing(bedpe_file, region, chrom, N_beads, smooth=False)` | the same as a tuple `(L, R, N_CTCF)` |
+| `motif_orientation(chrom, starts, ends, genome, ...)` (`motif_finder/`) | probability of reverse orientation of each window from motif hits |
+| `load_hic_region(path, geom, norm, resolution)` (`preproc/hic.py`) | Hi-C map on the bead grid |
 | `binding_vectors_from_bedpe(bedpe_file, N_beads, region, chrom, normalization, viz)` | does the binning; `normalization` rescales the potentials, `viz` draws the input figure |
 | `loop_stats(L, R)` | rows of the loop-input statistics table in the report |
 

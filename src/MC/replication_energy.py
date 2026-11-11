@@ -73,5 +73,5 @@ def E_rep(f_rep_T, ms, ns, t, rep_norm):
 @njit(cache=True)
 def get_dE_rep(f_rep_T, rep_norm, ms, ns, m_new, n_new, t, idx):
     '''Energy difference for replication energy.'''
-    dE_rep = Rep_Penalty(m_new, n_new, f_rep_T[t]) - Rep_Penalty(ms[idx], ns[idx], f_rep_T[t - 1])
+    dE_rep = Rep_Penalty(m_new, n_new, f_rep_T[t]) - Rep_Penalty(ms[idx], ns[idx], f_rep_T[t])    # both at the current time
     return rep_norm * dE_rep

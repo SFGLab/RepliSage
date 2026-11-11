@@ -12,7 +12,10 @@ python -m src.run -h    # without installing, from the repository root
 | Group | Flag | Meaning |
 |---|---|---|
 | config | `-c, --config FILE` | Read parameters from this ini file |
-| input | `--bedpe-file FILE` | Loops in BEDPE format (required unless the config file gives one) |
+| input | `--bedpe-file FILE` (or `--input-file`) | CTCF input: loops (`.bedpe`) or peaks (`.bed`, `.narrowPeak`); required unless the config file gives one |
+| input | `--smooth-sigma BEADS`, `--no-smooth` | Width of the Gaussian smoothing of the CTCF input (default `max(1.5, n_beads / 300)`, as in LoopSage) or switch it off |
+| input | `--motif-genome FASTA` | Reference genome: read CTCF orientation from the motif where the input has none |
+| input | `--hic FILE` | Hi-C map (`.hic`) to validate the model against (needs `hic-straw`) |
 | input | `--rt-file FILE` | Replication timing: `.bigWig`/`.bw`, `.txt`, `.parquet` (single cell) or the word `builtin` |
 | input | `--region CHR[:START-END]` | Region to model, for example `chr14:80835000-98674700`; a bare chromosome means the whole chromosome |
 | input | `--n-beads N` | Beads per chain (default: region length / 7 kb, about 10 beads per CTCF site) |

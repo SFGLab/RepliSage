@@ -18,6 +18,10 @@ class MCResult:
     S_viols: np.ndarray
     seed: int = -1
     elapsed: float = 0.0
+    Ec: np.ndarray = None      # recomputed crossing energy per sample
+    Er: np.ndarray = None      # replication-fork energy
+    Et: np.ndarray = None      # total energy recomputed from the state
+    Fk: np.ndarray = None      # per sample: LEF-fork encounters, legs pushed, LEFs removed (S phase)
 
 def phase_bounds(p):
     """Indices (in recorded samples) of the G1 start, S start and S end."""
@@ -51,6 +55,8 @@ def save_mc(res, p, out_path):
     mc, en = f"{out_path}/metadata/MCMC_output", f"{out_path}/metadata/energy_factors"
     np.save(f"{mc}/Ms.npy", res.Ms); np.save(f"{mc}/Ns.npy", res.Ns)
     np.save(f"{en}/Es.npy", res.Es); np.save(f"{en}/Fs.npy", res.Fs); np.save(f"{en}/Bs.npy", res.Bs)
+    for k in ("Ec", "Er", "Et"): np.save(f"{en}/{k}.npy", getattr(res, k))
+    if res.Fk is not None: np.save(f"{mc}/fork_events.npy", res.Fk)
     np.save(f"{mc}/loop_lengths.npy", res.Ns - res.Ms); np.save(f"{en}/Es_potts.npy", res.Es_potts)
     np.save(f"{mc}/mags.npy", res.mags); np.save(f"{mc}/spins.npy", res.spin_traj)
     if p.has_rep:

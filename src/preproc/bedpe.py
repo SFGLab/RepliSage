@@ -1,22 +1,13 @@
-"""Loop (BEDPE) preprocessing: CTCF binding potentials."""
+"""Loop (BEDPE) preprocessing: CTCF binding potentials, loop statistics."""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from ..logger import log
-
-# NOTE: the dense N x N coupling matrix J of the old version was never used here
-# (it was always zero); the Potts couplings are now handled sparsely in MC/.
-def load_region(bedpe_file, region, chrom):
-    """Loops of the BEDPE file that lie completely inside the region (bp coordinates)."""
-    df = pd.read_csv(bedpe_file, sep='\t', header=None, comment='#')
-    inside = (df[0] == chrom) & (df[[1, 2, 4, 5]] >= region[0]).all(axis=1) & (df[[1, 2, 4, 5]] < region[1]).all(axis=1)
-    df = df[inside].reset_index(drop=True)
-    if df.empty: raise ValueError("The selected region or chromosome is invalid: the final set does not contain any loops.")
-    return df
+from .readers import load_region, read_binding, detect_format
 
 MOTIF_FINDER = "https://github.com/BlackPianoCat/motif_finder"
-ORIENT_WARN = ("The BEDPE file has no CTCF orientation (columns 8-9). The model still runs, assuming every orientation blocks LEFs with the same "
-               f"probability, but it is a bit less accurate. To detect CTCF orientation from motifs see {MOTIF_FINDER}")
+ORIENT_WARN = ("The input has no CTCF orientation (BEDPE columns 8-9, BED column 7 or a narrowPeak probability column). The model still runs, assuming every orientation blocks LEFs with the same "
+               f"probability, but it is a bit less accurate. To detect CTCF orientation from motifs give a reference genome (--motif-genome genome.fa, built in), or see {MOTIF_FINDER}")
 
 def bead_loops(bedpe_file, N_beads, region, chrom):
     """Loops of the region with anchor coordinates converted from bp to simulation beads."""
@@ -108,11 +99,10 @@ def distance_point_line(x0,y0,a=1,b=-1,c=0):
     return np.abs(a*x0+b*y0+c)/np.sqrt(a**2+b**2)
 
 
-def preprocessing(bedpe_file: str, region: list, chrom: str, N_beads: int):
-    """Return left/right CTCF binding potentials and the number of CTCF sites."""
-    L, R = binding_vectors_from_bedpe(bedpe_file, N_beads, region, chrom, False, False)
-    N_CTCF = int(np.max(np.array([np.count_nonzero(L), np.count_nonzero(R)])))
-    return L, R, N_CTCF
+def preprocessing(path: str, region: list, chrom: str, N_beads: int, smooth: bool = False, sigma=None):
+    """Return left/right CTCF binding potentials and the number of CTCF sites (BEDPE, BED or narrowPeak; smoothing is optional)."""
+    b = read_binding(path, region, chrom, N_beads, smooth, sigma)
+    return b.L, b.R, b.n_sites
 
 def loop_stats(L, R):
     """Rows for a statistics table of the binding potentials (per bead)."""
@@ -125,6 +115,7 @@ def _q(v, f="{:,.0f}"):
 
 def input_stats(bedpe_file, region, chrom, n_beads):
     """Rows (bp / kb units) describing the loop input inside the modelled region."""
+    if detect_format(bedpe_file) != "bedpe": return peak_stats(bedpe_file, region, chrom, n_beads)
     df = load_region(bedpe_file, region, chrom); size = region[1] - region[0]; bead = size / n_beads
     c1, c2 = (df[1] + df[2]) / 2, (df[4] + df[5]) / 2; length = np.abs(c2 - c1) / 1e3; w = df[6].dropna() if df.shape[1] > 6 else pd.Series(dtype=float)
     rows = [("region", f"{chrom}:{region[0]:,}-{region[1]:,}"), ("region size", f"{size / 1e6:.2f} Mb"), ("bead size", f"{bead / 1e3:.2f} kb ({int(bead):,} bp)"),
@@ -132,4 +123,13 @@ def input_stats(bedpe_file, region, chrom, n_beads):
             ("loop length, beads (median)", f"{np.median(length) * 1e3 / bead:.1f}"), ("anchor width, bp (median)", f"{np.median(np.r_[df[2] - df[1], df[5] - df[4]]):,.0f}")]
     if len(w): rows.append(("loop strength (min / median / mean / max)", _q(w, "{:.2f}")))
     rows.append(("CTCF orientation", "present (columns 8-9)" if df.shape[1] > 8 else "absent: all orientations block equally"))
+    return rows
+
+def peak_stats(path, region, chrom, n_beads):
+    """Rows describing a BED / narrowPeak input inside the modelled region."""
+    df = load_region(path, region, chrom, paired=False); size = region[1] - region[0]; bead = size / n_beads
+    w = pd.to_numeric(df[6] if detect_format(path) == "narrowpeak" and df.shape[1] > 6 else df[4] if df.shape[1] > 4 else pd.Series(dtype=float), errors="coerce").dropna()
+    rows = [("region", f"{chrom}:{region[0]:,}-{region[1]:,}"), ("region size", f"{size / 1e6:.2f} Mb"), ("bead size", f"{bead / 1e3:.2f} kb ({int(bead):,} bp)"),
+            ("peaks in the region", len(df)), ("peak width, bp (median)", f"{np.median(df[2] - df[1]):,.0f}")]
+    if len(w): rows.append(("peak strength (min / median / mean / max)", _q(w, "{:.2f}")))
     return rows

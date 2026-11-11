@@ -22,7 +22,7 @@ setup(
     package_dir={'RepliSage': 'src'},
     packages=['RepliSage'] + [f'RepliSage.{p}' for p in subpackages],
     include_package_data=True,
-    package_data={'RepliSage': ['forcefields/*', 'data/*', 'config.ini', 'viz3d/assets/*', 'viz3d/vendor/*']},
+    package_data={'RepliSage': ['forcefields/*', 'data/*', 'config.ini', 'viz3d/assets/*', 'viz3d/vendor/*', 'motif_finder/data/*']},
     install_requires=[
         'scipy>=1.11.4', 'mdtraj>=1.9.9', 'seaborn>=0.13.0', 'statsmodels>=0.14.0', 'matplotlib>=3.8.2',
         'numpy>1.2,<2.0', 'pandas>=2.1.3', 'OpenMM>=8.1.1', 'openmm-cuda>=8.1.1', 'scikit-learn>=1.5.2',
@@ -30,7 +30,7 @@ setup(
         'matplotlib-venn>=1.1.1', 'imageio>=2.36.0', 'imageio-ffmpeg>=0.5.1', 'jupyterlab>=4.2.5',
         'jupyter_core>=5.7.2', 'tqdm', 'pyarrow', 'fastparquet', 'pyBigWig>=0.3.19',
     ],
-    extras_require={'viz': ['pyvista'], 'test': ['pytest'], 'docs': ['mkdocs-material>=9.5']},
+    extras_require={'viz': ['pyvista'], 'hic': ['hic-straw'], 'test': ['pytest'], 'docs': ['mkdocs-material>=9.5']},
     project_urls={'Documentation': 'https://sfglab.github.io/RepliSage/', 'Source': 'https://github.com/SFGLab/RepliSage'},
     entry_points={'console_scripts': ['replisage=RepliSage.run:main']},
     classifiers=[

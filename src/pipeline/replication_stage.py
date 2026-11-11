@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import os
 import numpy as np
 from ..replication_simulation.replikator import Replikator
+from ..replication_simulation.front_smoothing import smooth_front
 from ..MC.replication_matrix import to_time_major
 from ..logger import log
 
@@ -50,6 +51,7 @@ def run_replication(ctx):
     except Exception as e:
         raise ValueError("Something went wrong with the replication simulation. Probably the region of modelling is too large "
                          "or too short for the resolution (number of beads) specified.") from e
+    rep_frac, l_forks, r_forks = smooth_front(rep_frac, l_forks, r_forks, a.REP_FRONT_SMOOTH); rep.sim_f = rep_frac   # Potts start state uses the smoothed front
     log.table("Replication timing input", rt_input_rows(ctx, rep))
     if a.REP_TIME_DURATION % a.REP_SIM_T:
         log.warning(f"REP_TIME_DURATION is not a multiple of REP_SIM_T={a.REP_SIM_T}: the last "

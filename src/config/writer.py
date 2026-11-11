@@ -2,7 +2,7 @@
 import datetime
 
 SECTION_ORDER = ["general", "input", "preprocessing", "replication", "mc", "md", "output"]
-TITLES = {"general": "run, hardware", "input": "data and region", "preprocessing": "replication-timing preprocessing",
+TITLES = {"general": "run, hardware", "input": "data and region", "preprocessing": "input smoothing, motifs, Hi-C, replication-timing preprocessing",
           "replication": "replication", "mc": "Monte Carlo and loop extrusion", "md": "3D structure (OpenMM)", "output": "report and figures"}
 NOTES = {"BEDPE_PATH": "REQUIRED", "CHROM": "REQUIRED",
          "REPT_PATH": "file (.bigWig/.txt/.parquet) | builtin | none"}

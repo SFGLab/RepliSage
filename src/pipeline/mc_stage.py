@@ -22,6 +22,7 @@ def build_mc_params(ctx, L, R, n_ctcf, rep):
     a = ctx.args
     nb = ctx.n_beads
     n_lef = a.N_LEF if a.N_LEF else min(max(1, n_ctcf // 2), nb // 4)   # default: one LEF per two CTCF sites, at most N/4
+    if not a.N_LEF: log.info(f"N_LEF not set: using N_CTCF / 2 = {n_lef} ({n_ctcf} CTCF beads after aggregation).")
     total = n_lef + (a.N_LEF2 or 0)
     if total >= nb // 2:
         raise ValueError(f"N_LEF + N_LEF2 = {total} is comparable to the number of beads ({nb}): LEFs would cover the whole chain. "
@@ -34,6 +35,7 @@ def build_mc_params(ctx, L, R, n_ctcf, rep):
                  cohesin_blocks_condensin=a.COHESIN_BLOCKS_CONDENSIN, random_spins=a.RANDOM_INIT_SPINS,
                  repfork_push=a.REP_FORK_PUSH, t_rep=a.REP_START_TIME, rep_duration=a.REP_TIME_DURATION,
                  f_rep_T=None if rep is None else rep.f_rep_T, h=None if rep is None else rep.h)
+    if ctx.binding is not None: p.L_site, p.R_site = ctx.binding.site_masks()
     if getattr(ctx, "occupancy", None) is not None: p.bind_w = loading_weights(ctx.occupancy, a.PREF_BIND_FLOOR, a.PREF_BIND_POWER)
     if rep is not None and a.REP_START_TIME + a.REP_TIME_DURATION > a.N_STEPS:
         log.alert("REP_START_TIME + REP_TIME_DURATION exceeds N_STEPS: replication will not finish within the simulation.")

@@ -21,8 +21,8 @@ def lef_series(res, p):
     return {"loop": (Ns - Ms).mean(0),                                  # as published: all LEFs
             "loop_bound": np.where(ok, Ns - Ms, 0).sum(0) / nb,
             "bound": ok.mean(0),
-            "on_L": ((p.L[safe_m] > 0) & ok).sum(0) / nb,
-            "on_R": ((p.R[safe_n] > 0) & ok).sum(0) / nb}
+            "on_L": (((p.L > 0) if p.L_site is None else p.L_site)[safe_m] & ok).sum(0) / nb,
+            "on_R": (((p.R > 0) if p.R_site is None else p.R_site)[safe_n] & ok).sum(0) / nb}
 
 def leg_occupancy(Ms, Ns, n_beads, seg):
     """Mean number of left / right legs per bead and sample."""

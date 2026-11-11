@@ -15,13 +15,13 @@ A config file is a short text file of `key = value` lines. You never need to wri
 
 ```ini
 [input]
-bedpe_path   = loops.bedpe        ; loops with CTCF anchors (required)
+bedpe_path   = loops.bedpe        ; CTCF input: .bedpe, .bed or .narrowPeak (required)
 chrom        = chr14
 region_start = 80835000           ; base pairs
 region_end   = 98674700
 ```
 
-Without a `bedpe_path` RepliSage stops, because without loops it does not know where the CTCF barriers are. If you leave out the region, the **whole chromosome** is modelled.
+Without a `bedpe_path` RepliSage stops, because without CTCF sites it does not know where the barriers are. If you leave out the region, the **whole chromosome** is modelled.
 
 **Step 2. Decide what to simulate.** What runs depends on the inputs you give:
 
@@ -130,7 +130,7 @@ One table per section of the file. *Flag* is the command-line option that sets t
 
 | Key | Flag | Type | Default | Meaning |
 |---|---|---|---|---|
-| `bedpe_path` | `--bedpe-file` | text | empty | A .bedpe file path with loops (CTCF anchors). It is required: without it the model does not know where the CTCF barriers are. Optional columns 8-9 hold CTCF orientation. |
+| `bedpe_path` | `--bedpe-file`, `--input-file` | text | empty | Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file. |
 | `rept_path` | `--rt-file` | text | empty | The replication timing dataset (.txt, .bw, .bigwig). If empty, no replication is modelled (unless USE_SC_REPT). |
 | `sc_rept_path` | `--rt-file` | text | built-in file | The single cell replication timing dataset (.parquet). |
 | `use_sc_rept` | `--rt-file builtin` | True/False | False | Use the built-in single-cell replication timing when REPT_PATH is empty. |
@@ -144,6 +144,17 @@ One table per section of the file. *Flag* is the command-line option that sets t
 
 | Key | Flag | Type | Default | Meaning |
 |---|---|---|---|---|
+| `smooth_input` | `--no-smooth` | True/False | True | [new] Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads. |
+| `smooth_sigma` | `--smooth-sigma` | number | empty | [new] Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300). |
+| `motif_genome` | `--motif-genome` | text | empty | [new] Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file. |
+| `motif_pfm` |  | text | empty | [new] Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif. |
+| `motif_pvalue` |  | number | 1e-5 | [new] Score threshold of the motif scan: chance of a hit in random sequence. |
+| `motif_pseudocount` |  | number | 0.8 | [new] Pseudocount of the motif matrix (avoids infinite scores). |
+| `motif_pad` |  | integer | 0 | [new] bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it). |
+| `hic_file` | `--hic` | text | empty | [new] Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation. |
+| `hic_norm` |  | text | KR | [new] Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing). |
+| `hic_resolution` |  | integer | empty | [new] Hi-C bin size (bp) to read. Empty = the one closest to the bead size. |
+| `hic_track_smooth` |  | number | 7.0 | [new] Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation. |
 | `rep_sim_t` |  | integer | 1000 | Number of time points of the replication simulation. |
 | `bigwig_bin_size` |  | integer | 1000 | Bin size (bp) used to average a Repli-Seq bigWig. |
 | `bigwig_sigma` |  | number | 200.0 | Gaussian smoothing (in bins) of a Repli-Seq bigWig. |
@@ -157,6 +168,7 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `rep_t_std_factor` |  | number | 0.1 | Factor multiplying the standard deviation of the replication timing curve. |
 | `rep_speed_scale` |  | number | 10 | A scale that quantifies the speed of the replication forks. |
 | `rep_init_rate_scale` |  | number | 1.0 | Multiplier of the experimentally estimated initiation rate. |
+| `rep_front_smooth` |  | number | 2.0 | [new] Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front. |
 | `rep_start_time` | `--rep-start` | integer | 50000 | MC step at which replication starts (G1 = the steps before it). |
 | `rep_time_duration` | `--rep-duration` | integer | 50000 | Duration of replication (in MC steps); G2/M = the steps after S phase. |
 
