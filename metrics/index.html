@@ -1,0 +1,2090 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Loop extrusion, epigenetic state and DNA replication shaping chromatin in 3D">
+      
+      
+      
+        <link rel="canonical" href="https://sfglab.github.io/RepliSage/metrics/">
+      
+      
+        <link rel="prev" href="../micro_macro/">
+      
+      
+        <link rel="next" href="../pipeline/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Metrics - RepliSage</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#metrics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="RepliSage" class="md-header__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RepliSage
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="RepliSage" class="md-nav__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    RepliSage
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Theory
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scope/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope and goals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../biology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biological background
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intuition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The idea in a nutshell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hamiltonian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hamiltonian idea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcmc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo, MCMC and Metropolis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../micro_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Microstates and macrostates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-from-the-monte-carlo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics from the Monte Carlo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics from the Monte Carlo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#energies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Energies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-and-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication and loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epigenetic-states-and-compartments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Epigenetic states and compartments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-parameters-of-the-epigenetic-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order parameters of the epigenetic states
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication simulation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convergence-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convergence diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-from-the-3d-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics from the 3D structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics from the 3D structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#volume-and-contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume and contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-chains-sisters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two chains: sisters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contact-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contact maps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-but-not-computed-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available but not computed by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-what-is-computed-and-where" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary: what is computed and where
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-the-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../preproc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pre-processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../replication_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replication model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mc_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../md_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular dynamics model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outputs and visualisation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The story and the role of AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-from-the-monte-carlo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics from the Monte Carlo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics from the Monte Carlo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#energies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Energies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-and-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication and loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epigenetic-states-and-compartments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Epigenetic states and compartments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#order-parameters-of-the-epigenetic-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order parameters of the epigenetic states
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication simulation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convergence-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convergence diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-from-the-3d-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics from the 3D structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics from the 3D structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#volume-and-contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume and contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-chains-sisters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two chains: sisters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contact-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contact maps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-but-not-computed-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available but not computed by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-what-is-computed-and-where" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary: what is computed and where
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-the-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h1>
+<p>A simulation produces a lot of numbers: loop positions, epigenetic states, energies, and thousands of 3D structures. A <strong>metric</strong> is a single number (or one number per sample) that summarises one aspect of them, so that runs, phases and parameter values can be compared. This page defines every metric RepliSage computes, in the notation of the paper, and says whether it is inferred from the <strong>Monte Carlo</strong> (the graph: loops and epigenetic states) or from the <strong>molecular dynamics</strong> (the 3D coordinates). The results are in the report and in <code>metadata/</code>; see <a href="../analysis/">Analysis</a> for how to read a run.</p>
+<div class="admonition note">
+<p class="admonition-title">Two sources of metrics</p>
+<p><strong>Monte Carlo (MC) metrics</strong> are computed from the sampled graph: where the LEF legs are, which state each bead has, the energies and the replication fork positions. They are cheap and exist for every sample.</p>
+<p><strong>Molecular dynamics (MD) metrics</strong> are computed from the 3D bead coordinates of each structure, which exist only when the 3D part ran. They describe size, shape and contacts, and are the ones you can compare with microscopy and Hi-C.</p>
+</div>
+<h2 id="notation">Notation<a class="headerlink" href="#notation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(N\)</span></td>
+<td>number of beads (one bead = a genomic segment, see <code>bead_kb</code> in the report)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(T\)</span></td>
+<td>number of recorded samples (one every <code>MC_STEP</code> Monte Carlo steps)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\((m_k, n_k)\)</span></td>
+<td>the two legs of LEF <span class="arithmatex">\(k\)</span>; <span class="arithmatex">\(m_k &lt; n_k\)</span> when bound, <span class="arithmatex">\(m_k = n_k = -1\)</span> when unbound</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\ell_k = n_k - m_k\)</span></td>
+<td>length of the loop of LEF <span class="arithmatex">\(k\)</span>, in beads (<span class="arithmatex">\(0\)</span> if unbound)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(s_i \in \{-2,-1,0,1,2\}\)</span></td>
+<td>epigenetic state of bead <span class="arithmatex">\(i\)</span> (positive = A-like, negative = B-like)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(r_i\)</span></td>
+<td>3D position of bead <span class="arithmatex">\(i\)</span> in one structure (a vector with three coordinates)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\langle \cdot \rangle\)</span></td>
+<td>average (over beads, samples or structures, stated in each case)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\#\{\cdot\}\)</span></td>
+<td>number of items that satisfy the condition inside</td>
+</tr>
+</tbody>
+</table>
+<p>All MC quantities are computed per recorded sample <span class="arithmatex">\(t\)</span>, so each metric is a time series. Phase values (G1, S, G2/M) are means of that series over the samples of the phase, and the report also gives the standard deviation. Because consecutive samples are correlated, this standard deviation describes fluctuations and is not an uncertainty.</p>
+<h2 id="metrics-from-the-monte-carlo">Metrics from the Monte Carlo<a class="headerlink" href="#metrics-from-the-monte-carlo" title="Permanent link">&para;</a></h2>
+<h3 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h3>
+<p><strong>Loop length.</strong> For one sample, the <em>mean loop length</em> is the average of <span class="arithmatex">\(n_k - m_k\)</span> over <strong>all</strong> LEFs, so an unbound LEF counts as length 0 (this is the definition used in the paper). The <em>bound loop length</em> averages only over the bound LEFs. Multiply by the bead size to get kilobases. The report also gives the median and the 95th percentile of the bound loop lengths.</p>
+<p><strong>Fraction of bound LEFs.</strong> A LEF is bound when <span class="arithmatex">\(m_k \ge 0\)</span> and <span class="arithmatex">\(n_k &gt; m_k\)</span>, so</p>
+<div class="arithmatex">\[f_{\text{bound}} = \frac{\#\{\text{bound LEFs}\}}{N_{\text{lef}}}\]</div>
+<p><strong>Legs on CTCF sites.</strong> The fraction of bound LEFs whose left leg sits on a CTCF site that attracts left legs, <span class="arithmatex">\(f_L\)</span>, and whose right leg sits on a site that attracts right legs, <span class="arithmatex">\(f_R\)</span> (the orientation of the sites is explained in the <a href="../biology/">biology page</a>). They tell how strongly the loops are anchored.</p>
+<p><strong>Coverage.</strong> The number of loops that span bead <span class="arithmatex">\(i\)</span>, that is the number of bound LEFs with <span class="arithmatex">\(m_k \le i &lt; n_k\)</span>. The report gives the fraction of beads covered by at least one loop and the mean coverage (loops per bead). A very high mean coverage with short loops is the signature of <strong>stacking</strong>, many loops piled on the same place, which is what happens when <span class="arithmatex">\(T_{\text{mc}}\)</span> is too low (see <a href="../hamiltonian/#temperature-in-replisage">the critical region</a>).</p>
+<h3 id="energies">Energies<a class="headerlink" href="#energies" title="Permanent link">&para;</a></h3>
+<p>The Monte Carlo energy is split into its terms, each recorded per sample (the terms are defined in the <a href="../mc_model/">Monte Carlo model</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total energy <span class="arithmatex">\(\mathcal{H}\)</span></td>
+<td>sum of all terms</td>
+</tr>
+<tr>
+<td>Folding energy</td>
+<td>loop-size term (favours long loops)</td>
+</tr>
+<tr>
+<td>Binding energy</td>
+<td>CTCF term (favours legs on CTCF sites)</td>
+</tr>
+<tr>
+<td>Epigenetic energy</td>
+<td>state-field, neighbour and loop-anchor terms (only with replication data)</td>
+</tr>
+</tbody>
+</table>
+<p>After burn-in the energy should fluctuate around a flat line. The acceptance rate (the fraction of accepted proposals) is reported too; the report warns when it is below 10 % or above 60 %.</p>
+<h3 id="replication-and-loops">Replication and loops<a class="headerlink" href="#replication-and-loops" title="Permanent link">&para;</a></h3>
+<p>Loops are not allowed to straddle a replication fork. Let <span class="arithmatex">\(f_i(t) = 1\)</span> if bead <span class="arithmatex">\(i\)</span> is replicated at time <span class="arithmatex">\(t\)</span> and <span class="arithmatex">\(0\)</span> if not. A loop <span class="arithmatex">\((m, n)\)</span> is a <strong>violation</strong> if its two legs are in different replication states (<span class="arithmatex">\(f_m \ne f_n\)</span>), or if both legs are replicated but some bead between them is not. The number of violations is counted in S phase, and each violating loop has a strength</p>
+<div class="arithmatex">\[\sigma = \min(r,\ \ell - r) + 1\]</div>
+<p>where <span class="arithmatex">\(\ell = n - m\)</span> is the loop length and <span class="arithmatex">\(r\)</span> the number of replicated beads inside it. The reported strength is the sum of <span class="arithmatex">\(\sigma\)</span> over the violating loops divided by (their number + 1). A good S phase has violations near zero.</p>
+<h3 id="epigenetic-states-and-compartments">Epigenetic states and compartments<a class="headerlink" href="#epigenetic-states-and-compartments" title="Permanent link">&para;</a></h3>
+<p><strong>Average epigenetic state.</strong> The mean state over all beads, <span class="arithmatex">\(\langle s \rangle\)</span>. It is close to 0 when A-like and B-like beads balance, and its change in S phase shows a global shift.</p>
+<p><strong>State fractions.</strong> <span class="arithmatex">\(p_k\)</span> is the fraction of beads in state <span class="arithmatex">\(k\)</span>, for <span class="arithmatex">\(k = -2, \dots, 2\)</span>.</p>
+<p><strong>Compartment of a bead.</strong> In a window of samples (the first and the last 10 % of S phase), take the mean state <span class="arithmatex">\(\bar{s}_i\)</span> of each bead and classify it:</p>
+<table>
+<thead>
+<tr>
+<th>Window-mean state</th>
+<th>Compartment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(\bar{s}_i &gt; 0.25\)</span></td>
+<td>A (active)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\bar{s}_i &lt; -0.25\)</span></td>
+<td>B (inactive)</td>
+</tr>
+<tr>
+<td>in between</td>
+<td>N (neutral)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Compartment switching.</strong> Comparing the two windows gives a <span class="arithmatex">\(3 \times 3\)</span> table of how many beads go from B, N or A to B, N or A. The report lists the number of beads that switched B to A and A to B, the <strong>net flux</strong> (B to A minus A to B), the fraction of unchanged beads and the A and B fractions before and after. For the time series, the <em>switching rate</em> at lag <span class="arithmatex">\(\tau\)</span> is the fraction of beads that have a negative state at sample <span class="arithmatex">\(t\)</span> and a positive state at sample <span class="arithmatex">\(t + \tau\)</span> (B to A), and the reverse for A to B.</p>
+<h3 id="order-parameters-of-the-epigenetic-states">Order parameters of the epigenetic states<a class="headerlink" href="#order-parameters-of-the-epigenetic-states" title="Permanent link">&para;</a></h3>
+<p>These describe how ordered the states are at each sample (only with replication data). With <span class="arithmatex">\(q = 5\)</span> states, <span class="arithmatex">\(p_k\)</span> the fraction of beads in state <span class="arithmatex">\(k\)</span> and <span class="arithmatex">\(p_{\max}\)</span> the largest of them:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Magnetisation</td>
+<td><span class="arithmatex">\(M = \dfrac{q\,p_{\max} - 1}{q - 1}\)</span></td>
+<td>0 if the states are evenly mixed, 1 if all beads share one state</td>
+</tr>
+<tr>
+<td>Cluster order</td>
+<td><span class="arithmatex">\(C = p_{\max}\)</span></td>
+<td>the fraction of beads in the most common state (state counts, not neighbours along the chain)</td>
+</tr>
+<tr>
+<td>Binder-type cumulant</td>
+<td><span class="arithmatex">\(U = 1 - \dfrac{\sum_k p_k^4}{3\,(\sum_k p_k^2)^2}\)</span></td>
+<td>a measure of the shape of the state distribution (built from its second and fourth moments)</td>
+</tr>
+<tr>
+<td>Entropy</td>
+<td><span class="arithmatex">\(H = -\sum_k p_k \ln p_k\)</span></td>
+<td>0 if all beads share a state, <span class="arithmatex">\(\ln q\)</span> if the states are evenly mixed</td>
+</tr>
+<tr>
+<td>Synchronisation</td>
+<td><span class="arithmatex">\(\dfrac{\text{fraction of edges whose two beads have the same state}}{q - 1}\)</span></td>
+<td>agreement of the states of beads joined by an edge of the graph</td>
+</tr>
+</tbody>
+</table>
+<p>For the synchronisation, the graph has one edge between every pair of consecutive beads and one edge for every bound loop, so it measures how well neighbouring beads and the two anchors of a loop agree, which is what produces compartments. The fraction is divided by <span class="arithmatex">\(q - 1\)</span>, so with <span class="arithmatex">\(q = 5\)</span> the value stays between 0 and 0.25. Use it for comparisons between phases and runs, not as an absolute fraction.</p>
+<h3 id="replication-simulation">Replication simulation<a class="headerlink" href="#replication-simulation" title="Permanent link">&para;</a></h3>
+<p>These come from the replication simulation (Replikator), not from the loops. With <span class="arithmatex">\(f_i(t)\)</span> as above (1 = replicated):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Replicated fraction</td>
+<td><span class="arithmatex">\(F(t)\)</span> = fraction of beads with <span class="arithmatex">\(f_i(t) = 1\)</span></td>
+</tr>
+<tr>
+<td>Replication time of bead <span class="arithmatex">\(i\)</span></td>
+<td><span class="arithmatex">\(t_i\)</span> = first time with <span class="arithmatex">\(f_i = 1\)</span>, divided by the S-phase length (0 to 1)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(T_{10}\)</span>, <span class="arithmatex">\(T_{50}\)</span>, <span class="arithmatex">\(T_{90}\)</span></td>
+<td>the times at which <span class="arithmatex">\(F\)</span> first reaches 10 %, 50 % and 90 %</td>
+</tr>
+<tr>
+<td>S-phase span</td>
+<td><span class="arithmatex">\(T_{90} - T_{10}\)</span>, how spread out the replication is</td>
+</tr>
+<tr>
+<td>Inferred origins</td>
+<td>local minima of the profile <span class="arithmatex">\(t_i\)</span></td>
+</tr>
+<tr>
+<td>Median origin spacing</td>
+<td>median distance between neighbouring origins, in kb</td>
+</tr>
+<tr>
+<td>Agreement with the input</td>
+<td>Spearman correlation <span class="arithmatex">\(\rho\)</span> between <span class="arithmatex">\(t_i\)</span> and the input timing (early beads should replicate early)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="convergence-diagnostics">Convergence diagnostics<a class="headerlink" href="#convergence-diagnostics" title="Permanent link">&para;</a></h3>
+<p>These tell whether the Monte Carlo has run long enough, and are applied to the series above (energies, loop lengths, bound fraction, average state): autocorrelation <span class="arithmatex">\(\rho(\tau)\)</span>, integrated autocorrelation time <span class="arithmatex">\(T_\rho\)</span>, effective sample size <span class="arithmatex">\(n_{\text{eff}} = n / T_\rho\)</span>, standard error <span class="arithmatex">\(\mathrm{MCSE} = s / \sqrt{n_{\text{eff}}}\)</span>, the Geweke <span class="arithmatex">\(z\)</span> score and the split <span class="arithmatex">\(\hat{R}\)</span>. They are defined in <a href="../analysis/#mcmc-diagnostics">Analysis</a> and explained in <a href="../mcmc/">Monte Carlo, MCMC and Metropolis</a>.</p>
+<p><strong>Effect size between phases.</strong> To say how much an observable changes from G1 to S, the report gives Cohen's <span class="arithmatex">\(d\)</span>,</p>
+<div class="arithmatex">\[d = \frac{\mu_{\text{S}} - \mu_{\text{G1}}}{\sigma_{\text{pooled}}}, \qquad \sigma_{\text{pooled}} = \sqrt{\frac{\sigma_{\text{G1}}^2 + \sigma_{\text{S}}^2}{2}}\]</div>
+<p>where <span class="arithmatex">\(\mu\)</span> and <span class="arithmatex">\(\sigma\)</span> are the mean and standard deviation of the observable in each phase. As a rule of thumb, <span class="arithmatex">\(d\)</span> below 0.2 (in absolute value) is small and above 0.8 is large.</p>
+<h2 id="metrics-from-the-3d-structures">Metrics from the 3D structures<a class="headerlink" href="#metrics-from-the-3d-structures" title="Permanent link">&para;</a></h2>
+<p>For every structure the coordinates form a matrix <span class="arithmatex">\(V\)</span> of <span class="arithmatex">\(N\)</span> rows (beads) and three columns. With replication there are two chains (the two sister chromatids). The shape and size metrics below are computed on the <strong>first sister</strong>, and a few extra ones use both. Coordinates are in Å in the structure files, and the figures convert lengths to nm and volumes to nm<span class="arithmatex">\(^3\)</span>.</p>
+<h3 id="size">Size<a class="headerlink" href="#size" title="Permanent link">&para;</a></h3>
+<p>Let <span class="arithmatex">\(c\)</span> be the centre of mass (the mean of all <span class="arithmatex">\(r_i\)</span>), <span class="arithmatex">\(D_i\)</span> the distance of bead <span class="arithmatex">\(i\)</span> from it, and <span class="arithmatex">\(d_{ij}\)</span> the distance between beads <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(j\)</span>.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Radius of gyration</td>
+<td><span class="arithmatex">\(R_g = \sqrt{\langle D_i^2 \rangle}\)</span></td>
+<td>root-mean-square distance from the centre: the overall size</td>
+</tr>
+<tr>
+<td>Mean distance to the centre</td>
+<td><span class="arithmatex">\(\langle D_i \rangle\)</span></td>
+<td>radial spread</td>
+</tr>
+<tr>
+<td>Maximum distance to the centre</td>
+<td><span class="arithmatex">\(\max_i D_i\)</span></td>
+<td>the farthest bead</td>
+</tr>
+<tr>
+<td>Mean pairwise distance</td>
+<td><span class="arithmatex">\(\langle d_{ij} \rangle\)</span> over all pairs</td>
+<td>compactness</td>
+</tr>
+<tr>
+<td>Standard deviation of pairwise distances</td>
+<td>spread of <span class="arithmatex">\(d_{ij}\)</span> over all pairs</td>
+<td>how heterogeneous the structure is</td>
+</tr>
+<tr>
+<td>Maximum pairwise distance</td>
+<td><span class="arithmatex">\(\max d_{ij}\)</span></td>
+<td>the diameter</td>
+</tr>
+<tr>
+<td>End-to-end distance</td>
+<td><span class="arithmatex">\(d_{1N}\)</span></td>
+<td>distance between the two chain ends</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shape">Shape<a class="headerlink" href="#shape" title="Permanent link">&para;</a></h3>
+<p>The <strong>gyration tensor</strong> <span class="arithmatex">\(G\)</span> describes how the beads are spread in each direction. It is a <span class="arithmatex">\(3 \times 3\)</span> matrix whose entry <span class="arithmatex">\(G_{ab}\)</span> is the average over beads of (offset from the centre along axis <span class="arithmatex">\(a\)</span>) times (offset along axis <span class="arithmatex">\(b\)</span>). Its eigenvalues <span class="arithmatex">\(\lambda_1 \ge \lambda_2 \ge \lambda_3 \ge 0\)</span> are the squared extents along the three principal axes, and they add up to <span class="arithmatex">\(R_g^2\)</span>. A sphere has three equal eigenvalues, a rod has one large, and a flat disc has one small.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Asphericity</td>
+<td><span class="arithmatex">\(\dfrac{\lambda_1 - \lambda_3}{R_g^2}\)</span></td>
+<td>0 for a sphere, towards 1 for an elongated shape (the definition used in RepliSage, which differs from the usual <span class="arithmatex">\(\lambda_1 - \frac{1}{2}(\lambda_2 + \lambda_3)\)</span> form)</td>
+</tr>
+<tr>
+<td>Planarity</td>
+<td><span class="arithmatex">\(\dfrac{\lambda_3}{R_g^2}\)</span></td>
+<td>small for a flat shape, up to <span class="arithmatex">\(1/3\)</span> for a sphere</td>
+</tr>
+<tr>
+<td>Ellipsoid ratio</td>
+<td><span class="arithmatex">\(\sqrt{\lambda_1 / \lambda_3}\)</span></td>
+<td>longest over shortest principal extent</td>
+</tr>
+<tr>
+<td>Ellipsoid volume</td>
+<td><span class="arithmatex">\(\frac{4}{3}\pi \sqrt{\lambda_1 \lambda_2 \lambda_3}\)</span></td>
+<td>volume of the ellipsoid whose semi-axes are the principal extents</td>
+</tr>
+</tbody>
+</table>
+<h3 id="volume-and-contacts">Volume and contacts<a class="headerlink" href="#volume-and-contacts" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Convex hull volume</td>
+<td>volume of the smallest convex shape that contains all beads</td>
+<td>the space the structure occupies; falls when the structure compacts</td>
+</tr>
+<tr>
+<td>Bounding box volume</td>
+<td>width <span class="arithmatex">\(\times\)</span> height <span class="arithmatex">\(\times\)</span> depth</td>
+<td>volume of the axis-aligned box around the beads</td>
+</tr>
+<tr>
+<td>Contact number</td>
+<td><span class="arithmatex">\(\langle \#\{j \ne i : d_{ij} &lt; d_c\} \rangle_i\)</span></td>
+<td>mean number of beads closer than the cutoff <span class="arithmatex">\(d_c\)</span> (default <span class="arithmatex">\(d_c = 1\)</span> in coordinate units)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="two-chains-sisters">Two chains: sisters<a class="headerlink" href="#two-chains-sisters" title="Permanent link">&para;</a></h3>
+<p>With replication, the whole system of both sisters has its own size and volume, and the two chromatids are compared:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total radius of gyration, total convex hull volume</td>
+<td><span class="arithmatex">\(R_g\)</span> and hull volume computed on all <span class="arithmatex">\(2N\)</span> beads</td>
+<td>size and volume of the replicated system</td>
+</tr>
+<tr>
+<td>Sister distance</td>
+<td>distance between the centroids of the two chains</td>
+<td>0 when the sisters overlap, growing as they separate</td>
+</tr>
+</tbody>
+</table>
+<h3 id="contact-maps">Contact maps<a class="headerlink" href="#contact-maps" title="Permanent link">&para;</a></h3>
+<p>For a set of structures (all of one phase), the <strong>contact map</strong> is the average of an inverse distance,</p>
+<div class="arithmatex">\[C_{ij} = \left\langle \frac{1}{d_{ij} + 1} \right\rangle\]</div>
+<p>where <span class="arithmatex">\(\langle\cdot\rangle\)</span> averages over the structures and <span class="arithmatex">\(d_{ij}\)</span> is the distance between beads <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(j\)</span> in one structure (high value = close). It is the 3D counterpart of a Hi-C map and is computed separately for G1, S and G2/M. Averaging the maps is preferred to taking the map of the average structure, because a mean structure is blurred and its distances are not those of any single cell.</p>
+<h3 id="available-but-not-computed-by-default">Available but not computed by default<a class="headerlink" href="#available-but-not-computed-by-default" title="Permanent link">&para;</a></h3>
+<p>The code also contains the box-counting (fractal) dimension, the global distance fluctuation and a PCA-based structural anisotropy. They are slow on large structures and are off in the standard pipeline; you can call them from <code>src/analysis/structure_metrics.py</code>.</p>
+<h2 id="summary-what-is-computed-and-where">Summary: what is computed and where<a class="headerlink" href="#summary-what-is-computed-and-where" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Metrics</th>
+<th>Source</th>
+<th>Saved in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loops</td>
+<td>mean and bound loop length, bound fraction, legs on CTCF, coverage</td>
+<td>MC</td>
+<td><code>metadata/MCMC_output/</code>, <code>lef</code> table</td>
+</tr>
+<tr>
+<td>Energies</td>
+<td>total, folding, binding, epigenetic</td>
+<td>MC</td>
+<td><code>metadata/energy_factors/</code></td>
+</tr>
+<tr>
+<td>Violations</td>
+<td>number and strength (S phase)</td>
+<td>MC + replication</td>
+<td><code>metadata/MCMC_output/</code></td>
+</tr>
+<tr>
+<td>Epigenetic states</td>
+<td>average state, fractions, compartments, switching</td>
+<td>MC</td>
+<td><code>metadata/MCMC_output/</code>, <code>compartments</code> table</td>
+</tr>
+<tr>
+<td>Order parameters</td>
+<td>magnetisation, cluster order, Binder-type cumulant, entropy, synchronisation</td>
+<td>MC</td>
+<td><code>metadata/graph_metrics/</code></td>
+</tr>
+<tr>
+<td>Replication</td>
+<td><span class="arithmatex">\(F(t)\)</span>, <span class="arithmatex">\(T_{10}/T_{50}/T_{90}\)</span>, origins, Spearman <span class="arithmatex">\(\rho\)</span></td>
+<td>replication simulation</td>
+<td><code>replication</code> table</td>
+</tr>
+<tr>
+<td>Convergence</td>
+<td>autocorrelation, <span class="arithmatex">\(T_\rho\)</span>, ESS, MCSE, Geweke, <span class="arithmatex">\(\hat{R}\)</span>, Cohen's <span class="arithmatex">\(d\)</span></td>
+<td>MC series</td>
+<td><code>convergence</code> and <code>phases</code> tables</td>
+</tr>
+<tr>
+<td>Size and shape</td>
+<td><span class="arithmatex">\(R_g\)</span>, pair distances, asphericity, planarity, ellipsoid ratio and volume</td>
+<td>MD</td>
+<td><code>metadata/structural_metrics/</code></td>
+</tr>
+<tr>
+<td>Volume and contacts</td>
+<td>convex hull and bounding box volume, contact number</td>
+<td>MD</td>
+<td><code>metadata/structural_metrics/</code></td>
+</tr>
+<tr>
+<td>Sisters</td>
+<td>total <span class="arithmatex">\(R_g\)</span>, total hull volume, sister distance</td>
+<td>MD</td>
+<td><code>metadata/structural_metrics/</code></td>
+</tr>
+<tr>
+<td>Contact maps</td>
+<td><span class="arithmatex">\(C_{ij}\)</span> per phase</td>
+<td>MD</td>
+<td><code>mean_inv_heatmap_&lt;first&gt;_&lt;last&gt;.npy</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="reading-the-metrics">Reading the metrics<a class="headerlink" href="#reading-the-metrics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Loops getting shorter in S phase</strong> is expected, because forks act as barriers that loops may not cross; check that the violations stay near zero.</li>
+<li><strong>Compartment switching</strong> (a net flux from B to A) is expected when forks act as epigenetic organisers (<code>REP_FORK_EPIGENETIC_ORGANIZER</code>).</li>
+<li><strong><span class="arithmatex">\(R_g\)</span> and the convex hull volume</strong> should rise in S (replicated chromatin unfolds and the sisters form) and fall in G2/M (condensation). The sister distance rises when the sisters separate.</li>
+<li><strong>Order parameters</strong> help to spot when the system is too frozen or too noisy; they are one of the ways to choose <span class="arithmatex">\(T_{\text{mc}}\)</span> in the critical region.</li>
+<li>Trust <strong>trends and ratios</strong> between phases more than absolute values, because the model has arbitrary length and energy units, and in S phase the system is out of equilibrium (see <a href="../hamiltonian/">the Hamiltonian idea</a>).</li>
+</ul>
+<h2 id="in-the-code">In the code<a class="headerlink" href="#in-the-code" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/lef_stats.py"><code>src/analysis/lef_stats.py</code></a>: loop series and coverage</li>
+<li><a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/compartments.py"><code>src/analysis/compartments.py</code></a>: compartments and switching</li>
+<li><a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/potts_order.py"><code>src/analysis/potts_order.py</code></a>, <a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/synchronization.py"><code>synchronization.py</code></a>: order parameters</li>
+<li><a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/rep_stats.py"><code>src/analysis/rep_stats.py</code></a>: replication statistics</li>
+<li><a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/structure_metrics.py"><code>src/analysis/structure_metrics.py</code></a>, <a href="https://github.com/SFGLab/RepliSage/blob/main/src/analysis/ensemble_metrics.py"><code>ensemble_metrics.py</code></a>: 3D metrics</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../assets/mathjax.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

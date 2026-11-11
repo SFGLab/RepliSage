@@ -1,0 +1,19 @@
+:root { --md-primary-fg-color: #141414; --md-primary-fg-color--light: #2a2a2a; --md-primary-fg-color--dark: #000;
+        --md-accent-fg-color: #A50F2D; --md-typeset-a-color: #A50F2D; }
+.md-header__button.md-logo img { height: 1.7rem; }
+.md-typeset h1, .md-typeset h2 { font-weight: 700; }
+.md-typeset table:not([class]) th { background: #141414; color: #fff; }
+.md-typeset img[src$=".svg"] { display: block; margin: 1rem auto; width: 100%; max-width: 100%; background: #fff; }
+/* flowcharts: keep labels dark on the light node fills */
+.md-typeset .mermaid .nodeLabel, .md-typeset .mermaid .nodeLabel p, .md-typeset .mermaid .label, .md-typeset .mermaid .cluster-label { color: #141414 !important; fill: #141414 !important; }
+.md-typeset .mermaid .edgeLabel, .md-typeset .mermaid .edgeLabel p { color: #141414 !important; background-color: #FFFFFF !important; }
+.md-typeset .mermaid .edgeLabel rect { fill: #FFFFFF !important; opacity: 1; }
+.md-typeset img[src$="flow_pipeline.svg"] { width: 70%; }
+.md-typeset img[src$="flow_intuition.svg"] { width: 55%; }
+
+/* sidebar: black page links, royal-red chapter titles (Theory, Implementation, ...) */
+.md-nav--primary .md-nav__item--section > .md-nav__link,
+.md-nav--primary .md-nav__item--section > label.md-nav__link,
+.md-nav__item--section > .md-nav__link { color: #A50F2D; font-weight: 700; }
+.md-nav__link { color: #141414; }
+.md-nav__link--active, .md-nav__link:hover { color: #A50F2D; }

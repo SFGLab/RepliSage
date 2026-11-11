@@ -1,0 +1,1581 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Loop extrusion, epigenetic state and DNA replication shaping chromatin in 3D">
+      
+      
+      
+        <link rel="canonical" href="https://sfglab.github.io/RepliSage/mcmc/">
+      
+      
+        <link rel="prev" href="../hamiltonian/">
+      
+      
+        <link rel="next" href="../micro_macro/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Monte Carlo, MCMC and Metropolis - RepliSage</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#monte-carlo-mcmc-and-metropolis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="RepliSage" class="md-header__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RepliSage
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Monte Carlo, MCMC and Metropolis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="RepliSage" class="md-nav__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    RepliSage
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Theory
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scope/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope and goals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../biology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biological background
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intuition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The idea in a nutshell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hamiltonian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hamiltonian idea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo, MCMC and Metropolis
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo, MCMC and Metropolis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key terms at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monte-carlo-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#markov-chains-and-mcmc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Markov chains and MCMC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-metropolis-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Metropolis algorithm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-replisage-uses-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RepliSage uses it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autocorrelation-how-independent-are-the-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autocorrelation: how independent are the samples?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Autocorrelation: how independent are the samples?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-to-expect-in-each-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to expect in each phase
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ergodic-mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ergodic mean
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../micro_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Microstates and macrostates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../preproc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pre-processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../replication_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replication model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mc_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../md_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular dynamics model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outputs and visualisation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The story and the role of AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-terms-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key terms at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monte-carlo-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#markov-chains-and-mcmc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Markov chains and MCMC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-metropolis-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Metropolis algorithm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-replisage-uses-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How RepliSage uses it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autocorrelation-how-independent-are-the-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autocorrelation: how independent are the samples?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Autocorrelation: how independent are the samples?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-to-expect-in-each-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to expect in each phase
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ergodic-mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ergodic mean
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="monte-carlo-mcmc-and-metropolis">Monte Carlo, MCMC and Metropolis<a class="headerlink" href="#monte-carlo-mcmc-and-metropolis" title="Permanent link">&para;</a></h1>
+<p>RepliSage explores its configurations with a <strong>Markov chain Monte Carlo</strong> (MCMC) method. This page explains the words, and how to tell whether a chain can be trusted. The <a href="../mc_model/">Monte Carlo model</a> page gives the details of the RepliSage moves, and the <a href="../analysis/">Analysis</a> page lists the diagnostics that the report computes.</p>
+<h2 id="key-terms-at-a-glance">Key terms at a glance<a class="headerlink" href="#key-terms-at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Short definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Monte Carlo simulation</td>
+<td>Estimating an average from random samples instead of summing over all states</td>
+</tr>
+<tr>
+<td>Markov chain</td>
+<td>A sequence of states in which the next state depends only on the current one</td>
+</tr>
+<tr>
+<td>MCMC</td>
+<td>A Markov chain built so that, in the long run, states appear with the target probability <span class="arithmatex">\(p(\mathcal{S}) \propto e^{-\mathcal{H}/T_{\text{mc}}}\)</span></td>
+</tr>
+<tr>
+<td>Metropolis rule</td>
+<td>Accept a proposed change with probability <span class="arithmatex">\(\min(1, e^{-\Delta\mathcal{H}/T_{\text{mc}}})\)</span>, otherwise keep the old state</td>
+</tr>
+<tr>
+<td>Proposal</td>
+<td>One attempted change of the configuration: a LEF move or a change of an epigenetic state</td>
+</tr>
+<tr>
+<td>Sweep (<code>N_SWEEP</code>)</td>
+<td>The number of proposals made in one Monte Carlo step</td>
+</tr>
+<tr>
+<td>Monte Carlo step</td>
+<td>One unit of simulated (pseudo)time: <code>N_SWEEP</code> proposals in a row</td>
+</tr>
+<tr>
+<td>Sampling step (<code>MC_STEP</code>)</td>
+<td>A configuration is saved every <code>MC_STEP</code> Monte Carlo steps. Saved configurations are the recorded samples that all statistics and 3D structures use</td>
+</tr>
+<tr>
+<td>Detailed balance</td>
+<td>For any two configurations <span class="arithmatex">\(\mathcal{S}_a\)</span> and <span class="arithmatex">\(\mathcal{S}_b\)</span> (here <span class="arithmatex">\(a\)</span> and <span class="arithmatex">\(b\)</span> just label states, they are unrelated to compartments A and B), the probability to be in <span class="arithmatex">\(\mathcal{S}_a\)</span> and move to <span class="arithmatex">\(\mathcal{S}_b\)</span> equals the probability to be in <span class="arithmatex">\(\mathcal{S}_b\)</span> and move to <span class="arithmatex">\(\mathcal{S}_a\)</span>: <span class="arithmatex">\(p(\mathcal{S}_a)\,P(\mathcal{S}_a \to \mathcal{S}_b) = p(\mathcal{S}_b)\,P(\mathcal{S}_b \to \mathcal{S}_a)\)</span>. It guarantees that <span class="arithmatex">\(p\)</span> is the stationary distribution of the chain</td>
+</tr>
+<tr>
+<td>Burn-in</td>
+<td>The first <code>BURNIN</code> Monte Carlo steps of a run, which are discarded because the chain still remembers its arbitrary starting configuration and has not yet reached typical states</td>
+</tr>
+<tr>
+<td>Stationary</td>
+<td>The statistics of the chain no longer change in time (true in G1 after burn-in, not in S phase)</td>
+</tr>
+<tr>
+<td>Autocorrelation</td>
+<td>How strongly a value at step <span class="arithmatex">\(t\)</span> is related to the value at step <span class="arithmatex">\(t+\tau\)</span></td>
+</tr>
+<tr>
+<td>Mixing</td>
+<td>How fast the chain forgets where it was; slow mixing means large autocorrelation</td>
+</tr>
+<tr>
+<td>Ergodic mean</td>
+<td>The time average of one long chain, which equals the ensemble average when the chain is ergodic</td>
+</tr>
+</tbody>
+</table>
+<h2 id="monte-carlo-simulation">Monte Carlo simulation<a class="headerlink" href="#monte-carlo-simulation" title="Permanent link">&para;</a></h2>
+<p>A <strong>Monte Carlo simulation</strong> estimates an average by random sampling. We want the expected value of an observable <span class="arithmatex">\(O\)</span> (say, the mean loop length) over a probability distribution <span class="arithmatex">\(p(\mathcal{S})\)</span> of states <span class="arithmatex">\(\mathcal{S}\)</span>,</p>
+<div class="arithmatex">\[\langle O \rangle = \sum_{\mathcal{S}} O(\mathcal{S})\, p(\mathcal{S})\]</div>
+<p>The sum is over astronomically many states, so we cannot do it exactly. Instead we draw <span class="arithmatex">\(n\)</span> states <span class="arithmatex">\(\mathcal{S}_1, \dots, \mathcal{S}_n\)</span> from <span class="arithmatex">\(p\)</span> and use the sample mean, which converges to <span class="arithmatex">\(\langle O \rangle\)</span> when <span class="arithmatex">\(n\)</span> is large.</p>
+<h2 id="markov-chains-and-mcmc">Markov chains and MCMC<a class="headerlink" href="#markov-chains-and-mcmc" title="Permanent link">&para;</a></h2>
+<p>The difficulty is how to draw samples from <span class="arithmatex">\(p(\mathcal{S}) \propto e^{-\mathcal{H}/T_{\text{mc}}}\)</span> when we do not know the normalisation <span class="arithmatex">\(\mathcal{Z}\)</span>. MCMC builds a <strong>Markov chain</strong>, a sequence of states in which each state depends only on the previous one, designed so that in the long run the chain visits each state with probability <span class="arithmatex">\(p(\mathcal{S})\)</span>. The samples are not independent, but they have the right distribution.</p>
+<h2 id="the-metropolis-algorithm">The Metropolis algorithm<a class="headerlink" href="#the-metropolis-algorithm" title="Permanent link">&para;</a></h2>
+<p>The <strong>Metropolis algorithm</strong> is the recipe RepliSage uses. Starting from the current state, it proposes a small random change (move a LEF, or change the epigenetic state <span class="arithmatex">\(s_k\)</span>) and accepts it with probability</p>
+<div class="arithmatex">\[P_{\text{accept}} = \min\left(1,\ e^{-\Delta\mathcal{H}/T_{\text{mc}}}\right)\]</div>
+<p>Downhill moves are always accepted, uphill moves sometimes. Because only the energy <em>difference</em> appears, <span class="arithmatex">\(\mathcal{Z}\)</span> is never needed. If a move is rejected, the old state is counted again.</p>
+<p><img alt="Metropolis algorithm: propose, accept or reject, repeat" src="../assets/diagrams/metropolis_flow.svg" /></p>
+<p>The rule satisfies <strong>detailed balance</strong>. Take two configurations <span class="arithmatex">\(\mathcal{S}_a\)</span> and <span class="arithmatex">\(\mathcal{S}_b\)</span> (the letters only label the states, they are not compartments). In equilibrium, the chance of being in <span class="arithmatex">\(\mathcal{S}_a\)</span> and jumping to <span class="arithmatex">\(\mathcal{S}_b\)</span> equals the chance of being in <span class="arithmatex">\(\mathcal{S}_b\)</span> and jumping back:</p>
+<div class="arithmatex">\[p(\mathcal{S}_a)\,P(\mathcal{S}_a \to \mathcal{S}_b) = p(\mathcal{S}_b)\,P(\mathcal{S}_b \to \mathcal{S}_a)\]</div>
+<p>With the Metropolis acceptance probability this holds exactly when <span class="arithmatex">\(p(\mathcal{S}) \propto e^{-\mathcal{H}(\mathcal{S})/T_{\text{mc}}}\)</span>, so the chain converges to the Boltzmann distribution, as long as the energy <span class="arithmatex">\(\mathcal{H}\)</span> is fixed. In RepliSage's S phase it is not fixed (see <a href="../hamiltonian/">the Hamiltonian idea</a>).</p>
+<h2 id="how-replisage-uses-it">How RepliSage uses it<a class="headerlink" href="#how-replisage-uses-it" title="Permanent link">&para;</a></h2>
+<p>A run has a simple structure. Each <strong>Monte Carlo step</strong> makes <code>N_SWEEP</code> proposals, the run lasts <code>N_STEPS</code> Monte Carlo steps, and a configuration is saved every <code>MC_STEP</code> steps after the burn-in:</p>
+<div class="arithmatex">\[n_{\text{samples}} = \frac{N_{\text{steps}} - \text{BURNIN}}{f_{\text{mc}}}\]</div>
+<p>where <span class="arithmatex">\(f_{\text{mc}}\)</span> is <code>MC_STEP</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Word</th>
+<th>Meaning in RepliSage</th>
+<th>Parameter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Proposal</td>
+<td>One attempted change: a LEF move with probability <code>P_REW</code>, otherwise an epigenetic-state change</td>
+<td><code>P_REW</code></td>
+</tr>
+<tr>
+<td>Sweep</td>
+<td>Number of proposals in one Monte Carlo step, <span class="arithmatex">\(N_{\text{sweep}}\)</span></td>
+<td><code>N_SWEEP</code></td>
+</tr>
+<tr>
+<td>Monte Carlo step</td>
+<td><span class="arithmatex">\(N_{\text{sweep}}\)</span> proposals; the unit of pseudotime</td>
+<td></td>
+</tr>
+<tr>
+<td>Run length</td>
+<td><span class="arithmatex">\(N_{\text{steps}}\)</span> Monte Carlo steps</td>
+<td><code>N_STEPS</code></td>
+</tr>
+<tr>
+<td>Burn-in</td>
+<td>First steps, discarded while the chain relaxes</td>
+<td><code>BURNIN</code></td>
+</tr>
+<tr>
+<td>Sampling step</td>
+<td>A configuration is recorded every <span class="arithmatex">\(f_{\text{mc}}\)</span> Monte Carlo steps</td>
+<td><code>MC_STEP</code></td>
+</tr>
+<tr>
+<td>Replicas</td>
+<td>Independent chains with different seeds</td>
+<td><code>N_REPLICAS</code>, <code>SEED</code></td>
+</tr>
+</tbody>
+</table>
+<p><img alt="A trace: burn-in, then fluctuations around the mean, with recorded samples" src="../assets/diagrams/trace_burnin.svg" /></p>
+<p>How to read the figure: the curve is the value <span class="arithmatex">\(O_t\)</span> of one observable (for example the energy <span class="arithmatex">\(\mathcal{H}\)</span> or the mean loop length <span class="arithmatex">\(\langle \ell \rangle\)</span>) at every Monte Carlo step <span class="arithmatex">\(t\)</span> of a single chain. The chain starts far from typical states, so the first <code>BURNIN</code> steps (grey) are thrown away. After that <span class="arithmatex">\(O_t\)</span> fluctuates around a stable mean <span class="arithmatex">\(\langle O \rangle\)</span>, and a state is stored every <span class="arithmatex">\(f_{\text{mc}}\)</span> steps (red dots). Storing every step would mostly repeat nearly identical states, so a larger <code>MC_STEP</code> gives samples that are closer to independent. The defaults are <code>BURNIN</code> = 1000, <code>MC_STEP</code> = 200 and <code>N_SWEEP</code> = 1000.</p>
+<h2 id="autocorrelation-how-independent-are-the-samples">Autocorrelation: how independent are the samples?<a class="headerlink" href="#autocorrelation-how-independent-are-the-samples" title="Permanent link">&para;</a></h2>
+<p>Neighbouring states in a chain look alike, so <span class="arithmatex">\(n\)</span> samples carry less information than <span class="arithmatex">\(n\)</span> independent ones. The <strong>autocorrelation</strong> of a series <span class="arithmatex">\(x_t\)</span> at lag <span class="arithmatex">\(\tau\)</span> measures how long the memory lasts,</p>
+<div class="arithmatex">\[\rho(\tau) = \frac{C(\tau)}{C(0)}\]</div>
+<p>where <span class="arithmatex">\(C(\tau)\)</span> is the autocovariance (the average of <span class="arithmatex">\((x_t - \bar{x})(x_{t+\tau} - \bar{x})\)</span> over <span class="arithmatex">\(t\)</span>), so <span class="arithmatex">\(\rho(0) = 1\)</span>, and <span class="arithmatex">\(\rho\)</span> should drop to about 0 within a few lags. The decay is summarised by the <strong>integrated autocorrelation time</strong> <span class="arithmatex">\(T_{\rho}\)</span> (the sum of <span class="arithmatex">\(\rho(\tau)\)</span> over lags, so it is built from the autocorrelation itself), the number of samples that count as one independent sample, and the <strong>effective sample size</strong></p>
+<div class="arithmatex">\[n_{\text{eff}} = \frac{n}{T_{\rho}}\]</div>
+<p>If <span class="arithmatex">\(T_{\rho}\)</span> is large, the chain <em>mixes slowly</em>: it needs many steps to forget where it was. Remedies are a longer run, a larger sampling interval, a higher <span class="arithmatex">\(T_{\text{mc}}\)</span> (more uphill moves), or more replicas.</p>
+<p><img alt="Fast and slow mixing and their autocorrelation functions" src="../assets/diagrams/autocorr.svg" /></p>
+<h3 id="what-to-expect-in-each-phase">What to expect in each phase<a class="headerlink" href="#what-to-expect-in-each-phase" title="Permanent link">&para;</a></h3>
+<p>Autocorrelation is not equally worrying in every phase. In G1 and G2/M the energy is fixed, so the chain relaxes to equilibrium and forgets its past quickly. In S phase the replication forks keep changing the system.</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Expected autocorrelation (size of <span class="arithmatex">\(T_{\rho}\)</span>)</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td>Small</td>
+<td>Fixed energy; loops and states relax quickly and the samples are close to independent</td>
+</tr>
+<tr>
+<td>S</td>
+<td>Large, almost always present</td>
+<td>Forks move along the genome and keep pushing LEFs and the epigenetic states in a semi-deterministic way. Origin firing is stochastic, but in general it follows the replication program, so consecutive samples stay correlated</td>
+</tr>
+<tr>
+<td>G2/M</td>
+<td>Small</td>
+<td>The replication ties are off and the energy is fixed again</td>
+</tr>
+</tbody>
+</table>
+<p>So in S phase a large autocorrelation is a <strong>real signal of the replication program</strong>, not a failed run. It shows up as a slow trend in the trace, and a longer run or a larger <code>MC_STEP</code> will not remove it. To separate this trend from noise, look at how the observable changes with time and compare replicas: the ensemble over replicas shows the program, and the spread between replicas shows the randomness around it. Use <span class="arithmatex">\(n_{\text{eff}}\)</span> and the convergence checks mainly in the stationary phases (G1 after burn-in, and G2/M).</p>
+<h2 id="the-ergodic-mean">The ergodic mean<a class="headerlink" href="#the-ergodic-mean" title="Permanent link">&para;</a></h2>
+<p>A chain is <strong>ergodic</strong> if it can reach any state from any other, so that one long run explores the whole distribution. Then the <strong>time average</strong> of one chain equals the <strong>ensemble average</strong> over many independent chains,</p>
+<div class="arithmatex">\[\overline{O} = \frac{1}{n}\sum_{t=1}^{n} O(\mathcal{S}_t) \ \longrightarrow\ \langle O\rangle \quad (n \to \infty)\]</div>
+<p>This is the <strong>ergodic mean</strong>, and it is why a single long Monte Carlo run is enough to estimate averages. Two cautions apply:</p>
+<ul>
+<li><strong>Local minima.</strong> At low <span class="arithmatex">\(T_{\text{mc}}\)</span> a chain can stay trapped near one valley, so its time average is not the ensemble average. Several replicas reveal this: they would disagree (see the split R-hat in <a href="../analysis/">Analysis</a>).</li>
+<li><strong>Non-stationary phases.</strong> In S phase the energy changes as forks move, so the distribution itself changes in time. A time average over S phase mixes different situations, and the right object is the <strong>ensemble average at each time</strong>, over replicas.</li>
+</ul>
+<p><img alt="Time average of one chain and ensemble average over replicas" src="../assets/diagrams/ergodic.svg" /></p>
+<p>For this reason RepliSage checks convergence in the stationary part (G1 after burn-in) and compares phases using ensembles of replicas. See also <a href="../micro_macro/">microstates and macrostates</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../assets/mathjax.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

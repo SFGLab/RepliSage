@@ -1,0 +1,2400 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Loop extrusion, epigenetic state and DNA replication shaping chromatin in 3D">
+      
+      
+      
+        <link rel="canonical" href="https://sfglab.github.io/RepliSage/config/">
+      
+      
+        <link rel="prev" href="../md_model/">
+      
+      
+        <link rel="next" href="../analysis/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Configuration - RepliSage</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration-file" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="RepliSage" class="md-header__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RepliSage
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="RepliSage" class="md-nav__button md-logo" aria-label="RepliSage" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    RepliSage
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SFGLab/RepliSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Theory
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scope/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scope and goals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../biology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biological background
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intuition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The idea in a nutshell
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hamiltonian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hamiltonian idea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcmc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo, MCMC and Metropolis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../micro_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Microstates and macrostates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../preproc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pre-processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../replication_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Replication model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mc_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monte Carlo model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../md_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular dynamics model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-write-a-configini" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to write a config.ini
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to write a config.ini">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A complete example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common mistakes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="All parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General ([general])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input ([input])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-processing-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-processing ([preprocessing])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication ([replication])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monte-carlo-mc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo ([mc])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#molecular-dynamics-md" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Molecular dynamics ([md])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output ([output])
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-the-physics-in-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing the physics in detail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outputs and visualisation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The story and the role of AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-write-a-configini" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to write a config.ini
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to write a config.ini">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A complete example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common mistakes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="All parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General ([general])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input ([input])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-processing-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-processing ([preprocessing])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replication-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication ([replication])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monte-carlo-mc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo ([mc])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#molecular-dynamics-md" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Molecular dynamics ([md])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output ([output])
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-the-physics-in-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing the physics in detail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-the-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In the code
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="configuration-file">Configuration file<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h1>
+<p><code>config.ini</code> is where the detailed settings live: energies, temperatures, force-field and plotting options. The command line carries only the everyday choices (see <a href="../cli/">cli.md</a>).</p>
+<div class="highlight"><pre><span></span><code>replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w">                 </span><span class="c1"># use your file</span>
+replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w"> </span>--seed<span class="w"> </span><span class="m">7</span><span class="w">        </span><span class="c1"># flags override the file</span>
+</code></pre></div>
+<h2 id="how-to-write-a-configini">How to write a <code>config.ini</code><a class="headerlink" href="#how-to-write-a-configini" title="Permanent link">&para;</a></h2>
+<p>A config file is a short text file of <code>key = value</code> lines. You never need to write all parameters: <strong>list only what you want to change</strong>, everything else keeps its default.</p>
+<p><strong>Step 1. Start small.</strong> Create <code>my_config.ini</code> and write the two things RepliSage always needs, the loops and the region:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[input]</span>
+<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">loops.bedpe</span><span class="w">        </span><span class="c1">; CTCF input: .bedpe, .bed or .narrowPeak (required)</span>
+<span class="na">chrom</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s">chr14</span>
+<span class="na">region_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">80835000</span><span class="w">           </span><span class="c1">; base pairs</span>
+<span class="na">region_end</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">98674700</span>
+</code></pre></div>
+<p>Without a <code>bedpe_path</code> RepliSage stops, because without CTCF sites it does not know where the barriers are. If you leave out the region, the <strong>whole chromosome</strong> is modelled.</p>
+<p><strong>Step 2. Decide what to simulate.</strong> What runs depends on the inputs you give:</p>
+<table>
+<thead>
+<tr>
+<th>You want</th>
+<th>Add to the file</th>
+<th>What runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loop extrusion only</td>
+<td><code>rept_path = none</code></td>
+<td>loop extrusion; no replication, no S or G2/M phase</td>
+</tr>
+<tr>
+<td>Replication with the built-in data</td>
+<td><code>use_sc_rept = True</code></td>
+<td>+ replication from the single-cell GM12878 timing, and A/B compartments</td>
+</tr>
+<tr>
+<td>Replication with your own data</td>
+<td><code>rept_path = my_timing.bigWig</code> (or <code>.txt</code>)</td>
+<td>the same, driven by your Repli-Seq signal</td>
+</tr>
+<tr>
+<td>3D structures</td>
+<td><code>simulation_type = MD</code> (default), <code>EM</code>, or <code>none</code> to switch off</td>
+<td>a 3D model built with OpenMM; MD gives the replication trajectory</td>
+</tr>
+</tbody>
+</table>
+<p>If you give no timing at all and run in a terminal, RepliSage asks whether to use the built-in timing or to continue with loop extrusion only. <code>ask_rt = False</code> switches that question off, which is what you want for scripts and clusters.</p>
+<p><strong>Step 3. Tune only when needed.</strong> Typical first changes are the run length and the temperature in <code>[mc]</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[mc]</span>
+<span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">150000</span><span class="w">      </span><span class="c1">; Monte Carlo steps</span>
+<span class="na">mc_step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">200</span><span class="w">         </span><span class="c1">; record every 200th step</span>
+<span class="na">burnin</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s">5000</span><span class="w">        </span><span class="c1">; steps discarded at the start</span>
+<span class="na">t_mc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span><span class="w">         </span><span class="c1">; Monte Carlo temperature</span>
+</code></pre></div>
+<p>There is no simulated annealing: <code>t_mc</code> is one fixed value for the whole run (G1, S and G2/M). Keep it in the critical region, not too low (loops freeze and stack) and not too high (loops fall off); the default 1.5 is inside it. See <a href="../hamiltonian/#temperature-in-replisage">the Hamiltonian idea</a>.</p>
+<p><strong>Step 4. Run and check.</strong> Every run saves the values it actually used as <code>config_used.ini</code> in its folder. Open it to confirm that your changes were picked up, and use it to repeat the run exactly.</p>
+<div class="highlight"><pre><span></span><code>replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w"> </span>-v
+</code></pre></div>
+<h3 id="a-complete-example">A complete example<a class="headerlink" href="#a-complete-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">; my_config.ini: loops + replication + 3D structures for a 17.8 Mb region</span>
+<span class="k">[general]</span>
+<span class="na">out_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">results</span>
+<span class="na">run_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">chr14_demo</span>
+<span class="na">n_threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4</span>
+<span class="na">seed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">7</span>
+
+<span class="k">[input]</span>
+<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">loops.bedpe</span>
+<span class="na">rept_path</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">GM12878_timing.bigWig</span><span class="w">    </span><span class="c1">; Repli-Seq, always log-normalised</span>
+<span class="na">chrom</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s">chr14</span>
+<span class="na">region_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">80835000</span>
+<span class="na">region_end</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">98674700</span>
+<span class="na">n_beads</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="s">1000</span><span class="w">                     </span><span class="c1">; empty = 7 kb per bead (max 10,000 beads)</span>
+
+<span class="k">[replication]</span>
+<span class="na">rep_start_time</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span><span class="w">               </span><span class="c1">; MC step where S phase starts</span>
+<span class="na">rep_time_duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span><span class="w">               </span><span class="c1">; length of S phase in MC steps</span>
+
+<span class="k">[mc]</span>
+<span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">150000</span>
+<span class="na">t_mc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span>
+
+<span class="k">[md]</span>
+<span class="na">simulation_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">MD</span>
+<span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">CUDA</span>
+</code></pre></div>
+<h3 id="common-mistakes">Common mistakes<a class="headerlink" href="#common-mistakes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A typo in a key.</strong> Unknown keys are ignored with a warning (<code>-vv</code> shows it), so check <code>config_used.ini</code> if a change seems to have no effect.</li>
+<li><strong>Comments.</strong> <code>;</code> starts a comment, also after a value. Do not put <code>#</code> or quotes around values.</li>
+<li><strong>Empty is not zero.</strong> An empty value means "not set", so the default is used. Write <code>0</code> if you mean zero.</li>
+<li><strong>Coordinates in kb or Mb.</strong> Region coordinates are always in base pairs.</li>
+<li><strong>Region too small for the number of beads.</strong> The bead size is <code>(region_end - region_start) / n_beads</code>; keep it at a few kb or more.</li>
+<li><strong>Replication time too short.</strong> <code>rep_time_duration</code> must be larger than <code>rep_sim_t</code>, and the S phase must fit inside <code>n_steps</code>.</li>
+</ul>
+<p>The repository also ships a fully annotated template, <code>src/config.ini</code>, and ready-made variants in the <a href="../examples/">examples folder</a>, and short runnable ones in <code>demo/</code>.</p>
+<h2 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Everything has a key.</strong> Each command-line flag is a shortcut for a key, and the file has many more. <code>src/config.ini</code> is a full commented template. With a well-defined file <code>replisage -c my_config.ini</code> is all you need.</li>
+<li><strong>Checks.</strong> <code>N_LEF + N_LEF2</code> at or above half the beads is an error. Bead size outside 200 bp - 50 kb is an error, outside 1 - 10 kb a warning.</li>
+<li>
+<p><code>rept_path</code> accepts a <code>.bigWig/.txt</code> file, a single-cell <code>.parquet</code>, <code>builtin</code> (shipped GM12878 data) or <code>none</code> (loop extrusion only).</p>
+</li>
+<li>
+<p>The format is a plain ini file. Section names are only for readability: <code>[mc]</code>, <code>[md]</code> and so on can be named anything, and a key may sit in any section.</p>
+</li>
+<li>Keys are not case sensitive. <code>N_LEF</code>, <code>n_lef</code> and <code>N_lef</code> are the same.</li>
+<li><code>;</code> starts a comment, also after a value.</li>
+<li>An empty value means "not set" and the default is used.</li>
+<li>Unknown keys are ignored with a warning, so typos do not stop a run but show up in the log.</li>
+<li>Booleans accept <code>True/False</code>, <code>yes/no</code>, <code>1/0</code>.</li>
+<li>Precedence: defaults, then the file, then the command-line flags.</li>
+<li>Every run saves the resolved parameters as <code>config_used.ini</code> in its folder, so you can repeat any run with <code>-c</code> on that file.</li>
+</ul>
+<h2 id="all-parameters">All parameters<a class="headerlink" href="#all-parameters" title="Permanent link">&para;</a></h2>
+<p>One table per section of the file. <em>Flag</em> is the command-line option that sets the same thing, if there is one. <em>Type</em> tells how to write the value: <code>integer</code>, <code>number</code> (decimals allowed), <code>text</code> (a path or a name) or <code>True/False</code>. These tables are generated from <code>src/config/arg_defs.py</code> by <code>docs/scripts/gen_config_tables.py</code>, so they always match the code.</p>
+<h3 id="general-general">General (<code>[general]</code>)<a class="headerlink" href="#general-general" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>platform</code></td>
+<td><code>--platform</code></td>
+<td>text</td>
+<td>auto</td>
+<td>OpenMM platform: auto (default) tries CUDA, then OpenCL, then CPU and falls back on any error; or force CUDA, OpenCL or CPU.</td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td></td>
+<td>text</td>
+<td>empty</td>
+<td>Device index for CUDA or OpenCL (count from 0).</td>
+</tr>
+<tr>
+<td><code>out_path</code></td>
+<td><code>--out-path</code></td>
+<td>text</td>
+<td>results</td>
+<td>Root folder of results. Each run gets its own sub-folder inside.</td>
+</tr>
+<tr>
+<td><code>run_name</code></td>
+<td><code>--run-name</code></td>
+<td>text</td>
+<td>empty</td>
+<td>Exact name of the run sub-folder. Empty = automatic name (chrom + region + time).</td>
+</tr>
+<tr>
+<td><code>run_tag</code></td>
+<td></td>
+<td>text</td>
+<td>empty</td>
+<td>Free label appended to the automatic run name.</td>
+</tr>
+<tr>
+<td><code>n_threads</code></td>
+<td><code>--threads</code></td>
+<td>integer</td>
+<td>1</td>
+<td>Number of CPU threads used to run independent MC replicas in parallel.</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td><code>--seed</code></td>
+<td>integer</td>
+<td>empty</td>
+<td>Random seed of the Monte Carlo (empty = random).</td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td></td>
+<td>integer</td>
+<td>0</td>
+<td>Verbosity 0-3 (same as -v, -vv, -vvv): 0 stages, progress bars and results; 1 + input / output tables; 2 + detailed info; 3 everything.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="input-input">Input (<code>[input]</code>)<a class="headerlink" href="#input-input" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bedpe_path</code></td>
+<td><code>--bedpe-file</code>, <code>--input-file</code></td>
+<td>text</td>
+<td>empty</td>
+<td>Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file.</td>
+</tr>
+<tr>
+<td><code>rept_path</code></td>
+<td><code>--rt-file</code></td>
+<td>text</td>
+<td>empty</td>
+<td>The replication timing dataset (.txt, .bw, .bigwig). If empty, no replication is modelled (unless USE_SC_REPT).</td>
+</tr>
+<tr>
+<td><code>sc_rept_path</code></td>
+<td><code>--rt-file</code></td>
+<td>text</td>
+<td>built-in file</td>
+<td>The single cell replication timing dataset (.parquet).</td>
+</tr>
+<tr>
+<td><code>use_sc_rept</code></td>
+<td><code>--rt-file builtin</code></td>
+<td>True/False</td>
+<td>False</td>
+<td>Use the built-in single-cell replication timing when REPT_PATH is empty.</td>
+</tr>
+<tr>
+<td><code>ask_rt</code></td>
+<td><code>--rt-file none</code></td>
+<td>True/False</td>
+<td>True</td>
+<td>Ask interactively what to do when no replication timing is given (only in a terminal).</td>
+</tr>
+<tr>
+<td><code>chrom</code></td>
+<td><code>--region</code></td>
+<td>text</td>
+<td>empty</td>
+<td>Chromosome of the modelling region of interest.</td>
+</tr>
+<tr>
+<td><code>region_start</code></td>
+<td><code>--region</code></td>
+<td>integer</td>
+<td>empty</td>
+<td>Starting region coordinate. Empty = whole chromosome.</td>
+</tr>
+<tr>
+<td><code>region_end</code></td>
+<td><code>--region</code></td>
+<td>integer</td>
+<td>empty</td>
+<td>Ending region coordinate. Empty = whole chromosome.</td>
+</tr>
+<tr>
+<td><code>n_beads</code></td>
+<td><code>--n-beads</code></td>
+<td>integer</td>
+<td>empty</td>
+<td>Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads). Bead sizes outside 200 bp - 50 kb are an error.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pre-processing-preprocessing">Pre-processing (<code>[preprocessing]</code>)<a class="headerlink" href="#pre-processing-preprocessing" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>smooth_input</code></td>
+<td><code>--no-smooth</code></td>
+<td>True/False</td>
+<td>True</td>
+<td>[new] Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads.</td>
+</tr>
+<tr>
+<td><code>smooth_sigma</code></td>
+<td><code>--smooth-sigma</code></td>
+<td>number</td>
+<td>empty</td>
+<td>[new] Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300).</td>
+</tr>
+<tr>
+<td><code>motif_genome</code></td>
+<td><code>--motif-genome</code></td>
+<td>text</td>
+<td>empty</td>
+<td>[new] Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file.</td>
+</tr>
+<tr>
+<td><code>motif_pfm</code></td>
+<td></td>
+<td>text</td>
+<td>empty</td>
+<td>[new] Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif.</td>
+</tr>
+<tr>
+<td><code>motif_pvalue</code></td>
+<td></td>
+<td>number</td>
+<td>1e-5</td>
+<td>[new] Score threshold of the motif scan: chance of a hit in random sequence.</td>
+</tr>
+<tr>
+<td><code>motif_pseudocount</code></td>
+<td></td>
+<td>number</td>
+<td>0.8</td>
+<td>[new] Pseudocount of the motif matrix (avoids infinite scores).</td>
+</tr>
+<tr>
+<td><code>motif_pad</code></td>
+<td></td>
+<td>integer</td>
+<td>0</td>
+<td>[new] bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it).</td>
+</tr>
+<tr>
+<td><code>hic_file</code></td>
+<td><code>--hic</code></td>
+<td>text</td>
+<td>empty</td>
+<td>[new] Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation.</td>
+</tr>
+<tr>
+<td><code>hic_norm</code></td>
+<td></td>
+<td>text</td>
+<td>KR</td>
+<td>[new] Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing).</td>
+</tr>
+<tr>
+<td><code>hic_resolution</code></td>
+<td></td>
+<td>integer</td>
+<td>empty</td>
+<td>[new] Hi-C bin size (bp) to read. Empty = the one closest to the bead size.</td>
+</tr>
+<tr>
+<td><code>hic_track_smooth</code></td>
+<td></td>
+<td>number</td>
+<td>7.0</td>
+<td>[new] Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation.</td>
+</tr>
+<tr>
+<td><code>rep_sim_t</code></td>
+<td></td>
+<td>integer</td>
+<td>1000</td>
+<td>Number of time points of the replication simulation.</td>
+</tr>
+<tr>
+<td><code>bigwig_bin_size</code></td>
+<td></td>
+<td>integer</td>
+<td>1000</td>
+<td>Bin size (bp) used to average a Repli-Seq bigWig.</td>
+</tr>
+<tr>
+<td><code>bigwig_sigma</code></td>
+<td></td>
+<td>number</td>
+<td>200.0</td>
+<td>Gaussian smoothing (in bins) of a Repli-Seq bigWig.</td>
+</tr>
+<tr>
+<td><code>bigwig_log_norm</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>[deprecated] Repli-Seq signals are always log-normalised; this value is ignored.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="replication-replication">Replication (<code>[replication]</code>)<a class="headerlink" href="#replication-replication" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rep_with_stress</code></td>
+<td><code>--with-stress</code></td>
+<td>True/False</td>
+<td>False</td>
+<td>True sets REP_T_STD_FACTOR, REP_SPEED_SCALE and REP_INIT_RATE_SCALE to replication-stress values.</td>
+</tr>
+<tr>
+<td><code>rep_t_std_factor</code></td>
+<td></td>
+<td>number</td>
+<td>0.1</td>
+<td>Factor multiplying the standard deviation of the replication timing curve.</td>
+</tr>
+<tr>
+<td><code>rep_speed_scale</code></td>
+<td></td>
+<td>number</td>
+<td>10</td>
+<td>A scale that quantifies the speed of the replication forks.</td>
+</tr>
+<tr>
+<td><code>rep_init_rate_scale</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Multiplier of the experimentally estimated initiation rate.</td>
+</tr>
+<tr>
+<td><code>rep_front_smooth</code></td>
+<td></td>
+<td>number</td>
+<td>2.0</td>
+<td>[new] Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front.</td>
+</tr>
+<tr>
+<td><code>rep_start_time</code></td>
+<td><code>--rep-start</code></td>
+<td>integer</td>
+<td>50000</td>
+<td>MC step at which replication starts (G1 = the steps before it).</td>
+</tr>
+<tr>
+<td><code>rep_time_duration</code></td>
+<td><code>--rep-duration</code></td>
+<td>integer</td>
+<td>50000</td>
+<td>Duration of replication (in MC steps); G2/M = the steps after S phase.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="monte-carlo-mc">Monte Carlo (<code>[mc]</code>)<a class="headerlink" href="#monte-carlo-mc" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lef_rw</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Random walk for cohesins instead of unidirectional sliding.</td>
+</tr>
+<tr>
+<td><code>cohesin_blocks_condensin</code></td>
+<td></td>
+<td>True/False</td>
+<td>False</td>
+<td>Allow cohesins to block condensins during simulation.</td>
+</tr>
+<tr>
+<td><code>random_init_spins</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Use a random initial distribution of epigenetic states.</td>
+</tr>
+<tr>
+<td><code>p_rew</code></td>
+<td></td>
+<td>number</td>
+<td>0.5</td>
+<td>Probability of proposing a rewiring move (LEF move).</td>
+</tr>
+<tr>
+<td><code>rep_fork_push</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Hard-coded replication fork pushing in the MC moves.</td>
+</tr>
+<tr>
+<td><code>rep_fork_epigenetic_organizer</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Model replication forks as epigenetic organizers.</td>
+</tr>
+<tr>
+<td><code>n_steps</code></td>
+<td><code>--n-steps</code></td>
+<td>integer</td>
+<td>150000</td>
+<td>Total number of Monte Carlo steps (default: G1 50000 + S 50000 + G2/M 50000).</td>
+</tr>
+<tr>
+<td><code>n_sweep</code></td>
+<td></td>
+<td>integer</td>
+<td>1000</td>
+<td>Number of node or link state changes proposed per simulation step.</td>
+</tr>
+<tr>
+<td><code>n_lef</code></td>
+<td></td>
+<td>integer</td>
+<td>empty</td>
+<td>Number of loop extrusion factors (LEFs). Empty = half the number of CTCF sites (changed from twice in earlier versions).</td>
+</tr>
+<tr>
+<td><code>n_lef2</code></td>
+<td></td>
+<td>integer</td>
+<td>0</td>
+<td>Number of second-family LEFs (different speed).</td>
+</tr>
+<tr>
+<td><code>mc_step</code></td>
+<td><code>--mc-step</code></td>
+<td>integer</td>
+<td>200</td>
+<td>Sampling frequency of MC steps (avoids autocorrelation).</td>
+</tr>
+<tr>
+<td><code>burnin</code></td>
+<td><code>--burnin</code></td>
+<td>integer</td>
+<td>5000</td>
+<td>Burn-in period (steps before equilibrium).</td>
+</tr>
+<tr>
+<td><code>t_mc</code></td>
+<td></td>
+<td>number</td>
+<td>1.5</td>
+<td>Temperature of the stochastic MCMC model.</td>
+</tr>
+<tr>
+<td><code>folding_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Folding coefficient for the first family of LEFs.</td>
+</tr>
+<tr>
+<td><code>folding_coeff2</code></td>
+<td></td>
+<td>number</td>
+<td>0.0</td>
+<td>Folding coefficient for the second family of LEFs.</td>
+</tr>
+<tr>
+<td><code>rep_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>0.01</td>
+<td>Replication-barrier penalty (energy scale = coeff * 1e8; was 1.0 = 1e8 in the published v1.0).</td>
+</tr>
+<tr>
+<td><code>epi_interact_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Interaction coefficient of the epigenetic state model.</td>
+</tr>
+<tr>
+<td><code>epi_field_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Field coefficient of the epigenetic state model.</td>
+</tr>
+<tr>
+<td><code>cross_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Coefficient for LEF crossing.</td>
+</tr>
+<tr>
+<td><code>bind_coeff</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Coefficient for CTCF binding.</td>
+</tr>
+<tr>
+<td><code>preferential_binding</code></td>
+<td><code>--preferential-binding</code></td>
+<td>True/False</td>
+<td>False</td>
+<td>LEFs load preferentially where loops span (CTCF occupancy), and rarely in loop-naked areas. Also --preferential-binding.</td>
+</tr>
+<tr>
+<td><code>pref_bind_floor</code></td>
+<td></td>
+<td>number</td>
+<td>0.05</td>
+<td>Loading weight of loop-naked beads relative to the most occupied bead (0-1) when PREFERENTIAL_BINDING is on.</td>
+</tr>
+<tr>
+<td><code>pref_bind_power</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Exponent applied to the occupancy before loading (1 = proportional, &gt;1 = stronger preference).</td>
+</tr>
+<tr>
+<td><code>n_replicas</code></td>
+<td><code>--n-replicas</code></td>
+<td>integer</td>
+<td>1</td>
+<td>Independent MC chains; each is processed into its own replica_XX sub-folder.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="molecular-dynamics-md">Molecular dynamics (<code>[md]</code>)<a class="headerlink" href="#molecular-dynamics-md" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>initial_structure_type</code></td>
+<td></td>
+<td>text</td>
+<td>rw</td>
+<td>rw, confined_rw, self_avoiding_rw, helix, circle, spiral, sphere, hilbert.</td>
+</tr>
+<tr>
+<td><code>simulation_type</code></td>
+<td><code>--run-md / --md-mode</code></td>
+<td>text</td>
+<td>MD</td>
+<td>3D engine: MD (one minimization + dynamics, the default: gives the replication trajectory) or EM (many minimizations). none/empty = stop after the Monte Carlo.</td>
+</tr>
+<tr>
+<td><code>dcd_reporter</code></td>
+<td></td>
+<td>True/False</td>
+<td>False</td>
+<td>Save a .dcd video of the 3D structure.</td>
+</tr>
+<tr>
+<td><code>integrator_type</code></td>
+<td></td>
+<td>text</td>
+<td>langevin</td>
+<td>langevin or brownian.</td>
+</tr>
+<tr>
+<td><code>integrator_step</code></td>
+<td><code>--md-step-size</code></td>
+<td>text</td>
+<td>100 femtosecond</td>
+<td>Integrator time step (e.g. '100 femtosecond').</td>
+</tr>
+<tr>
+<td><code>forcefield_path</code></td>
+<td></td>
+<td>text</td>
+<td>built-in file</td>
+<td>Path to XML file with the forcefield.</td>
+</tr>
+<tr>
+<td><code>ev_p</code></td>
+<td></td>
+<td>number</td>
+<td>0.01</td>
+<td>Probability that excluded volume of a bead is randomly disabled.</td>
+</tr>
+<tr>
+<td><code>tolerance</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Stopping tolerance of the energy minimization.</td>
+</tr>
+<tr>
+<td><code>sim_temp</code></td>
+<td></td>
+<td>text</td>
+<td>310 kelvin</td>
+<td>Temperature of the 3D simulation (e.g. '310 kelvin').</td>
+</tr>
+<tr>
+<td><code>sim_step</code></td>
+<td><code>--md-steps</code></td>
+<td>integer</td>
+<td>1000</td>
+<td>MD steps performed each time the loop forces change.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="output-output">Output (<code>[output]</code>)<a class="headerlink" href="#output-output" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Flag</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>save_plots</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Save diagnostic plots.</td>
+</tr>
+<tr>
+<td><code>save_mdt</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Save metadata of the stochastic simulation.</td>
+</tr>
+<tr>
+<td><code>report</code></td>
+<td><code>--no-report</code></td>
+<td>True/False</td>
+<td>True</td>
+<td>Write report.html (model summary, figures, tables, command and all parameters).</td>
+</tr>
+<tr>
+<td><code>html_3d</code></td>
+<td><code>--no-viewer</code></td>
+<td>True/False</td>
+<td>True</td>
+<td>Write an interactive 3D viewer (viewer_3d.html) of the ensemble.</td>
+</tr>
+<tr>
+<td><code>skip_movies</code></td>
+<td><code>--skip-movies</code></td>
+<td>True/False</td>
+<td>False</td>
+<td>Skip the PyVista movies (mp4) of the ensemble. By default they are written; they take time, so use <code>--skip-movies</code> for quick runs.</td>
+</tr>
+<tr>
+<td><code>movie_color</code></td>
+<td></td>
+<td>text</td>
+<td>auto</td>
+<td>Movie colouring: auto (sister + compartment movies), sister, compartment, rainbow or replication.</td>
+</tr>
+<tr>
+<td><code>movie_cmap</code></td>
+<td></td>
+<td>text</td>
+<td>turbo</td>
+<td>Heatmap colour map of movie and viewer: turbo, inferno, magma, viridis, cividis or rs.</td>
+</tr>
+<tr>
+<td><code>movie_interp</code></td>
+<td></td>
+<td>integer</td>
+<td>5</td>
+<td>Interpolated frames between two structures in the movie.</td>
+</tr>
+<tr>
+<td><code>fig_dpi</code></td>
+<td></td>
+<td>integer</td>
+<td>200</td>
+<td>Resolution (dpi) of the saved figures and of the report.</td>
+</tr>
+<tr>
+<td><code>viz_heats</code></td>
+<td></td>
+<td>True/False</td>
+<td>True</td>
+<td>Save the averaged heatmaps of the 3D ensemble.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="changing-the-physics-in-detail">Changing the physics in detail<a class="headerlink" href="#changing-the-physics-in-detail" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>You want to change</th>
+<th>Go to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Strength of loops, CTCF binding, crossing, replication barrier, epigenetic field and coupling, temperature</td>
+<td><code>[mc]</code>, see <a href="../mc_model/">mc_model.md</a></td>
+</tr>
+<tr>
+<td>Fork speed, origin spread, replication stress, S-phase timing</td>
+<td><code>[replication]</code>, see <a href="../replication_model/">replication_model.md</a></td>
+</tr>
+<tr>
+<td>Integrator, 3D temperature, excluded volume, starting shape, force field</td>
+<td><code>[md]</code>, see <a href="../md_model/">md_model.md</a></td>
+</tr>
+<tr>
+<td>Figure resolution, movie and viewer settings</td>
+<td><code>[output]</code>, see <a href="../visualization/">visualization.md</a></td>
+</tr>
+</tbody>
+</table>
+<p>To change force-field terms beyond these parameters (bond strengths, compartment depths), edit the XML in <code>src/forcefields/</code> or the force definitions in <code>src/MD/forces.py</code>.</p>
+<h2 id="in-the-code">In the code<a class="headerlink" href="#in-the-code" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Function or class</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build_args()</code> in <code>config/arg_defs.py</code></td>
+<td>the table of every parameter: section, name, help, type and default</td>
+</tr>
+<tr>
+<td><code>Args</code>, <code>Arg</code>, <code>cast</code> in <code>config/arg_types.py</code></td>
+<td><code>args.N_BEADS</code> style access and casting of strings to python types</td>
+</tr>
+<tr>
+<td><code>read_ini(args, path)</code></td>
+<td>reads a config file; an unknown key is ignored with a warning</td>
+</tr>
+<tr>
+<td><code>apply_stress(args)</code></td>
+<td>replication stress values used by <code>--with-stress</code></td>
+</tr>
+<tr>
+<td><code>write_config(args, path)</code></td>
+<td>writes <code>config_used.ini</code> into the run folder</td>
+</tr>
+</tbody>
+</table>
+<p>To add a parameter, add one line <code>A(section, NAME, help, type, default)</code> in <code>src/config/arg_defs.py</code>; it then works in the ini file and in <code>args.NAME</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../assets/mathjax.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
