@@ -1058,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1345,39 +1373,7 @@
 <p>When replication timing data are given, RepliSage first simulates S phase on its own: which origins fire, when, and how forks travel along the DNA. The result is a matrix that tells the other models which beads are already copied at every moment.</p>
 <p>No timing data means no replication simulation, no forks and only one DNA chain in the model.</p>
 <h2 id="input-data">Input data<a class="headerlink" href="#input-data" title="Permanent link">&para;</a></h2>
-<p>Use <code>--rt-file</code> with one of:</p>
-<table>
-<thead>
-<tr>
-<th>Format</th>
-<th>Meaning</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>.bigWig</code>, <code>.bw</code></td>
-<td>Bulk Repli-Seq signal (for example ENCODE)</td>
-<td>Averaged in bins, log-transformed, smoothed with a Gaussian filter</td>
-</tr>
-<tr>
-<td><code>.txt</code></td>
-<td>Tab-separated table, value in the third column</td>
-<td>One value per genomic window</td>
-</tr>
-<tr>
-<td><code>.parquet</code></td>
-<td>Single-cell replication timing matrix (columns starting with <code>SC_</code>)</td>
-<td>The shipped file is <code>src/data/replication_timing_data.parquet</code></td>
-</tr>
-<tr>
-<td><code>builtin</code></td>
-<td>The shipped single-cell data</td>
-<td>Covers the chr14 test region; use <code>--rt-file builtin</code></td>
-</tr>
-</tbody>
-</table>
-<p>In every case the signal is rescaled to <span class="arithmatex">\(f_i \in [0, 1]\)</span> along the <span class="arithmatex">\(N\)</span> beads, where <span class="arithmatex">\(f_i\)</span> close to 1 means "replicates early" and close to 0 means "replicates late".</p>
+<p>Give timing with <code>--rt-file</code> (bigWig, txt, single-cell parquet, <code>builtin</code> or <code>none</code>); the formats are listed in <a href="../input_data/#replication-timing">Input data</a>. In every case the signal is rescaled to <span class="arithmatex">\(f_i \in [0, 1]\)</span> along the <span class="arithmatex">\(N\)</span> beads, where <span class="arithmatex">\(f_i\)</span> close to 1 means "replicates early" and close to 0 means "replicates late".</p>
 <h2 id="from-timing-to-initiation">From timing to initiation<a class="headerlink" href="#from-timing-to-initiation" title="Permanent link">&para;</a></h2>
 <p>Averaging single-cell timing over cells gives the replication fraction <span class="arithmatex">\(f(x,t)\)</span>, a pseudo-bulk timing curve with mean replication time <span class="arithmatex">\(\mu(x)\)</span> at position <span class="arithmatex">\(x\)</span> (bead <span class="arithmatex">\(i\)</span> in the code). The <strong>initiation rate</strong> <span class="arithmatex">\(I(x,t)\)</span> is the probability per unit time that an origin at <span class="arithmatex">\(x\)</span> fires at time <span class="arithmatex">\(t\)</span>. It is assumed Gaussian in time around <span class="arithmatex">\(\mu(x)\)</span>:</p>
 <div class="arithmatex">\[I(x,t) \propto \exp\left(-\frac{(t - \mu(x))^2}{2\sigma_I^2}\right)\]</div>

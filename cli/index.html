@@ -425,6 +425,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ctcf-orientation-from-the-motif-finder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CTCF orientation from the motif finder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-switches-what-on" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1036,6 +1047,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1223,6 +1262,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ctcf-orientation-from-the-motif-finder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CTCF orientation from the motif finder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-switches-what-on" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1325,22 +1375,22 @@ python<span class="w"> </span>-m<span class="w"> </span>src.run<span class="w"> 
 <tr>
 <td>input</td>
 <td><code>--smooth-sigma BEADS</code>, <code>--no-smooth</code></td>
-<td>Width of the Gaussian smoothing of the CTCF input (default <code>max(1.5, n_beads / 300)</code>, as in LoopSage) or switch it off</td>
+<td>Gaussian smoothing of the CTCF input: width (default <code>max(1.5, n_beads / 300)</code>) or off</td>
 </tr>
 <tr>
 <td>input</td>
 <td><code>--motif-genome FASTA</code></td>
-<td>Reference genome: read CTCF orientation from the motif where the input has none</td>
+<td><strong>Switches the CTCF motif finder on</strong>: reference genome (uncompressed FASTA) from which the orientation of sites without one is read (options: <code>MOTIF_*</code> in the config file)</td>
 </tr>
 <tr>
 <td>input</td>
 <td><code>--hic FILE</code></td>
-<td>Hi-C map (<code>.hic</code>) to validate the model against (needs <code>hic-straw</code>)</td>
+<td>Hi-C map (<code>.hic</code>) to validate the model against (needs <code>hic-straw</code>; more: <code>HIC_*</code>)</td>
 </tr>
 <tr>
 <td>input</td>
 <td><code>--rt-file FILE</code></td>
-<td>Replication timing: <code>.bigWig</code>/<code>.bw</code>, <code>.txt</code>, <code>.parquet</code> (single cell) or the word <code>builtin</code></td>
+<td>Replication timing: <code>.bigWig</code>/<code>.bw</code>, <code>.txt</code>, <code>.parquet</code> (single cell), <code>builtin</code> (shipped data) or <code>none</code></td>
 </tr>
 <tr>
 <td>input</td>
@@ -1490,7 +1540,7 @@ python<span class="w"> </span>-m<span class="w"> </span>src.run<span class="w"> 
 <td><code>--md-steps</code></td>
 <td><span class="arithmatex">\(n_{md}\)</span></td>
 <td>MD steps run for every recorded state</td>
-<td>5000</td>
+<td>1000</td>
 </tr>
 <tr>
 <td><code>--md-step-size</code></td>
@@ -1504,6 +1554,10 @@ python<span class="w"> </span>-m<span class="w"> </span>src.run<span class="w"> 
 <div class="arithmatex">\[n = \left\lfloor \frac{S}{\delta} \right\rfloor\]</div>
 <p>and the analysis uses the <span class="arithmatex">\(n - B/\delta\)</span> states after burn-in. For replication to finish inside the run keep <span class="arithmatex">\(t_0 + d \le S\)</span>; the remaining steps are G2/M. The simulated MD time per structure is <span class="arithmatex">\(n_{md}  \Delta t\)</span>.</p>
 <p>Example: <code>--n-steps 150000 --mc-step 200 --burnin 5000</code> records 750 states and analyses 725 of them.</p>
+<h2 id="ctcf-orientation-from-the-motif-finder">CTCF orientation from the motif finder<a class="headerlink" href="#ctcf-orientation-from-the-motif-finder" title="Permanent link">&para;</a></h2>
+<p>The motif finder is <strong>off unless you pass a genome</strong>: <code>--motif-genome</code> is the only switch, and there is no separate "enable" flag. It scans the sites of your input that have no orientation and writes nothing to your file. How it works and its options (<code>MOTIF_PFM</code>, <code>MOTIF_PVALUE</code>, <code>MOTIF_PSEUDOCOUNT</code>, <code>MOTIF_PAD</code>, config file only) are in <a href="../input_data/#reference-genome-and-ctcf-motif-finder">Input data</a>.</p>
+<div class="highlight"><pre><span></span><code>replisage<span class="w"> </span>--bedpe-file<span class="w"> </span>loops.bedpe<span class="w"> </span>--region<span class="w"> </span>chr14:80835000-98674700<span class="w"> </span>--motif-genome<span class="w"> </span>hg38.fa
+</code></pre></div>
 <h2 id="what-switches-what-on">What switches what on<a class="headerlink" href="#what-switches-what-on" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1516,6 +1570,14 @@ python<span class="w"> </span>-m<span class="w"> </span>src.run<span class="w"> 
 <tr>
 <td>only <code>--bedpe-file</code> and a region</td>
 <td>Loop extrusion, 3D structures (MD) and the report</td>
+</tr>
+<tr>
+<td>plus <code>--motif-genome</code></td>
+<td>CTCF orientation from the sequence, for sites that have none</td>
+</tr>
+<tr>
+<td>plus <code>--hic</code></td>
+<td>Validation of the model against a Hi-C map</td>
 </tr>
 <tr>
 <td>plus <code>--rt-file</code></td>

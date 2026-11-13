@@ -801,10 +801,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#input-a-bedpe-file-loops" class="md-nav__link">
+  <a href="#input" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Input: a BEDPE file (loops)
+        Input
       
     </span>
   </a>
@@ -812,21 +812,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-inputs-bed-and-narrowpeak" class="md-nav__link">
+  <a href="#orientation-from-dna-motif-finder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other inputs: BED and narrowPeak
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#orientation-from-the-dna-sequence-motif-finder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Orientation from the DNA sequence (motif finder)
+        Orientation from DNA (motif finder)
       
     </span>
   </a>
@@ -1069,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1234,10 +1251,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#input-a-bedpe-file-loops" class="md-nav__link">
+  <a href="#input" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Input: a BEDPE file (loops)
+        Input
       
     </span>
   </a>
@@ -1245,21 +1262,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-inputs-bed-and-narrowpeak" class="md-nav__link">
+  <a href="#orientation-from-dna-motif-finder" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other inputs: BED and narrowPeak
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#orientation-from-the-dna-sequence-motif-finder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Orientation from the DNA sequence (motif finder)
+        Orientation from DNA (motif finder)
       
     </span>
   </a>
@@ -1365,81 +1371,34 @@
 
 <h1 id="pre-processing">Pre-processing<a class="headerlink" href="#pre-processing" title="Permanent link">&para;</a></h1>
 <p>Pre-processing turns a list of loops or CTCF peaks into the quantities the Monte Carlo needs: how strongly each bead attracts a loop extruder from the left and from the right.</p>
-<h2 id="input-a-bedpe-file-loops">Input: a BEDPE file (loops)<a class="headerlink" href="#input-a-bedpe-file-loops" title="Permanent link">&para;</a></h2>
-<p>A tab-separated file, one loop per line:</p>
-<table>
-<thead>
-<tr>
-<th>Column</th>
-<th>Content</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Chromosome of the first anchor</td>
-</tr>
-<tr>
-<td>2, 3</td>
-<td>Start and end of the first anchor</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Chromosome of the second anchor</td>
-</tr>
-<tr>
-<td>5, 6</td>
-<td>Start and end of the second anchor</td>
-</tr>
-<tr>
-<td>7</td>
-<td>Loop strength (for example ChIA-PET or HiChIP score); negative values are ignored</td>
-</tr>
-<tr>
-<td>8, 9</td>
-<td>Optional CTCF orientation of each anchor, between 0 and 1 (0 = forward only, 1 = reverse only, negative = no motif)</td>
-</tr>
-</tbody>
-</table>
-<p>Only loops that lie fully inside the chosen region and chromosome are kept. If none remain, RepliSage stops with a clear message.</p>
-<h2 id="other-inputs-bed-and-narrowpeak">Other inputs: BED and narrowPeak<a class="headerlink" href="#other-inputs-bed-and-narrowpeak" title="Permanent link">&para;</a></h2>
-<p>If you have CTCF ChIP-seq peaks instead of loops, give a <code>.bed</code> or <code>.narrowPeak</code> file. The format is chosen from the file extension.</p>
-<table>
-<thead>
-<tr>
-<th>Format</th>
-<th>Weight <span class="arithmatex">\(w\)</span> of a site</th>
-<th>Position</th>
-<th>CTCF orientation (optional)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>.bed</code></td>
-<td>column 5 (score; 1 if missing)</td>
-<td>middle of the interval</td>
-<td>column 7 = probability of reverse orientation, or the strand in column 6 (<code>+</code> = forward, <code>-</code> = reverse)</td>
-</tr>
-<tr>
-<td><code>.narrowPeak</code></td>
-<td>column 7 (signalValue; the score in column 5 if it is all zero)</td>
-<td>the summit (column 10), else the middle</td>
-<td>an extra column with the probability of <em>forward</em> orientation (column 11, or 6)</td>
-</tr>
-</tbody>
-</table>
-<p>A peak sits on one bead and adds <span class="arithmatex">\(w (1 - o)\)</span> to <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(w\, o\)</span> to <span class="arithmatex">\(R\)</span> exactly as an anchor does. Peak input has no loops, so the loop figures of the report and <code>PREFERENTIAL_BINDING</code> (which needs loops) are switched off.</p>
-<h2 id="orientation-from-the-dna-sequence-motif-finder">Orientation from the DNA sequence (motif finder)<a class="headerlink" href="#orientation-from-the-dna-sequence-motif-finder" title="Permanent link">&para;</a></h2>
-<p>If your sites have no orientation, give a reference genome with <code>--motif-genome genome.fa</code> (an uncompressed FASTA; an index <code>.fai</code> is created next to it). RepliSage scans every anchor or peak for the JASPAR CTCF motif (MA0139.1, or your own PFM in <code>MOTIF_PFM</code>) on both strands. A hit is kept when its score is at least the threshold that a random sequence reaches with probability <code>MOTIF_PVALUE</code> (<span class="arithmatex">\(10^{-5}\)</span>). For a site with several hits the orientation is</p>
-<div class="arithmatex">\[o = \frac{\sum_{\text{reverse hits}} 2^{s}}{\sum_{\text{all hits}} 2^{s}},\]</div>
-<p>where <span class="arithmatex">\(s\)</span> is the score of a hit: the share of the reverse strand, each hit weighted by its likelihood ratio <span class="arithmatex">\(2^{s}\)</span>. A site without a hit stays without orientation. Orientations already in your file are kept. <code>MOTIF_PAD</code> widens the window scanned around each site.</p>
+<h2 id="input">Input<a class="headerlink" href="#input" title="Permanent link">&para;</a></h2>
+<p>A file of loops (<code>.bedpe</code>) or CTCF peaks (<code>.bed</code>, <code>.narrowPeak</code>) and a region; the columns and formats are listed in <a href="../input_data/#ctcf-sites">Input data</a>. A peak sits on one bead and adds <span class="arithmatex">\(w(1-o)\)</span> to <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(w\,o\)</span> to <span class="arithmatex">\(R\)</span> exactly as an anchor does (defined <a href="#binding-potentials">below</a>). If no loops or peaks lie in the region, RepliSage stops with a clear message.</p>
+<h2 id="orientation-from-dna-motif-finder">Orientation from DNA (motif finder)<a class="headerlink" href="#orientation-from-dna-motif-finder" title="Permanent link">&para;</a></h2>
+<p>Sites without an orientation can get one from the genome sequence (<a href="../input_data/#reference-genome-and-ctcf-motif-finder">input format</a>). RepliSage scans each anchor or peak, on both strands, for the JASPAR CTCF motif (MA0139.1, 19 bp) or your own PFM (<code>MOTIF_PFM</code>, a count matrix with rows A C G T).</p>
+<ul>
+<li><strong>Score.</strong> A window of the sequence scores <span class="arithmatex">\(s = \sum_j \log_2 \frac{P(x_j \mid \text{motif})}{1/4}\)</span>: how much more likely it is under the motif than under random DNA (higher = closer to the consensus).</li>
+<li><strong>Hit.</strong> A window is a hit when <span class="arithmatex">\(s\)</span> passes the cut-off that random DNA reaches with probability <code>MOTIF_PVALUE</code> (<span class="arithmatex">\(10^{-5}\)</span> by default).</li>
+<li><strong>Orientation.</strong> With several hits the site gets the reverse-strand share, each hit weighted by <span class="arithmatex">\(2^{s}\)</span>:</li>
+</ul>
+<div class="arithmatex">\[o = \frac{\sum_{\text{reverse hits}} 2^{s}}{\sum_{\text{all hits}} 2^{s}}, \qquad o \in [0, 1]\]</div>
+<p>A site without a hit stays unoriented, and orientations already in your file are never overwritten. <code>MOTIF_PAD</code> widens the scanned window on both sides.</p>
 <h2 id="smoothing">Smoothing<a class="headerlink" href="#smoothing" title="Permanent link">&para;</a></h2>
-<p>A site is a sharp spike on one bead, but a real CTCF site is not exact to one bead and the LEF legs move by thermal motion. Like LoopSage, RepliSage therefore smooths the profiles <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(R\)</span> with a Gaussian of width <span class="arithmatex">\(\sigma\)</span> beads (<code>SMOOTH_INPUT = True</code> by default):</p>
+<p><strong>CTCF profiles.</strong> A site is a spike on one bead, but a real site is not exact to one bead and LEF legs move. As in LoopSage, <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(R\)</span> (defined <a href="#binding-potentials">below</a>) are therefore blurred with a Gaussian of width <span class="arithmatex">\(\sigma\)</span> beads, so that sites become soft barriers:</p>
 <div class="arithmatex">\[\sigma = \max\left(1.5,\ N_{\text{beads}} / 300\right)\]</div>
-<p>Change it with <code>SMOOTH_SIGMA</code> (<code>--smooth-sigma</code>), or switch smoothing off with <code>--no-smooth</code>. Loops are smoothed with a plain Gaussian. Peaks use a Gaussian whose width is capped (about three times the median gap between sites) so that isolated peaks are not erased. Smoothing keeps the total strength, so the binding energy does not change scale. The number of CTCF sites <span class="arithmatex">\(N_{\text{CTCF}}\)</span> and the "legs on a CTCF site" statistic always refer to the raw sites (the second one with a margin of <span class="arithmatex">\(\sigma\)</span> beads), not to the smoothed profile. For fine beads, <span class="arithmatex">\(\sigma\)</span> in kb can be large; the run log states it, and <code>SMOOTH_SIGMA</code> overrides it.</p>
-<p>The <strong>replication front</strong> is smoothed too (<code>REP_FRONT_SMOOTH</code>, in beads, default 2): the replication time of each bead is averaged with its neighbours and the replicated/unreplicated state is rebuilt from it, so the front is a gently varying profile instead of a random staircase. The start and end of S phase are kept. Use 0 for the sharp front.</p>
+<ul>
+<li>Set it with <code>--smooth-sigma</code> (<code>SMOOTH_SIGMA</code>); turn it off with <code>--no-smooth</code> (<code>SMOOTH_INPUT = False</code>).</li>
+<li>Loops use a plain Gaussian. Peaks cap <span class="arithmatex">\(\sigma\)</span> at three times the median gap between sites (at least 3 beads), so isolated peaks are not erased.</li>
+<li>The total strength is kept (up to the region edges), so the binding energy keeps its scale.</li>
+<li><span class="arithmatex">\(N_{\text{CTCF}}\)</span> and the "legs on a CTCF site" statistic use the raw sites (the latter with a margin of <span class="arithmatex">\(\sigma\)</span> beads). With fine beads <span class="arithmatex">\(\sigma\)</span> can be many kb; the log states it.</li>
+</ul>
+<p><strong>Replication front.</strong> <code>REP_FRONT_SMOOTH</code> (default 2 beads) smooths the <em>replication time</em> of each bead with a Gaussian and rebuilds the replicated/unreplicated state from it. The front becomes a gentle profile instead of a random staircase; the start and end of S phase are kept. <code>0</code> keeps it sharp.</p>
 <h2 id="hi-c-map-for-validation">Hi-C map for validation<a class="headerlink" href="#hi-c-map-for-validation" title="Permanent link">&para;</a></h2>
-<p>With <code>--hic file.hic</code> the same region is read from the Hi-C file (needs <code>hic-straw</code>, <code>pip install hic-straw</code>), put on the bead grid and used to <a href="../analysis/#hi-c-validation">validate the model</a>. The bin size closest to the bead size and the normalisation <code>HIC_NORM</code> (KR by default) are tried first; if the file lacks them the next available ones are used, and the log says so.</p>
+<p>A <code>.hic</code> file (<a href="../input_data/#hi-c-map">input format</a>) is read for the same region, put on the bead grid and uses it to <a href="../analysis/#hi-c-validation">validate the model</a>.</p>
+<ul>
+<li><strong>Bin size.</strong> <code>HIC_RESOLUTION</code> if given, else the size closest to the bead size (finer preferred).</li>
+<li><strong>Normalisation.</strong> <code>HIC_NORM</code> (KR by default); if the file lacks it, the next one is used (KR, SCALE, VC_SQRT, VC, NONE). The log reports any fallback.</li>
+<li><strong>Masked beads.</strong> Beads with less than half of their bins in the file are left out of the comparison.</li>
+</ul>
 <h2 id="from-base-pairs-to-beads">From base pairs to beads<a class="headerlink" href="#from-base-pairs-to-beads" title="Permanent link">&para;</a></h2>
 <p>The region is cut into <code>N_BEADS</code> equal pieces. For a region of <span class="arithmatex">\(G\)</span> base pairs, one bead spans <span class="arithmatex">\(G / N_{\text{beads}}\)</span> base pairs. An anchor is assigned to the bead at the middle of its interval.</p>
 <h2 id="binding-potentials">Binding potentials<a class="headerlink" href="#binding-potentials" title="Permanent link">&para;</a></h2>
@@ -1449,7 +1408,7 @@
 <p><strong>Building <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(R\)</span>.</strong> Start from <span class="arithmatex">\(L(k) = R(k) = 0\)</span> and go through the loops <span class="arithmatex">\(\lambda = 1, 2, \dots\)</span> of the BEDPE file. Each loop brings three ingredients:</p>
 <ul>
 <li>two <strong>anchor beads</strong> <span class="arithmatex">\(a_\lambda\)</span> and <span class="arithmatex">\(b_\lambda\)</span>, the beads that hold the two ends of the loop;</li>
-<li>a <strong>strength</strong> <span class="arithmatex">\(w_\lambda \ge 0\)</span>, the score in column 7: how strongly the experiment supports this loop (for example the number of ChIA-PET read pairs or a HiChIP score). A strong loop makes its anchors more attractive for LEF legs, and a weak loop only slightly. If your file has no meaningful score, give every loop the same value, for example 1. Loops with a missing or negative score are skipped;</li>
+<li>a <strong>strength</strong> <span class="arithmatex">\(w_\lambda \ge 0\)</span>, the score in column 7: how strongly the experiment supports this loop (for example the number of ChIA-PET read pairs or a HiChIP score). A strong loop makes its anchors more attractive for LEF legs, and a weak loop only slightly. If your file has no meaningful score, give every loop the same value, for example 1. A missing score counts as 1 and a negative one as 0;</li>
 <li>optionally, a <strong>CTCF orientation</strong> <span class="arithmatex">\(o_c \in [0, 1]\)</span> for each anchor <span class="arithmatex">\(c\)</span> (columns 8 and 9).</li>
 </ul>
 <p>For each anchor bead <span class="arithmatex">\(c \in \{a_\lambda, b_\lambda\}\)</span> add:</p>
@@ -1463,7 +1422,7 @@
 </ul>
 <div class="arithmatex">\[L(c) \leftarrow L(c) + w_\lambda (1 - o_c)\]</div>
 <div class="arithmatex">\[R(c) \leftarrow R(c) + w_\lambda\, o_c\]</div>
-<p>In words: a forward-facing CTCF site (<span class="arithmatex">\(o_c = 0\)</span>) attracts the left leg of a LEF, and a reverse-facing site (<span class="arithmatex">\(o_c = 1\)</span>) attracts the right leg; values in between split the attraction. An anchor with a negative orientation (no motif) adds nothing. Anchors from different loops that fall on the same bead add up, so beads that anchor many strong loops get the deepest potential wells.</p>
+<p>In words: a forward-facing CTCF site (<span class="arithmatex">\(o_c = 0\)</span>) attracts the left leg of a LEF, and a reverse-facing site (<span class="arithmatex">\(o_c = 1\)</span>) attracts the right leg; values in between split the attraction. An anchor whose orientation is unknown (negative, no motif) splits its strength evenly: <span class="arithmatex">\(w_\lambda / 2\)</span> to each of <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(R\)</span>. Anchors from different loops that fall on the same bead add up, so beads that anchor many strong loops get the deepest potential wells.</p>
 <p>The number of CTCF sites is the number of beads that carry an anchor in <span class="arithmatex">\(L\)</span> or <span class="arithmatex">\(R\)</span> after aggregation, <span class="arithmatex">\(N_{\text{CTCF}} = \#\{k : L(k) &gt; 0 \text{ or } R(k) &gt; 0\}\)</span>, so anchors that fall into the same bead count once. If you do not set <code>N_LEF</code>, RepliSage uses <span class="arithmatex">\(N_{\text{lef}} = N_{\text{CTCF}} / 2\)</span> extruders, one per two CTCF sites. (Earlier versions used <span class="arithmatex">\(2 N_{\text{CTCF}}\)</span>; with many CTCF sites per bead that can exceed the number of beads, and then no loops form, so set <code>N_LEF</code> below the number of beads, at most a quarter of it; at or above half of it is an error.)</p>
 <p>The <strong>input figures</strong> show the anchors read from your file: a map (loop arcs coloured by convergent, tandem, divergent or uncertain configuration for BEDPE; anchor strength with orientation markers; orientation confidence <span class="arithmatex">\(|2p-1|\)</span>, where <span class="arithmatex">\(p\)</span> is the probability of a reverse-oriented site), anchor statistics, and the binding profiles <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(R\)</span> before and after smoothing.</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -1510,14 +1469,14 @@
 <tr>
 <td><code>REP_FRONT_SMOOTH</code></td>
 <td></td>
-<td>Smoothing of the replication front</td>
+<td>Smoothing of the replication front (<code>smooth_front</code> in <code>replication_simulation/front_smoothing.py</code>)</td>
 <td>2 beads</td>
 </tr>
 <tr>
-<td><code>HIC_FILE</code>, <code>HIC_NORM</code>, <code>HIC_RESOLUTION</code></td>
+<td><code>HIC_FILE</code>, <code>HIC_NORM</code>, <code>HIC_RESOLUTION</code>, <code>HIC_TRACK_SMOOTH</code></td>
 <td><code>--hic</code></td>
-<td>Hi-C map for validation</td>
-<td>none, KR, closest to the bead size</td>
+<td>Hi-C map for validation; smoothing (beads) of its insulation and A/B tracks</td>
+<td>none, KR, closest to the bead size, 7</td>
 </tr>
 </tbody>
 </table>
@@ -1539,7 +1498,7 @@
 <td>reads BEDPE, BED or narrowPeak, fills missing orientations from the motif finder, smooths, and returns a <code>Binding</code> with <code>L</code>, <code>R</code>, the raw <code>L0</code>, <code>R0</code> and the number of sites</td>
 </tr>
 <tr>
-<td><code>preprocessing(bedpe_file, region, chrom, N_beads, smooth=False)</code></td>
+<td><code>preprocessing(bedpe_file, region, chrom, N_beads, smooth=False, sigma=None)</code></td>
 <td>the same as a tuple <code>(L, R, N_CTCF)</code></td>
 </tr>
 <tr>

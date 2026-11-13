@@ -912,6 +912,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1509,7 +1537,7 @@
 <div class="arithmatex">\[F(x) = -T \ln P(x),\]</div>
 <p>where <span class="arithmatex">\(P(x)\)</span> is the histogram of <span class="arithmatex">\(x\)</span> over the samples of a phase and <span class="arithmatex">\(T\)</span> the Monte Carlo temperature (<code>T_MC</code>); <span class="arithmatex">\(F\)</span> is shifted so its minimum is 0. The order parameters are the mean loop length and, with replication, the mean epigenetic state. A shifted minimum between phases is a change of the preferred fold. Samples are correlated, so small differences are not significant.</p>
 <h2 id="hi-c-validation">Hi-C validation<a class="headerlink" href="#hi-c-validation" title="Permanent link">&para;</a></h2>
-<p>With <code>--hic file.hic</code> the model is compared with a Hi-C map on the same bead grid. The simulated map is built from the loop contacts of all post-burn-in samples (a population of cells in all phases) plus a polymer background, multiplied by the epigenetic checkerboard when it is on; with a 3D run the mean inverse-distance map of the ensemble is compared as well. The metrics are the Pearson <span class="arithmatex">\(r\)</span> of log contacts, of observed/expected contacts (each diagonal divided by its mean), the stratified correlation (SCC, mean <span class="arithmatex">\(r\)</span> per diagonal), <span class="arithmatex">\(r\)</span> of the decay <span class="arithmatex">\(P(s)\)</span> of contact with distance, <span class="arithmatex">\(r\)</span> of the insulation score (domain boundaries) and the F1 of the boundaries found in both maps, <span class="arithmatex">\(r\)</span> of the correlation matrices, and <span class="arithmatex">\(r\)</span> of the A/B eigenvector with the mean epigenetic state. The first three are also given for each phase. The comparison needs <code>hic-straw</code> (see <a href="../preproc/">Pre-processing</a>); no optimisation against Hi-C is done.</p>
+<p>With <code>--hic file.hic</code> the model is compared with a Hi-C map on the same bead grid. The simulated map is built from the loop contacts of all post-burn-in samples (a population of cells in all phases) plus a polymer background, multiplied by the epigenetic checkerboard when it is on; with a 3D run the mean inverse-distance map of the ensemble is compared as well. The metrics are the Pearson <span class="arithmatex">\(r\)</span> of log contacts, of observed/expected contacts (each diagonal divided by its mean), the stratified correlation (SCC, mean <span class="arithmatex">\(r\)</span> per diagonal weighted by the pairs on it), <span class="arithmatex">\(r\)</span> of the decay <span class="arithmatex">\(P(s)\)</span> of contact with distance, <span class="arithmatex">\(r\)</span> of the insulation score (domain boundaries) and the F1 of the boundaries found in both maps, <span class="arithmatex">\(r\)</span> of the correlation matrices, and <span class="arithmatex">\(r\)</span> of the A/B eigenvector with the mean epigenetic state. The first three are also given for each phase. The comparison needs <code>hic-straw</code> (see <a href="../preproc/#hi-c-map-for-validation">Pre-processing</a>); the model is never fitted to Hi-C.</p>
 <h2 id="compartment-switching">Compartment switching<a class="headerlink" href="#compartment-switching" title="Permanent link">&para;</a></h2>
 <p>Beads are classified as A (mean epigenetic state above 0.25), B (below -0.25) or neutral in two windows: the first and the last tenth of S phase. The report shows</p>
 <ul>

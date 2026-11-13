@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://sfglab.github.io/RepliSage/config/">
       
       
-        <link rel="prev" href="../md_model/">
+        <link rel="prev" href="../input_data/">
       
       
         <link rel="next" href="../analysis/">
@@ -909,6 +909,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../input_data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -972,16 +1000,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-write-a-configini" class="md-nav__link">
+  <a href="#writing-a-config-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to write a config.ini
+        Writing a config file
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to write a config.ini">
+    <nav class="md-nav" aria-label="Writing a config file">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step by step
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#a-complete-example" class="md-nav__link">
@@ -995,10 +1034,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#common-mistakes" class="md-nav__link">
+  <a href="#good-practice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common mistakes
+        Good practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syntax-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax rules
       
     </span>
   </a>
@@ -1007,17 +1057,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rules
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1290,16 +1329,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-write-a-configini" class="md-nav__link">
+  <a href="#writing-a-config-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to write a config.ini
+        Writing a config file
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to write a config.ini">
+    <nav class="md-nav" aria-label="Writing a config file">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step by step
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#a-complete-example" class="md-nav__link">
@@ -1313,10 +1363,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#common-mistakes" class="md-nav__link">
+  <a href="#good-practice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common mistakes
+        Good practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syntax-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax rules
       
     </span>
   </a>
@@ -1325,17 +1386,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rules
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1476,122 +1526,134 @@
 
 
 <h1 id="configuration-file">Configuration file<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h1>
-<p><code>config.ini</code> is where the detailed settings live: energies, temperatures, force-field and plotting options. The command line carries only the everyday choices (see <a href="../cli/">cli.md</a>).</p>
+<p><code>config.ini</code> holds every parameter of RepliSage: energies, temperatures, force field and plotting options, besides the input paths. The command line carries only the everyday ones (see <a href="../cli/">cli.md</a>).</p>
 <div class="highlight"><pre><span></span><code>replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w">                 </span><span class="c1"># use your file</span>
 replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w"> </span>--seed<span class="w"> </span><span class="m">7</span><span class="w">        </span><span class="c1"># flags override the file</span>
 </code></pre></div>
-<h2 id="how-to-write-a-configini">How to write a <code>config.ini</code><a class="headerlink" href="#how-to-write-a-configini" title="Permanent link">&para;</a></h2>
-<p>A config file is a short text file of <code>key = value</code> lines. You never need to write all parameters: <strong>list only what you want to change</strong>, everything else keeps its default.</p>
-<p><strong>Step 1. Start small.</strong> Create <code>my_config.ini</code> and write the two things RepliSage always needs, the loops and the region:</p>
+<h2 id="writing-a-config-file">Writing a config file<a class="headerlink" href="#writing-a-config-file" title="Permanent link">&para;</a></h2>
+<p>The command line carries only the everyday choices; anything else goes in a config file you run with <code>replisage -c my_config.ini</code>. You never write all parameters: <strong>list only what you want to change</strong> and the rest keeps its default.</p>
+<h3 id="step-by-step">Step by step<a class="headerlink" href="#step-by-step" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Start from the minimum:</strong> the CTCF file and the region.</li>
+</ol>
 <div class="highlight"><pre><span></span><code><span class="k">[input]</span>
-<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">loops.bedpe</span><span class="w">        </span><span class="c1">; CTCF input: .bedpe, .bed or .narrowPeak (required)</span>
+<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">loops.bedpe</span><span class="w">       </span><span class="c1">; .bedpe, .bed or .narrowPeak</span>
 <span class="na">chrom</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s">chr14</span>
-<span class="na">region_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">80835000</span><span class="w">           </span><span class="c1">; base pairs</span>
+<span class="na">region_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">80835000</span><span class="w">          </span><span class="c1">; base pairs</span>
 <span class="na">region_end</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">98674700</span>
 </code></pre></div>
-<p>Without a <code>bedpe_path</code> RepliSage stops, because without CTCF sites it does not know where the barriers are. If you leave out the region, the <strong>whole chromosome</strong> is modelled.</p>
-<p><strong>Step 2. Decide what to simulate.</strong> What runs depends on the inputs you give:</p>
+<ol>
+<li><strong>Choose what to simulate</strong> with a few keys; everything else follows from them:</li>
+</ol>
 <table>
 <thead>
 <tr>
 <th>You want</th>
-<th>Add to the file</th>
-<th>What runs</th>
+<th>Set</th>
+<th>Result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Loop extrusion only</td>
+<td>loop extrusion only</td>
 <td><code>rept_path = none</code></td>
-<td>loop extrusion; no replication, no S or G2/M phase</td>
+<td>no replication, S or G2/M phase</td>
 </tr>
 <tr>
-<td>Replication with the built-in data</td>
-<td><code>use_sc_rept = True</code></td>
-<td>+ replication from the single-cell GM12878 timing, and A/B compartments</td>
+<td>replication, shipped data</td>
+<td><code>rept_path = builtin</code></td>
+<td>single-cell GM12878 timing</td>
 </tr>
 <tr>
-<td>Replication with your own data</td>
-<td><code>rept_path = my_timing.bigWig</code> (or <code>.txt</code>)</td>
-<td>the same, driven by your Repli-Seq signal</td>
+<td>replication, your data</td>
+<td><code>rept_path = timing.bigWig</code></td>
+<td>driven by your Repli-Seq signal</td>
 </tr>
 <tr>
-<td>3D structures</td>
-<td><code>simulation_type = MD</code> (default), <code>EM</code>, or <code>none</code> to switch off</td>
-<td>a 3D model built with OpenMM; MD gives the replication trajectory</td>
+<td>CTCF orientation from DNA</td>
+<td><code>motif_genome = hg38.fa</code></td>
+<td>motif finder on (<a href="../input_data/#reference-genome-and-ctcf-motif-finder">details</a>)</td>
+</tr>
+<tr>
+<td>validation</td>
+<td><code>hic_file = map.hic</code></td>
+<td>comparison with Hi-C</td>
+</tr>
+<tr>
+<td>no 3D structures</td>
+<td><code>simulation_type = none</code></td>
+<td>stop after the Monte Carlo</td>
 </tr>
 </tbody>
 </table>
-<p>If you give no timing at all and run in a terminal, RepliSage asks whether to use the built-in timing or to continue with loop extrusion only. <code>ask_rt = False</code> switches that question off, which is what you want for scripts and clusters.</p>
-<p><strong>Step 3. Tune only when needed.</strong> Typical first changes are the run length and the temperature in <code>[mc]</code>:</p>
+<ol>
+<li><strong>Tune only what you need</strong>, grouped by section, with a short comment for each change so you remember why:</li>
+</ol>
 <div class="highlight"><pre><span></span><code><span class="k">[mc]</span>
-<span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">150000</span><span class="w">      </span><span class="c1">; Monte Carlo steps</span>
-<span class="na">mc_step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">200</span><span class="w">         </span><span class="c1">; record every 200th step</span>
-<span class="na">burnin</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s">5000</span><span class="w">        </span><span class="c1">; steps discarded at the start</span>
-<span class="na">t_mc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span><span class="w">         </span><span class="c1">; Monte Carlo temperature</span>
+<span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">150000</span><span class="w">     </span><span class="c1">; Monte Carlo steps</span>
+<span class="na">burnin</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s">5000</span><span class="w">       </span><span class="c1">; steps discarded at the start</span>
+<span class="na">t_mc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span><span class="w">        </span><span class="c1">; fixed temperature (no annealing); keep it near the default</span>
 </code></pre></div>
-<p>There is no simulated annealing: <code>t_mc</code> is one fixed value for the whole run (G1, S and G2/M). Keep it in the critical region, not too low (loops freeze and stack) and not too high (loops fall off); the default 1.5 is inside it. See <a href="../hamiltonian/#temperature-in-replisage">the Hamiltonian idea</a>.</p>
-<p><strong>Step 4. Run and check.</strong> Every run saves the values it actually used as <code>config_used.ini</code> in its folder. Open it to confirm that your changes were picked up, and use it to repeat the run exactly.</p>
+<ol>
+<li><strong>Test small, then scale up.</strong> Run first with a short <code>n_steps</code> (for example 5000) and <code>-v</code>, open <code>config_used.ini</code> in the run folder to see the values actually used, then set the real length.</li>
+</ol>
 <div class="highlight"><pre><span></span><code>replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w"> </span>-v
+replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span class="w"> </span>--n-steps<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--name<span class="w"> </span><span class="nb">test</span><span class="w">     </span><span class="c1"># flags override the file</span>
 </code></pre></div>
 <h3 id="a-complete-example">A complete example<a class="headerlink" href="#a-complete-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">; my_config.ini: loops + replication + 3D structures for a 17.8 Mb region</span>
+<div class="highlight"><pre><span></span><code><span class="c1">; my_config.ini: loops + replication + motif finder + 3D, 17.8 Mb region</span>
 <span class="k">[general]</span>
 <span class="na">out_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">results</span>
 <span class="na">run_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">chr14_demo</span>
 <span class="na">n_threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4</span>
-<span class="na">seed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">7</span>
+<span class="na">seed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">7</span><span class="w">                          </span><span class="c1">; reproducible run</span>
 
 <span class="k">[input]</span>
-<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">loops.bedpe</span>
-<span class="na">rept_path</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">GM12878_timing.bigWig</span><span class="w">    </span><span class="c1">; Repli-Seq, always log-normalised</span>
+<span class="na">bedpe_path</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">/data/loops.bedpe</span><span class="w">  </span><span class="c1">; absolute paths work from any folder</span>
+<span class="na">rept_path</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">/data/GM12878_timing.bigWig</span>
 <span class="na">chrom</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s">chr14</span>
 <span class="na">region_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">80835000</span>
 <span class="na">region_end</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s">98674700</span>
-<span class="na">n_beads</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="s">1000</span><span class="w">                     </span><span class="c1">; empty = 7 kb per bead (max 10,000 beads)</span>
+<span class="na">n_beads</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="s">1000</span><span class="w">               </span><span class="c1">; empty = 7 kb per bead (max 10,000)</span>
+
+<span class="k">[preprocessing]</span>
+<span class="na">motif_genome</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/data/hg38.fa</span><span class="w">      </span><span class="c1">; sites without orientation get one from the motif</span>
+<span class="na">motif_pvalue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1e-5</span>
 
 <span class="k">[replication]</span>
-<span class="na">rep_start_time</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span><span class="w">               </span><span class="c1">; MC step where S phase starts</span>
-<span class="na">rep_time_duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span><span class="w">               </span><span class="c1">; length of S phase in MC steps</span>
+<span class="na">rep_start_time</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span><span class="w">         </span><span class="c1">; MC step where S phase starts</span>
+<span class="na">rep_time_duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50000</span>
 
 <span class="k">[mc]</span>
 <span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">150000</span>
-<span class="na">t_mc</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span>
 
 <span class="k">[md]</span>
 <span class="na">simulation_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">MD</span>
 <span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">CUDA</span>
 </code></pre></div>
-<h3 id="common-mistakes">Common mistakes<a class="headerlink" href="#common-mistakes" title="Permanent link">&para;</a></h3>
+<h3 id="good-practice">Good practice<a class="headerlink" href="#good-practice" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>A typo in a key.</strong> Unknown keys are ignored with a warning (<code>-vv</code> shows it), so check <code>config_used.ini</code> if a change seems to have no effect.</li>
-<li><strong>Comments.</strong> <code>;</code> starts a comment, also after a value. Do not put <code>#</code> or quotes around values.</li>
-<li><strong>Empty is not zero.</strong> An empty value means "not set", so the default is used. Write <code>0</code> if you mean zero.</li>
-<li><strong>Coordinates in kb or Mb.</strong> Region coordinates are always in base pairs.</li>
-<li><strong>Region too small for the number of beads.</strong> The bead size is <code>(region_end - region_start) / n_beads</code>; keep it at a few kb or more.</li>
-<li><strong>Replication time too short.</strong> <code>rep_time_duration</code> must be larger than <code>rep_sim_t</code>, and the S phase must fit inside <code>n_steps</code>.</li>
+<li><strong>Keep it short.</strong> A file that lists ten keys is easier to read and to reproduce than a copy of the full template; <code>src/config.ini</code> is there to look up names and defaults.</li>
+<li><strong>Use absolute paths</strong> for data, so the file works from any folder.</li>
+<li><strong>Set a <code>seed</code> and a <code>run_name</code></strong> for runs you want to compare or repeat.</li>
+<li><strong>Keep the numbers consistent:</strong> <code>rep_start_time + rep_time_duration</code> must fit inside <code>n_steps</code>; <code>rep_time_duration</code> must exceed <code>rep_sim_t</code>; bead size <code>(region_end - region_start) / n_beads</code> should be a few kb; <code>n_lef</code> should stay well below the number of beads.</li>
+<li><strong>Use flags for one-off changes</strong> (<code>--seed</code>, <code>--n-steps</code>, <code>--name</code>) and the file for settings you keep.</li>
+<li><strong>Reuse results:</strong> every run writes <code>config_used.ini</code>; running it again with <code>-c</code> repeats the run exactly.</li>
 </ul>
-<p>The repository also ships a fully annotated template, <code>src/config.ini</code>, and ready-made variants in the <a href="../examples/">examples folder</a>, and short runnable ones in <code>demo/</code>.</p>
-<h2 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h2>
+<h3 id="syntax-rules">Syntax rules<a class="headerlink" href="#syntax-rules" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Everything has a key.</strong> Each command-line flag is a shortcut for a key, and the file has many more. <code>src/config.ini</code> is a full commented template. With a well-defined file <code>replisage -c my_config.ini</code> is all you need.</li>
-<li><strong>Checks.</strong> <code>N_LEF + N_LEF2</code> at or above half the beads is an error. Bead size outside 200 bp - 50 kb is an error, outside 1 - 10 kb a warning.</li>
-<li>
-<p><code>rept_path</code> accepts a <code>.bigWig/.txt</code> file, a single-cell <code>.parquet</code>, <code>builtin</code> (shipped GM12878 data) or <code>none</code> (loop extrusion only).</p>
-</li>
-<li>
-<p>The format is a plain ini file. Section names are only for readability: <code>[mc]</code>, <code>[md]</code> and so on can be named anything, and a key may sit in any section.</p>
-</li>
-<li>Keys are not case sensitive. <code>N_LEF</code>, <code>n_lef</code> and <code>N_lef</code> are the same.</li>
-<li><code>;</code> starts a comment, also after a value.</li>
-<li>An empty value means "not set" and the default is used.</li>
-<li>Unknown keys are ignored with a warning, so typos do not stop a run but show up in the log.</li>
+<li>A plain text file of <code>key = value</code> lines; section names (<code>[mc]</code>, <code>[md]</code>, ...) are only for readability, and a key may sit in any section.</li>
+<li>Keys are not case sensitive (<code>N_LEF</code> = <code>n_lef</code>).</li>
+<li><code>;</code> starts a comment, also after a value. Do not use <code>#</code> or quotes.</li>
+<li>An empty value means "not set" (the default is used); write <code>0</code> for zero.</li>
 <li>Booleans accept <code>True/False</code>, <code>yes/no</code>, <code>1/0</code>.</li>
+<li>Unknown keys are ignored with a warning (<code>-vv</code>), so a typo shows up in the log, not as an error; check <code>config_used.ini</code> if a change has no effect.</li>
 <li>Precedence: defaults, then the file, then the command-line flags.</li>
-<li>Every run saves the resolved parameters as <code>config_used.ini</code> in its folder, so you can repeat any run with <code>-c</code> on that file.</li>
+<li>Checks: <code>N_LEF + N_LEF2</code> at or above half the beads is an error; bead sizes outside 200 bp - 50 kb are an error, outside 1 - 10 kb a warning.</li>
 </ul>
+<p>The data files are described in <a href="../input_data/">Input data</a>; ready-made files are in <a href="../examples/">Examples</a>.</p>
 <h2 id="all-parameters">All parameters<a class="headerlink" href="#all-parameters" title="Permanent link">&para;</a></h2>
-<p>One table per section of the file. <em>Flag</em> is the command-line option that sets the same thing, if there is one. <em>Type</em> tells how to write the value: <code>integer</code>, <code>number</code> (decimals allowed), <code>text</code> (a path or a name) or <code>True/False</code>. These tables are generated from <code>src/config/arg_defs.py</code> by <code>docs/scripts/gen_config_tables.py</code>, so they always match the code.</p>
+<p>One table per section. <em>Flag</em> is the command-line option for the same setting, if there is one. <em>Type</em> is <code>integer</code>, <code>number</code>, <code>text</code> (a path or a name) or <code>True/False</code>. The tables are generated from <code>src/config/arg_defs.py</code> by <code>docs/scripts/gen_config_tables.py</code>.</p>
 <h3 id="general-general">General (<code>[general]</code>)<a class="headerlink" href="#general-general" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1676,7 +1738,7 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <tbody>
 <tr>
 <td><code>bedpe_path</code></td>
-<td><code>--bedpe-file</code>, <code>--input-file</code></td>
+<td><code>--bedpe-file</code></td>
 <td>text</td>
 <td>empty</td>
 <td>Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file.</td>
@@ -1735,7 +1797,7 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td><code>--n-beads</code></td>
 <td>integer</td>
 <td>empty</td>
-<td>Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads). Bead sizes outside 200 bp - 50 kb are an error.</td>
+<td>Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads).</td>
 </tr>
 </tbody>
 </table>
@@ -1753,80 +1815,52 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <tbody>
 <tr>
 <td><code>smooth_input</code></td>
-<td><code>--no-smooth</code></td>
+<td></td>
 <td>True/False</td>
 <td>True</td>
-<td>[new] Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads.</td>
+<td>Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads.</td>
 </tr>
 <tr>
 <td><code>smooth_sigma</code></td>
 <td><code>--smooth-sigma</code></td>
 <td>number</td>
 <td>empty</td>
-<td>[new] Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300).</td>
+<td>Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300).</td>
 </tr>
 <tr>
 <td><code>motif_genome</code></td>
 <td><code>--motif-genome</code></td>
 <td>text</td>
 <td>empty</td>
-<td>[new] Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file.</td>
+<td>Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file.</td>
 </tr>
 <tr>
 <td><code>motif_pfm</code></td>
 <td></td>
 <td>text</td>
 <td>empty</td>
-<td>[new] Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif.</td>
+<td>Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif.</td>
 </tr>
 <tr>
 <td><code>motif_pvalue</code></td>
 <td></td>
 <td>number</td>
 <td>1e-5</td>
-<td>[new] Score threshold of the motif scan: chance of a hit in random sequence.</td>
+<td>Score threshold of the motif scan: chance of a hit in random sequence.</td>
 </tr>
 <tr>
 <td><code>motif_pseudocount</code></td>
 <td></td>
 <td>number</td>
 <td>0.8</td>
-<td>[new] Pseudocount of the motif matrix (avoids infinite scores).</td>
+<td>Pseudocount of the motif matrix (avoids infinite scores).</td>
 </tr>
 <tr>
 <td><code>motif_pad</code></td>
 <td></td>
 <td>integer</td>
 <td>0</td>
-<td>[new] bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it).</td>
-</tr>
-<tr>
-<td><code>hic_file</code></td>
-<td><code>--hic</code></td>
-<td>text</td>
-<td>empty</td>
-<td>[new] Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation.</td>
-</tr>
-<tr>
-<td><code>hic_norm</code></td>
-<td></td>
-<td>text</td>
-<td>KR</td>
-<td>[new] Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing).</td>
-</tr>
-<tr>
-<td><code>hic_resolution</code></td>
-<td></td>
-<td>integer</td>
-<td>empty</td>
-<td>[new] Hi-C bin size (bp) to read. Empty = the one closest to the bead size.</td>
-</tr>
-<tr>
-<td><code>hic_track_smooth</code></td>
-<td></td>
-<td>number</td>
-<td>7.0</td>
-<td>[new] Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation.</td>
+<td>bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it).</td>
 </tr>
 <tr>
 <td><code>rep_sim_t</code></td>
@@ -1855,6 +1889,34 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td>True/False</td>
 <td>True</td>
 <td>[deprecated] Repli-Seq signals are always log-normalised; this value is ignored.</td>
+</tr>
+<tr>
+<td><code>hic_file</code></td>
+<td><code>--hic</code></td>
+<td>text</td>
+<td>empty</td>
+<td>Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation.</td>
+</tr>
+<tr>
+<td><code>hic_norm</code></td>
+<td></td>
+<td>text</td>
+<td>KR</td>
+<td>Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing).</td>
+</tr>
+<tr>
+<td><code>hic_resolution</code></td>
+<td></td>
+<td>integer</td>
+<td>empty</td>
+<td>Hi-C bin size (bp) to read. Empty = the one closest to the bead size.</td>
+</tr>
+<tr>
+<td><code>hic_track_smooth</code></td>
+<td></td>
+<td>number</td>
+<td>7.0</td>
+<td>Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation.</td>
 </tr>
 </tbody>
 </table>
@@ -1903,7 +1965,7 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td></td>
 <td>number</td>
 <td>2.0</td>
-<td>[new] Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front.</td>
+<td>Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front.</td>
 </tr>
 <tr>
 <td><code>rep_start_time</code></td>
@@ -1974,6 +2036,27 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td>True/False</td>
 <td>True</td>
 <td>Model replication forks as epigenetic organizers.</td>
+</tr>
+<tr>
+<td><code>preferential_binding</code></td>
+<td><code>--preferential-binding</code></td>
+<td>True/False</td>
+<td>False</td>
+<td>LEFs load preferentially where loops span (CTCF occupancy), and rarely in loop-naked areas. Also --preferential-binding.</td>
+</tr>
+<tr>
+<td><code>pref_bind_floor</code></td>
+<td></td>
+<td>number</td>
+<td>0.05</td>
+<td>Loading weight of loop-naked beads relative to the most occupied bead (0-1) when PREFERENTIAL_BINDING is on.</td>
+</tr>
+<tr>
+<td><code>pref_bind_power</code></td>
+<td></td>
+<td>number</td>
+<td>1.0</td>
+<td>Exponent applied to the occupancy before loading (1 = proportional, &gt;1 = stronger preference).</td>
 </tr>
 <tr>
 <td><code>n_steps</code></td>
@@ -2072,27 +2155,6 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td>number</td>
 <td>1.0</td>
 <td>Coefficient for CTCF binding.</td>
-</tr>
-<tr>
-<td><code>preferential_binding</code></td>
-<td><code>--preferential-binding</code></td>
-<td>True/False</td>
-<td>False</td>
-<td>LEFs load preferentially where loops span (CTCF occupancy), and rarely in loop-naked areas. Also --preferential-binding.</td>
-</tr>
-<tr>
-<td><code>pref_bind_floor</code></td>
-<td></td>
-<td>number</td>
-<td>0.05</td>
-<td>Loading weight of loop-naked beads relative to the most occupied bead (0-1) when PREFERENTIAL_BINDING is on.</td>
-</tr>
-<tr>
-<td><code>pref_bind_power</code></td>
-<td></td>
-<td>number</td>
-<td>1.0</td>
-<td>Exponent applied to the occupancy before loading (1 = proportional, &gt;1 = stronger preference).</td>
 </tr>
 <tr>
 <td><code>n_replicas</code></td>
@@ -2232,7 +2294,7 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td><code>--skip-movies</code></td>
 <td>True/False</td>
 <td>False</td>
-<td>Skip the PyVista movies (mp4) of the ensemble. By default they are written; they take time, so use <code>--skip-movies</code> for quick runs.</td>
+<td>Skip the PyVista movies (mp4) of the ensemble. By default the movies are written (they take time: use --skip-movies to disable).</td>
 </tr>
 <tr>
 <td><code>movie_color</code></td>
@@ -2246,7 +2308,7 @@ replisage<span class="w"> </span>-c<span class="w"> </span>my_config.ini<span cl
 <td></td>
 <td>text</td>
 <td>turbo</td>
-<td>Heatmap colour map of movie and viewer: turbo, inferno, magma, viridis, cividis or rs.</td>
+<td>Colour map of the contact map in the movie and the viewer: turbo (most variable), inferno, magma, viridis, cividis or rs.</td>
 </tr>
 <tr>
 <td><code>movie_interp</code></td>
