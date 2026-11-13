@@ -1,117 +1,39 @@
 # Configuration file
 
-`config.ini` is where the detailed settings live: energies, temperatures, force-field and plotting options. The command line carries only the everyday choices (see [cli.md](cli.md)).
+`config.ini` holds every parameter of RepliSage: energies, temperatures, force field and plotting options, besides the input paths. The command line carries only the everyday ones (see [cli.md](cli.md)).
 
 ```bash
 replisage -c my_config.ini                 # use your file
 replisage -c my_config.ini --seed 7        # flags override the file
 ```
 
-## How to write a `config.ini`
+## File format
 
-A config file is a short text file of `key = value` lines. You never need to write all parameters: **list only what you want to change**, everything else keeps its default.
-
-**Step 1. Start small.** Create `my_config.ini` and write the two things RepliSage always needs, the loops and the region:
+A plain text file of `key = value` lines. List only what you want to change; everything else keeps its default.
 
 ```ini
 [input]
-bedpe_path   = loops.bedpe        ; CTCF input: .bedpe, .bed or .narrowPeak (required)
+bedpe_path   = loops.bedpe       ; see Input data
 chrom        = chr14
-region_start = 80835000           ; base pairs
+region_start = 80835000          ; base pairs
 region_end   = 98674700
 ```
 
-Without a `bedpe_path` RepliSage stops, because without CTCF sites it does not know where the barriers are. If you leave out the region, the **whole chromosome** is modelled.
-
-**Step 2. Decide what to simulate.** What runs depends on the inputs you give:
-
-| You want | Add to the file | What runs |
-|---|---|---|
-| Loop extrusion only | `rept_path = none` | loop extrusion; no replication, no S or G2/M phase |
-| Replication with the built-in data | `use_sc_rept = True` | + replication from the single-cell GM12878 timing, and A/B compartments |
-| Replication with your own data | `rept_path = my_timing.bigWig` (or `.txt`) | the same, driven by your Repli-Seq signal |
-| 3D structures | `simulation_type = MD` (default), `EM`, or `none` to switch off | a 3D model built with OpenMM; MD gives the replication trajectory |
-
-If you give no timing at all and run in a terminal, RepliSage asks whether to use the built-in timing or to continue with loop extrusion only. `ask_rt = False` switches that question off, which is what you want for scripts and clusters.
-
-**Step 3. Tune only when needed.** Typical first changes are the run length and the temperature in `[mc]`:
-
-```ini
-[mc]
-n_steps = 150000      ; Monte Carlo steps
-mc_step = 200         ; record every 200th step
-burnin  = 5000        ; steps discarded at the start
-t_mc    = 1.5         ; Monte Carlo temperature
-```
-
-There is no simulated annealing: `t_mc` is one fixed value for the whole run (G1, S and G2/M). Keep it in the critical region, not too low (loops freeze and stack) and not too high (loops fall off); the default 1.5 is inside it. See [the Hamiltonian idea](hamiltonian.md#temperature-in-replisage).
-
-**Step 4. Run and check.** Every run saves the values it actually used as `config_used.ini` in its folder. Open it to confirm that your changes were picked up, and use it to repeat the run exactly.
-
-```bash
-replisage -c my_config.ini -v
-```
-
-### A complete example
-
-```ini
-; my_config.ini: loops + replication + 3D structures for a 17.8 Mb region
-[general]
-out_path = results
-run_name = chr14_demo
-n_threads = 4
-seed = 7
-
-[input]
-bedpe_path   = loops.bedpe
-rept_path    = GM12878_timing.bigWig    ; Repli-Seq, always log-normalised
-chrom        = chr14
-region_start = 80835000
-region_end   = 98674700
-n_beads      = 1000                     ; empty = 7 kb per bead (max 10,000 beads)
-
-[replication]
-rep_start_time    = 50000               ; MC step where S phase starts
-rep_time_duration = 50000               ; length of S phase in MC steps
-
-[mc]
-n_steps = 150000
-t_mc    = 1.5
-
-[md]
-simulation_type = MD
-platform = CUDA
-```
-
-### Common mistakes
-
-* **A typo in a key.** Unknown keys are ignored with a warning (`-vv` shows it), so check `config_used.ini` if a change seems to have no effect.
-* **Comments.** `;` starts a comment, also after a value. Do not put `#` or quotes around values.
-* **Empty is not zero.** An empty value means "not set", so the default is used. Write `0` if you mean zero.
-* **Coordinates in kb or Mb.** Region coordinates are always in base pairs.
-* **Region too small for the number of beads.** The bead size is `(region_end - region_start) / n_beads`; keep it at a few kb or more.
-* **Replication time too short.** `rep_time_duration` must be larger than `rep_sim_t`, and the S phase must fit inside `n_steps`.
-
-The repository also ships a fully annotated template, `src/config.ini`, and ready-made variants in the [examples folder](examples.md), and short runnable ones in `demo/`.
-
-## Rules
-
-* **Everything has a key.** Each command-line flag is a shortcut for a key, and the file has many more. `src/config.ini` is a full commented template. With a well-defined file `replisage -c my_config.ini` is all you need.
-* **Checks.** `N_LEF + N_LEF2` at or above half the beads is an error. Bead size outside 200 bp - 50 kb is an error, outside 1 - 10 kb a warning.
-* `rept_path` accepts a `.bigWig/.txt` file, a single-cell `.parquet`, `builtin` (shipped GM12878 data) or `none` (loop extrusion only).
-
-* The format is a plain ini file. Section names are only for readability: `[mc]`, `[md]` and so on can be named anything, and a key may sit in any section.
-* Keys are not case sensitive. `N_LEF`, `n_lef` and `N_lef` are the same.
-* `;` starts a comment, also after a value.
-* An empty value means "not set" and the default is used.
-* Unknown keys are ignored with a warning, so typos do not stop a run but show up in the log.
+* Section names are only for readability: a key may sit in any section.
+* Keys are not case sensitive (`N_LEF` = `n_lef`).
+* `;` starts a comment, also after a value. Do not use `#` or quotes.
+* An empty value means "not set" (the default is used); write `0` for zero.
 * Booleans accept `True/False`, `yes/no`, `1/0`.
+* Unknown keys are ignored with a warning (`-vv`), so check `config_used.ini` if a change has no effect.
 * Precedence: defaults, then the file, then the command-line flags.
-* Every run saves the resolved parameters as `config_used.ini` in its folder, so you can repeat any run with `-c` on that file.
+* Every run saves the values it used as `config_used.ini` in its folder; re-run it with `-c`.
+* Checks: `N_LEF + N_LEF2` at or above half the beads is an error; bead sizes outside 200 bp - 50 kb are an error, outside 1 - 10 kb a warning.
+
+The data files themselves are described in [Input data](input_data.md); complete files are in [Examples](examples.md) and `src/config.ini`.
 
 ## All parameters
 
-One table per section of the file. *Flag* is the command-line option that sets the same thing, if there is one. *Type* tells how to write the value: `integer`, `number` (decimals allowed), `text` (a path or a name) or `True/False`. These tables are generated from `src/config/arg_defs.py` by `docs/scripts/gen_config_tables.py`, so they always match the code.
+One table per section. *Flag* is the command-line option for the same setting, if there is one. *Type* is `integer`, `number`, `text` (a path or a name) or `True/False`. The tables are generated from `src/config/arg_defs.py` by `docs/scripts/gen_config_tables.py`.
 
 ### General (`[general]`)
 
@@ -130,7 +52,7 @@ One table per section of the file. *Flag* is the command-line option that sets t
 
 | Key | Flag | Type | Default | Meaning |
 |---|---|---|---|---|
-| `bedpe_path` | `--bedpe-file`, `--input-file` | text | empty | Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file. |
+| `bedpe_path` | `--bedpe-file` | text | empty | Input file with the CTCF sites: .bedpe (loops; optional columns 8-9 = CTCF orientation), .bed or .narrowPeak (CTCF peaks; no loops). Required: without it the model does not know where the CTCF barriers are. Also INPUT_PATH, --input-file. |
 | `rept_path` | `--rt-file` | text | empty | The replication timing dataset (.txt, .bw, .bigwig). If empty, no replication is modelled (unless USE_SC_REPT). |
 | `sc_rept_path` | `--rt-file` | text | built-in file | The single cell replication timing dataset (.parquet). |
 | `use_sc_rept` | `--rt-file builtin` | True/False | False | Use the built-in single-cell replication timing when REPT_PATH is empty. |
@@ -138,27 +60,27 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `chrom` | `--region` | text | empty | Chromosome of the modelling region of interest. |
 | `region_start` | `--region` | integer | empty | Starting region coordinate. Empty = whole chromosome. |
 | `region_end` | `--region` | integer | empty | Ending region coordinate. Empty = whole chromosome. |
-| `n_beads` | `--n-beads` | integer | empty | Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads). Bead sizes outside 200 bp - 50 kb are an error. |
+| `n_beads` | `--n-beads` | integer | empty | Number of Simulation Beads. Empty = region length / 7 kb (about 10 beads per CTCF site; max 10,000 beads). |
 
 ### Pre-processing (`[preprocessing]`)
 
 | Key | Flag | Type | Default | Meaning |
 |---|---|---|---|---|
-| `smooth_input` | `--no-smooth` | True/False | True | [new] Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads. |
-| `smooth_sigma` | `--smooth-sigma` | number | empty | [new] Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300). |
-| `motif_genome` | `--motif-genome` | text | empty | [new] Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file. |
-| `motif_pfm` |  | text | empty | [new] Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif. |
-| `motif_pvalue` |  | number | 1e-5 | [new] Score threshold of the motif scan: chance of a hit in random sequence. |
-| `motif_pseudocount` |  | number | 0.8 | [new] Pseudocount of the motif matrix (avoids infinite scores). |
-| `motif_pad` |  | integer | 0 | [new] bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it). |
-| `hic_file` | `--hic` | text | empty | [new] Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation. |
-| `hic_norm` |  | text | KR | [new] Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing). |
-| `hic_resolution` |  | integer | empty | [new] Hi-C bin size (bp) to read. Empty = the one closest to the bead size. |
-| `hic_track_smooth` |  | number | 7.0 | [new] Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation. |
+| `smooth_input` |  | True/False | True | Smooth the CTCF binding profiles with a Gaussian (as LoopSage): sites become soft barriers instead of single beads. |
+| `smooth_sigma` | `--smooth-sigma` | number | empty | Width (sigma, in beads) of the input smoothing. Empty = LoopSage default max(1.5, N_BEADS / 300). |
+| `motif_genome` | `--motif-genome` | text | empty | Reference genome FASTA (uncompressed). If given, CTCF orientation is read from the motif (JASPAR MA0139.1) at every anchor or peak without orientation in the input file. |
+| `motif_pfm` |  | text | empty | Own motif as a PFM file (4 rows A C G T). Empty = built-in CTCF motif. |
+| `motif_pvalue` |  | number | 1e-5 | Score threshold of the motif scan: chance of a hit in random sequence. |
+| `motif_pseudocount` |  | number | 0.8 | Pseudocount of the motif matrix (avoids infinite scores). |
+| `motif_pad` |  | integer | 0 | bp added on both sides of every anchor or peak before scanning (the site may be a bit outside it). |
 | `rep_sim_t` |  | integer | 1000 | Number of time points of the replication simulation. |
 | `bigwig_bin_size` |  | integer | 1000 | Bin size (bp) used to average a Repli-Seq bigWig. |
 | `bigwig_sigma` |  | number | 200.0 | Gaussian smoothing (in bins) of a Repli-Seq bigWig. |
 | `bigwig_log_norm` |  | True/False | True | [deprecated] Repli-Seq signals are always log-normalised; this value is ignored. |
+| `hic_file` | `--hic` | text | empty | Hi-C map (.hic) of the region: the model is validated against it (needs hic-straw). Empty = no validation. |
+| `hic_norm` |  | text | KR | Hi-C normalisation: KR, SCALE, VC_SQRT, VC or NONE (the next available is used if missing). |
+| `hic_resolution` |  | integer | empty | Hi-C bin size (bp) to read. Empty = the one closest to the bead size. |
+| `hic_track_smooth` |  | number | 7.0 | Smoothing (beads) of the insulation and A/B tracks of the Hi-C validation. |
 
 ### Replication (`[replication]`)
 
@@ -168,7 +90,7 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `rep_t_std_factor` |  | number | 0.1 | Factor multiplying the standard deviation of the replication timing curve. |
 | `rep_speed_scale` |  | number | 10 | A scale that quantifies the speed of the replication forks. |
 | `rep_init_rate_scale` |  | number | 1.0 | Multiplier of the experimentally estimated initiation rate. |
-| `rep_front_smooth` |  | number | 2.0 | [new] Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front. |
+| `rep_front_smooth` |  | number | 2.0 | Smoothing (sigma, in beads) of the replication front: the replication time of neighbouring beads is averaged. 0 = sharp front. |
 | `rep_start_time` | `--rep-start` | integer | 50000 | MC step at which replication starts (G1 = the steps before it). |
 | `rep_time_duration` | `--rep-duration` | integer | 50000 | Duration of replication (in MC steps); G2/M = the steps after S phase. |
 
@@ -182,6 +104,9 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `p_rew` |  | number | 0.5 | Probability of proposing a rewiring move (LEF move). |
 | `rep_fork_push` |  | True/False | True | Hard-coded replication fork pushing in the MC moves. |
 | `rep_fork_epigenetic_organizer` |  | True/False | True | Model replication forks as epigenetic organizers. |
+| `preferential_binding` | `--preferential-binding` | True/False | False | LEFs load preferentially where loops span (CTCF occupancy), and rarely in loop-naked areas. Also --preferential-binding. |
+| `pref_bind_floor` |  | number | 0.05 | Loading weight of loop-naked beads relative to the most occupied bead (0-1) when PREFERENTIAL_BINDING is on. |
+| `pref_bind_power` |  | number | 1.0 | Exponent applied to the occupancy before loading (1 = proportional, >1 = stronger preference). |
 | `n_steps` | `--n-steps` | integer | 150000 | Total number of Monte Carlo steps (default: G1 50000 + S 50000 + G2/M 50000). |
 | `n_sweep` |  | integer | 1000 | Number of node or link state changes proposed per simulation step. |
 | `n_lef` |  | integer | empty | Number of loop extrusion factors (LEFs). Empty = half the number of CTCF sites (changed from twice in earlier versions). |
@@ -196,9 +121,6 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `epi_field_coeff` |  | number | 1.0 | Field coefficient of the epigenetic state model. |
 | `cross_coeff` |  | number | 1.0 | Coefficient for LEF crossing. |
 | `bind_coeff` |  | number | 1.0 | Coefficient for CTCF binding. |
-| `preferential_binding` | `--preferential-binding` | True/False | False | LEFs load preferentially where loops span (CTCF occupancy), and rarely in loop-naked areas. Also --preferential-binding. |
-| `pref_bind_floor` |  | number | 0.05 | Loading weight of loop-naked beads relative to the most occupied bead (0-1) when PREFERENTIAL_BINDING is on. |
-| `pref_bind_power` |  | number | 1.0 | Exponent applied to the occupancy before loading (1 = proportional, >1 = stronger preference). |
 | `n_replicas` | `--n-replicas` | integer | 1 | Independent MC chains; each is processed into its own replica_XX sub-folder. |
 
 ### Molecular dynamics (`[md]`)
@@ -224,13 +146,12 @@ One table per section of the file. *Flag* is the command-line option that sets t
 | `save_mdt` |  | True/False | True | Save metadata of the stochastic simulation. |
 | `report` | `--no-report` | True/False | True | Write report.html (model summary, figures, tables, command and all parameters). |
 | `html_3d` | `--no-viewer` | True/False | True | Write an interactive 3D viewer (viewer_3d.html) of the ensemble. |
-| `skip_movies` | `--skip-movies` | True/False | False | Skip the PyVista movies (mp4) of the ensemble. By default they are written; they take time, so use `--skip-movies` for quick runs. |
+| `skip_movies` | `--skip-movies` | True/False | False | Skip the PyVista movies (mp4) of the ensemble. By default the movies are written (they take time: use --skip-movies to disable). |
 | `movie_color` |  | text | auto | Movie colouring: auto (sister + compartment movies), sister, compartment, rainbow or replication. |
-| `movie_cmap` |  | text | turbo | Heatmap colour map of movie and viewer: turbo, inferno, magma, viridis, cividis or rs. |
+| `movie_cmap` |  | text | turbo | Colour map of the contact map in the movie and the viewer: turbo (most variable), inferno, magma, viridis, cividis or rs. |
 | `movie_interp` |  | integer | 5 | Interpolated frames between two structures in the movie. |
 | `fig_dpi` |  | integer | 200 | Resolution (dpi) of the saved figures and of the report. |
 | `viz_heats` |  | True/False | True | Save the averaged heatmaps of the 3D ensemble. |
-
 
 ## Changing the physics in detail
 

@@ -6,16 +6,7 @@ No timing data means no replication simulation, no forks and only one DNA chain 
 
 ## Input data
 
-Use `--rt-file` with one of:
-
-| Format | Meaning | Notes |
-|---|---|---|
-| `.bigWig`, `.bw` | Bulk Repli-Seq signal (for example ENCODE) | Averaged in bins, log-transformed, smoothed with a Gaussian filter |
-| `.txt` | Tab-separated table, value in the third column | One value per genomic window |
-| `.parquet` | Single-cell replication timing matrix (columns starting with `SC_`) | The shipped file is `src/data/replication_timing_data.parquet` |
-| `builtin` | The shipped single-cell data | Covers the chr14 test region; use `--rt-file builtin` |
-
-In every case the signal is rescaled to $f_i \in [0, 1]$ along the $N$ beads, where $f_i$ close to 1 means "replicates early" and close to 0 means "replicates late".
+Give timing with `--rt-file` (bigWig, txt, single-cell parquet, `builtin` or `none`); the formats are listed in [Input data](input_data.md#replication-timing). In every case the signal is rescaled to $f_i \in [0, 1]$ along the $N$ beads, where $f_i$ close to 1 means "replicates early" and close to 0 means "replicates late".
 
 ## From timing to initiation
 

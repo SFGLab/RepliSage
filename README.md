@@ -47,8 +47,9 @@ python src/run.py -c my_config.ini --with-stress --n-replicas 4 --threads 4
 |---|---|
 | `-c FILE` | Read a config file |
 | `--bedpe-file FILE` | CTCF input: loops (BEDPE) or peaks (BED, narrowPeak) |
+| `--smooth-sigma BEADS`, `--no-smooth` | Width of the Gaussian smoothing of the CTCF input, or switch it off |
 | `--motif-genome FASTA` | Read CTCF orientation from motifs when the input has none |
-| `--hic FILE` | Validate the model against a Hi-C map (`.hic`) |
+| `--hic FILE` | Validate the model against a Hi-C map (`.hic`; `pip install "pyRepliSage[hic]"`) |
 | `--rt-file FILE` | Replication timing. No file: no replication simulation, no forks |
 | `--region CHR:START-END` | Region to model |
 | `--run-md true/false` | Build 3D structures (needs replication data or not, both work) |

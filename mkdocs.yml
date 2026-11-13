@@ -45,6 +45,7 @@ nav:
       - Monte Carlo model: mc_model.md
       - Molecular dynamics model: md_model.md
   - Reference:
+      - Input data: input_data.md
       - Configuration: config.md
       - Analysis: analysis.md
       - Outputs and visualisation: visualization.md

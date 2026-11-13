@@ -99,3 +99,42 @@ Beads are set automatically (7 kb per bead gives about 430 beads):
 ```bash
 replisage --bedpe-file loops.bedpe --region chr14:80835000-83835000 --rt-file builtin --run-md true --name chr14_3Mb_md
 ```
+
+## Writing a config file
+
+Start small: the CTCF file and the region, plus whatever you want to change.
+
+```ini
+; my_config.ini: loops + replication + 3D structures for a 17.8 Mb region
+[general]
+out_path = results
+run_name = chr14_demo
+n_threads = 4
+seed = 7
+
+[input]
+bedpe_path   = loops.bedpe
+rept_path    = GM12878_timing.bigWig    ; a file, builtin or none
+chrom        = chr14
+region_start = 80835000
+region_end   = 98674700
+n_beads      = 1000                     ; empty = 7 kb per bead (max 10,000)
+
+[replication]
+rep_start_time    = 50000               ; MC step where S phase starts
+rep_time_duration = 50000               ; length of S phase in MC steps
+
+[mc]
+n_steps = 150000
+mc_step = 200                           ; record every 200th step
+burnin  = 5000                          ; steps discarded at the start
+t_mc    = 1.5                           ; fixed temperature, no annealing
+
+[md]
+simulation_type = MD                    ; none = no 3D
+platform = CUDA
+```
+
+Keep `t_mc` in the critical region: too low and loops freeze, too high and they fall off; see [the Hamiltonian idea](hamiltonian.md#temperature-in-replisage). Run with `replisage -c my_config.ini -v` and open `config_used.ini` in the run folder to confirm your changes were read.
+
+Common mistakes: a typo in a key (ignored with a warning), coordinates in kb instead of bp, a region too small for `n_beads` (bead size should be a few kb or more), and `rep_time_duration` not larger than `rep_sim_t` or an S phase that does not fit inside `n_steps`.

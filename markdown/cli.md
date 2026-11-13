@@ -13,10 +13,10 @@ python -m src.run -h    # without installing, from the repository root
 |---|---|---|
 | config | `-c, --config FILE` | Read parameters from this ini file |
 | input | `--bedpe-file FILE` (or `--input-file`) | CTCF input: loops (`.bedpe`) or peaks (`.bed`, `.narrowPeak`); required unless the config file gives one |
-| input | `--smooth-sigma BEADS`, `--no-smooth` | Width of the Gaussian smoothing of the CTCF input (default `max(1.5, n_beads / 300)`, as in LoopSage) or switch it off |
-| input | `--motif-genome FASTA` | Reference genome: read CTCF orientation from the motif where the input has none |
-| input | `--hic FILE` | Hi-C map (`.hic`) to validate the model against (needs `hic-straw`) |
-| input | `--rt-file FILE` | Replication timing: `.bigWig`/`.bw`, `.txt`, `.parquet` (single cell) or the word `builtin` |
+| input | `--smooth-sigma BEADS`, `--no-smooth` | Gaussian smoothing of the CTCF input: width (default `max(1.5, n_beads / 300)`) or off |
+| input | `--motif-genome FASTA` | Reference genome (uncompressed FASTA): CTCF orientation from the motif where the input has none (more: `MOTIF_*`) |
+| input | `--hic FILE` | Hi-C map (`.hic`) to validate the model against (needs `hic-straw`; more: `HIC_*`) |
+| input | `--rt-file FILE` | Replication timing: `.bigWig`/`.bw`, `.txt`, `.parquet` (single cell), `builtin` (shipped data) or `none` |
 | input | `--region CHR[:START-END]` | Region to model, for example `chr14:80835000-98674700`; a bare chromosome means the whole chromosome |
 | input | `--n-beads N` | Beads per chain (default: region length / 7 kb, about 10 beads per CTCF site) |
 | run | `--run-md true/false` | Build 3D structures with OpenMM (default true), or stop after the Monte Carlo (false) |
@@ -51,7 +51,7 @@ Four numbers decide how long a run is and how much of it you keep. They can all 
 | `--mc-step` | $\delta$ | one state is recorded every $\delta$ steps (thinning) | 200 |
 | `--burnin` | $B$ | steps discarded at the start | 5000 |
 | `--rep-start`, `--rep-duration` | $t_0$, $d$ | S phase runs from step $t_0$ to $t_0 + d$ | 50000, 50000 |
-| `--md-steps` | $n_{md}$ | MD steps run for every recorded state | 5000 |
+| `--md-steps` | $n_{md}$ | MD steps run for every recorded state | 1000 |
 | `--md-step-size` | $\Delta t$ | MD integrator time step | 100 femtosecond |
 
 The number of recorded states, and so of 3D structures, is

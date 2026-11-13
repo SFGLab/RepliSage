@@ -37,6 +37,7 @@ pip install pyRepliSage
 | You want | Install |
 |---|---|
 | The pyvista movies (`movie_3d_sister.mp4`, `movie_3d_compartment.mp4`) | `pip install "pyRepliSage[viz]"` (the `ffmpeg` encoder comes with `imageio-ffmpeg`) |
+| Hi-C validation (`--hic`) | `pip install "pyRepliSage[hic]"` (installs `hic-straw`) |
 | 3D on a GPU | a CUDA or OpenCL OpenMM build, then `--platform CUDA` (or `OpenCL`) |
 | To run the tests | `pip install "pyRepliSage[test]"`, then `pytest` (fast tests) or `python run_tests.py` (all checks with one summary) |
 | To build these docs | `pip install "pyRepliSage[docs]"`, then `mkdocs serve` |

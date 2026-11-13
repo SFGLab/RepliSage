@@ -42,7 +42,7 @@ mkdocs build --strict --clean          # must finish without warnings (broken li
 
 ## Release checklist
 
-1. Set the version in `src/_version.py` (for example `__version__ = "1.0.0"`).
+1. Set the version in `src/_version.py` (for example `__version__ = "1.0.2"`).
 2. Run the everyday checks and `mkdocs build --strict --clean`.
 3. Check that the package builds:
    ```bash
@@ -55,19 +55,19 @@ mkdocs build --strict --clean          # must finish without warnings (broken li
    ```bash
    git status
    git add -A
-   git commit -m "v1.0.0: <short summary>"
+   git commit -m "v1.0.2: <short summary>"
    git push origin main
    ```
 5. Tag and publish the release:
    ```bash
-   git tag -a v1.0.0 -m "RepliSage 1.0.0"
-   git push origin v1.0.0
-   gh release create v1.0.0 --title "RepliSage 1.0.0" --generate-notes
+   git tag -a v1.0.2 -m "RepliSage 1.0.2"
+   git push origin v1.0.2
+   gh release create v1.0.2 --title "RepliSage 1.0.2" --generate-notes
    ```
    Publishing the release starts two workflows: `python-publish.yml` uploads to PyPI (needs the repository secret `PYPI_API_TOKEN`) and `docs.yml` redeploys the site.
 6. Check the result in a clean environment and in the browser:
    ```bash
-   pip install --upgrade pyRepliSage==1.0.0
+   pip install --upgrade pyRepliSage==1.0.2
    replisage --help
    ```
    Open https://sfglab.github.io/RepliSage/ and look at the new pages. If the site returns 404, check Settings → Pages.
